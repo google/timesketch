@@ -256,6 +256,7 @@ class LogAnalyzer(LLMFeatureInterface):
                 ),
                 "processed_findings_summary": processed_findings_summary,
                 "full_response_text": full_response_text,
+                "report_summary": response_data.get("report_summary", ""),
             }
 
         except Exception as exception:  # pylint: disable=broad-exception-caught

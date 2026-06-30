@@ -17,7 +17,6 @@ import json
 import logging
 import os
 import asyncio
-import inspect
 import pathlib
 import tempfile
 from datetime import datetime
@@ -31,11 +30,16 @@ from timesketch.lib.llms.providers import manager
 has_required_deps = True
 try:
     from sec_gemini import SecGemini
-    from sec_gemini.models.enums import MessageType
 except ImportError:
     has_required_deps = False
 
 logger = logging.getLogger(__name__)
+
+
+CONCLUSION_LOG_RECORDS_HEADER = "**What the selected log records are:**\n\n"
+CONCLUSION_RELEVANCE_HEADER = (
+    "**How the selected log records are related to the finding:**\n\n"
+)
 
 
 class SecGeminiLogAnalyzer(interface.LLMProvider):
@@ -66,37 +70,20 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
         if not self.api_key:
             raise ValueError("SecGemini provider requires an 'api_key' in its config.")
 
-        self.server_url = self.config.get("logs_processor_api_url")
-        if self.server_url:
-            os.environ["SEC_GEMINI_LOGS_PROCESSOR_API_URL"] = self.server_url
-
-        self.base_url = self.config.get("base_url")
-        self.wss_url = self.config.get("wss_url")
-        self.agents_config = self.config.get("agents_config", {})
+        self.host = self.config.get("host")
+        self.meta_config = self.config.get("meta", {})
 
         try:
-            if self.base_url and self.wss_url:
-                self.sg_client = SecGemini(
-                    base_url=self.base_url,
-                    base_websockets_url=self.wss_url,
-                    api_key=self.api_key,
-                )
+            if self.host:
+                self.sg_client = SecGemini(api_key=self.api_key, host=self.host)
             else:
                 self.sg_client = SecGemini(api_key=self.api_key)
         except Exception as e:
             raise ValueError(f"Failed to initialize SecGemini client: {e}") from e
 
-        self.model = self.config.get("model", "logs_analysis_agent-1.1")
-        self.custom_fields_mapping = {
-            "id": "_id",
-            "enrichment": "tag",
-            "timestamp": "datetime",
-        }
-        self.enable_logging = self.config.get("enable_logging", False)
         self._events_sent = 0
         self._session = None
         self.session_id = None
-        self.table_hash = None
 
     async def _run_async_stream(self, log_path, prompt):
         """Initializes a SecGemini session and streams the analysis response.
@@ -114,105 +101,148 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
         Yields:
             str: The content chunks of the streamed response from the agent.
         """
-        session_params = {
-            "model": self.model,
-            "enable_logging": self.enable_logging,
-        }
-
-        # Check if the installed sec-gemini library supports agents_config
-        sig = inspect.signature(self.sg_client.create_session)
-        if "agents_config" in sig.parameters:
-            session_params["agents_config"] = self.agents_config
-        else:
-            raise ValueError(
-                "The installed version of 'sec_gemini' does not support the "
-                "'agents_config' parameter. Please upgrade the library to a "
-                "version > 1.1.5 to use the log analyzer feature."
-            )
-        self._session = self.sg_client.create_session(**session_params)
-        self.session_id = self._session.id
-        # TODO: Could we check if the API key has logging enabled and if not ERR
-        logger.info("Started new SecGemini session: '%s'", self._session.id)
-        self._session.upload_and_attach_logs(
-            log_path, custom_fields_mapping=self.custom_fields_mapping
-        )
-        if hasattr(self._session, "logs_table") and hasattr(
-            self._session.logs_table, "blake2s"
-        ):
-            self.table_hash = self._session.logs_table.blake2s
-            logger.info(
-                "Uploaded logs table hash (blake2s): '%s'",
-                self._session.logs_table.blake2s,
-            )
-        else:
-            logger.warning("Uploaded logs did not produce a blake2s table hash!")
-
-        logger.info("Starting the SecGemini analysis...")
-        logger.info(
-            "NOTE: 'ConnectionClosedOK' errors from the SecGemini client in the "
-            "log are expected. The client automatically reconnects during "
-            "long-running analysis."
-        )
-
-        debug_log_file = None
-        if current_app.config.get("DEBUG"):
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            log_filename = f"secgemini_response_{timestamp}_{self.session_id}.log"
-            log_file_path = os.path.join(tempfile.gettempdir(), log_filename)
-            flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
-            try:
-                debug_log_file = os.fdopen(
-                    os.open(log_file_path, flags, 0o600), "w", encoding="utf-8"
-                )
-                logger.info(
-                    "SecGemini raw response is being streamed to: %s", log_file_path
-                )
-            except (IOError, FileExistsError) as e:
-                logger.error(
-                    "Failed to create SecGemini debug log at %s: %s",
-                    log_file_path,
-                    e,
-                    exc_info=True,
-                )
-                debug_log_file = None
+        # Start the client connection first
+        await self.sg_client.start()
 
         try:
-            async for response in self._session.stream(prompt):
-                if debug_log_file:
-                    try:
-                        if hasattr(response, "to_json") and callable(
-                            getattr(response, "to_json")
-                        ):
-                            json_bytes = response.to_json()
-                            json_string = json_bytes.decode("utf-8")
-                            debug_log_file.write(json_string + "\n")
+            # Create session via the sessions manager
+            self._session = await self.sg_client.sessions.create()
+            self.session_id = self._session.id
+            logger.info("Started new SecGemini session: '%s'", self.session_id)
+
+            # Upload logs file using the new files.upload API
+            await self._session.files.upload(str(log_path), content_type="text/plain")
+            logger.info("Uploaded logs file: '%s'", log_path)
+
+            logger.info("Starting the SecGemini analysis...")
+            logger.info(
+                "NOTE: 'ConnectionClosedOK' errors from the SecGemini client in the "
+                "log are expected. The client automatically reconnects during "
+                "long-running analysis."
+            )
+
+            debug_log_file = None
+            if current_app.config.get("DEBUG"):
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                log_filename = f"secgemini_response_{timestamp}_{self.session_id}.log"
+                log_file_path = os.path.join(tempfile.gettempdir(), log_filename)
+                flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+                try:
+                    debug_log_file = os.fdopen(
+                        os.open(log_file_path, flags, 0o600), "w", encoding="utf-8"
+                    )
+                    logger.info(
+                        "SecGemini raw response is being streamed to: %s", log_file_path
+                    )
+                except (IOError, FileExistsError) as e:
+                    logger.error(
+                        "Failed to create SecGemini debug log at %s: %s",
+                        log_file_path,
+                        e,
+                        exc_info=True,
+                    )
+                    debug_log_file = None
+
+            try:
+                # Trigger the prompt first
+                logger.info("Sending prompt to SecGemini: '%s'", prompt[:100])
+                meta = {"config.mode": "dfir"}
+                if self.meta_config:
+                    for key, val in self.meta_config.items():
+                        if isinstance(val, bool):
+                            meta[key] = "true" if val else "false"
                         else:
+                            meta[key] = str(val)
+
+                await self._session.prompt(prompt, meta=meta)
+                logger.info("Prompt sent successfully!")
+
+                # Stream messages using messages.stream()
+                async for response in self._session.messages.stream():
+                    if debug_log_file:
+                        try:
                             debug_log_file.write(str(response) + "\n")
-                        debug_log_file.flush()
-                    except IOError as e:
-                        logger.error(
-                            "Failed to write to SecGemini debug log: %s",
-                            e,
-                            exc_info=True,
-                        )
+                            debug_log_file.flush()
+                        except IOError as e:
+                            logger.error(
+                                "Failed to write to SecGemini debug log: %s",
+                                e,
+                                exc_info=True,
+                            )
 
-                if (
-                    response.message_type == MessageType.RESULT
-                    and response.actor == "chat_summarization_agent"
-                ):
-                    content = response.content
-                    json_str = None
-                    if "```json" in content:
-                        json_str = content.split("```json")[1].split("```")[0].strip()
+                    # Extract response dictionary values
+                    msg_type = response.get("message_type")
+                    content = response.get("content", "")
 
-                    if json_str:
-                        yield json_str
-                        # force termination to avoid back2back runs
-                        break
+                    if msg_type == "MESSAGE_TYPE_RESPONSE":
+                        start_marker = "\n## Investigation Findings\n\n"
+                        if start_marker in content:
+                            parts = content.rsplit(start_marker, 1)
+                            report_summary_text = parts[0].strip()
+                            json_str = parts[1].strip()
+                            try:
+                                findings_list = json.loads(json_str)
+                                if isinstance(findings_list, list):
+                                    translated_findings = []
+                                    for f in findings_list:
+                                        log_records = [
+                                            {"record_id": rid}
+                                            for rid in f.get("record_ids", [])
+                                            if rid
+                                        ]
+                                        desc = f.get("description", "")
+                                        relevance = f.get("relevance", "")
+                                        combined_conclusion = (
+                                            f"{CONCLUSION_LOG_RECORDS_HEADER}"
+                                            f"{desc}\n\n<br>\n\n"
+                                            f"{CONCLUSION_RELEVANCE_HEADER}"
+                                            f"{relevance}"
+                                        )
+                                        annotations = [
+                                            {
+                                                "investigative_question": f.get(
+                                                    "finding", ""
+                                                ),
+                                                "conclusions": [combined_conclusion],
+                                                "priority": f.get("severity", "notice"),
+                                            }
+                                        ]
+                                        translated_findings.append(
+                                            {
+                                                "log_records": log_records,
+                                                "annotations": annotations,
+                                            }
+                                        )
+                                    json_str = json.dumps(
+                                        {
+                                            "findings": translated_findings,
+                                            "report_summary": report_summary_text,
+                                        }
+                                    )
+                            except Exception as e:  # pylint: disable=broad-except
+                                logger.error(
+                                    "Failed to translate SecGemini findings JSON: %s",
+                                    e,
+                                    exc_info=True,
+                                )
+                                json_str = json.dumps(
+                                    {
+                                        "findings": [],
+                                        "report_summary": report_summary_text,
+                                    }
+                                )
+                            yield json_str
+                            # force termination to avoid back2back runs
+                            break
+            finally:
+                if debug_log_file:
+                    debug_log_file.close()
+                    logger.info(
+                        "Finished writing SecGemini debug log: %s", log_file_path
+                    )
         finally:
-            if debug_log_file:
-                debug_log_file.close()
-                logger.info("Finished writing SecGemini debug log: %s", log_file_path)
+            # Ensure client is properly closed
+            await self.sg_client.close()
 
     def generate_stream_from_logs(
         self,
@@ -309,10 +339,8 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                         log_trigger += 1
                         if log_trigger % 50 == 0:
                             logger.info(
-                                "[%s] SecGemini is still processing table with "
-                                "hash [%s] ...",
+                                "[%s] SecGemini is still processing...",
                                 self.session_id,
-                                self.table_hash,
                             )
                         yield chunk
                 except StopAsyncIteration:
