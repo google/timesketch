@@ -165,6 +165,49 @@ class LLMLogAnalyzer(interface.BaseAnalyzer):
 
                 story.add_text(f"```\n{full_response_text}\n```")
 
+            # Update the sketch's investigation report story with the AI report summary
+            report_summary = result.get("report_summary")
+            if report_summary:
+                # pylint: disable=import-outside-toplevel
+                from timesketch.models.sketch import Story
+                from timesketch.models import db_session
+                import json
+                import datetime
+
+                # pylint: enable=import-outside-toplevel
+
+                report_story = Story.query.filter_by(
+                    sketch_id=self.sketch.id, title="__ts_investigation_report"
+                ).first()
+
+                if report_story:
+                    try:
+                        content = json.loads(report_story.content)
+                        if isinstance(content, list):
+                            content = {str(i): val for i, val in enumerate(content)}
+                    except Exception:  # pylint: disable=broad-exception-caught
+                        content = {}
+                else:
+                    report_story = Story(
+                        title="__ts_investigation_report",
+                        sketch_id=self.sketch.id,
+                        user_id=1,  # Default to system user
+                    )
+                    content = {}
+
+                existing_summaries = content.get("summary", [])
+                content["summary"] = [
+                    {
+                        "timestamp": datetime.datetime.utcnow().isoformat(),
+                        "value": report_summary,
+                        "user": "<AI>",
+                    }
+                ] + existing_summaries
+
+                report_story.content = json.dumps(content)
+                db_session.add(report_story)
+                db_session.commit()
+
             self.output.result_summary = summary
 
             logger.info(summary)
