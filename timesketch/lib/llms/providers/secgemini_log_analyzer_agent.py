@@ -191,8 +191,10 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                                         desc = f.get("description", "")
                                         relevance = f.get("relevance", "")
                                         combined_conclusion = (
-                                            f"{CONCLUSION_LOG_RECORDS_HEADER}{desc}\n\n<br>\n\n"
-                                            f"{CONCLUSION_RELEVANCE_HEADER}{relevance}"
+                                            f"{CONCLUSION_LOG_RECORDS_HEADER}"
+                                            f"{desc}\n\n<br>\n\n"
+                                            f"{CONCLUSION_RELEVANCE_HEADER}"
+                                            f"{relevance}"
                                         )
                                         annotations = [
                                             {
