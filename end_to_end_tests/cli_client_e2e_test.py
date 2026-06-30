@@ -215,6 +215,47 @@ class CliClientE2ETest(interface.BaseEndToEndTest):
             self.assertions.assertEqual(result.exit_code, 0, f"Failed: {result.output}")
             self.assertions.assertEqual(result.output.strip(), "42")
 
+    def test_cli_sketch_delete_soft_deleted(self):
+        """Tests that a soft-deleted sketch can be deleted via CLI."""
+        # Create a new sketch to be soft-deleted and then hard-deleted
+        sketch_name = f"cli_soft_delete_test_{uuid.uuid4().hex}"
+        sketch = self.api.create_sketch(name=sketch_name)
+
+        # We need a timeline to trigger the loop in sketch.py
+        self.import_timeline("evtx_part.csv", sketch=sketch)
+
+        # Soft delete the sketch
+        sketch.delete(force_delete=False)
+
+        # Get a fresh instance of the sketch so cached values are cleared
+        fresh_sketch = self.api.get_sketch(sketch.id)
+
+        # Now try to delete it via CLI (dry-run first, then force)
+        cli_ctx_obj = E2ECliContextObject(
+            api_client=self.api,
+            sketch_instance=fresh_sketch,
+            output_format="text",
+        )
+
+        # Dry-run
+        result = self.runner.invoke(sketch_group, ["delete"], obj=cli_ctx_obj)
+        self.assertions.assertEqual(
+            result.exit_code,
+            1,
+            f"CLI command 'sketch delete' (dry-run) failed to exit with 1 on soft-deleted sketch.\nOutput:\n{result.output}\nException:\n{result.exception}",  # pylint: disable=line-too-long
+        )
+
+        # Force-delete
+        result_force = self.runner.invoke(
+            sketch_group, ["delete", "--force_delete"], obj=cli_ctx_obj
+        )
+        self.assertions.assertEqual(
+            result_force.exit_code,
+            1,
+            f"CLI command 'sketch delete --force_delete' unexpectedly succeeded on a soft-deleted sketch for a non-admin.\nOutput:\n{result_force.output}\nException:\n{result_force.exception}",  # pylint: disable=line-too-long
+        )
+        self.assertions.assertIn("Failed to delete sketch", result_force.output)
+
 
 # Register the new test class with the test manager
 manager.EndToEndTestManager.register_test(CliClientE2ETest)

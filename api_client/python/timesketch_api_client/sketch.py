@@ -502,13 +502,17 @@ class Sketch(resource.BaseResource):
         # Check the return status. If it's not a success (20x),
         # error_message will raise a RuntimeError.
         if not error.check_return_status(response, logger):
+            if response.status_code == definitions.HTTP_STATUS_CODE_NOT_FOUND:
+                error.error_message(
+                    response,
+                    message=f"Failed to delete sketch {self.id}",
+                    error=error.NotFoundError,
+                )
             error.error_message(
                 response,
                 message=f"Failed to delete sketch {self.id}",
-                error=RuntimeError,
             )
-        else:
-            return error.check_return_status(response, logger)
+
         return True
 
     def add_to_acl(
