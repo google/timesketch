@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Default Gunicorn settings
+export WSGI_WORKER_CLASS="${WSGI_WORKER_CLASS:-gthread}"
+export NUM_WSGI_THREADS="${NUM_WSGI_THREADS:-2}"
+
 # Run the container the default way
 if [ "$1" = 'timesketch' ]; then
   echo '**** Debugging information for e2e tests ****'
@@ -114,6 +118,8 @@ EOF
   gunicorn --reload -b 0.0.0.0:80 \
   --access-logfile - --error-logfile - --log-level info \
   --timeout 120 \
+  --worker-class $WSGI_WORKER_CLASS \
+  --threads $NUM_WSGI_THREADS \
   --workers 2 \
   --max-requests 100 --max-requests-jitter 10 \
   --limit-request-line 8190 \

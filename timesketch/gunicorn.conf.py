@@ -67,6 +67,13 @@ def get_debug_status():
 
 DEBUG = get_debug_status()
 
+# Worker Configuration
+worker_class = os.environ.get("WSGI_WORKER_CLASS") or "sync"
+threads_val = os.environ.get("NUM_WSGI_THREADS")
+threads = int(threads_val) if threads_val and threads_val.isdigit() else 1
+workers_val = os.environ.get("NUM_WSGI_WORKERS")
+workers = int(workers_val) if workers_val and workers_val.isdigit() else 1
+
 # Metrics Configuration
 METRICS_HTTP_HOST = os.environ.get("TIMESKETCH_METRICS_HOST", "0.0.0.0")
 METRICS_HTTP_PORT = os.environ.get("TIMESKETCH_METRICS_PORT", 8080)
