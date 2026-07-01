@@ -14,11 +14,28 @@
 """The class definitions for the data finder, or the data analyzer."""
 
 import logging
+from datetime import datetime
 
 from timesketch.lib.analyzers import utils
 from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 
 logger = logging.getLogger("timesketch.data_finder")
+
+
+def _is_valid_iso_date(date_string):
+    """Check whether a string is a valid ISO 8601-formatted date.
+
+    Args:
+        date_string (str): The string to validate.
+
+    Returns:
+        bool: True if the string is a valid ISO 8601 date, False otherwise.
+    """
+    try:
+        datetime.fromisoformat(date_string)
+        return True
+    except (ValueError, TypeError):
+        return False
 
 
 class DataFinder:
@@ -69,8 +86,13 @@ class DataFinder:
         return True
 
     def set_end_date(self, end_date):
-        """Sets the end date of the time period the data finder uses."""
-        # TODO: Implement a check if this is a valid ISO formatted date.
+        """Sets the end date of the time period the data finder uses.
+
+        Args:
+            end_date (str): An ISO 8601-formatted date string.
+        """
+        if not _is_valid_iso_date(end_date):
+            logger.warning("end_date [%s] is not a valid ISO 8601 date.", end_date)
         self._end_date = end_date
 
     def set_indices(self, indices):
@@ -106,8 +128,13 @@ class DataFinder:
         self._rule = rule_dict
 
     def set_start_date(self, start_date):
-        """Sets the start date of the time period the data finder uses."""
-        # TODO: Implement a check if this is a valid ISO formatted date.
+        """Sets the start date of the time period the data finder uses.
+
+        Args:
+            start_date (str): An ISO 8601-formatted date string.
+        """
+        if not _is_valid_iso_date(start_date):
+            logger.warning("start_date [%s] is not a valid ISO 8601 date.", start_date)
         self._start_date = start_date
 
     def set_timeline_ids(self, timeline_ids):
