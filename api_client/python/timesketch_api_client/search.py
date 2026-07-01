@@ -13,16 +13,28 @@
 # limitations under the License.
 """Timesketch API search object."""
 
+from __future__ import annotations
+
 import datetime
 import json
 import logging
 import re
+
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Union
+from typing import TYPE_CHECKING
 
 import pandas
 
 from . import error
 from . import resource
 from . import searchtemplate
+
+if TYPE_CHECKING:
+    from . import sketch as sketch_lib
 
 logger = logging.getLogger("timesketch_api.search")
 
@@ -40,24 +52,28 @@ class Chip:
     # The value of the chip field.
     CHIP_FIELD = ""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the chip."""
         self._active = True
         self._operator = "must"
         self._chip_field = self.CHIP_FIELD
 
     @property
-    def active(self):
+    def active(self) -> bool:
         """A property that returns whether the chip is active or not."""
         return self._active
 
     @active.setter
-    def active(self, active):
-        """Decide whether the chip is active or disabled."""
+    def active(self, active: bool) -> None:
+        """Decide whether the chip is active or disabled.
+
+        Args:
+            active: Boolean indicating if the chip is active.
+        """
         self._active = bool(active)
 
     @property
-    def chip(self):
+    def chip(self) -> Dict[str, Any]:
         """A property that returns the chip value."""
         return {
             "field": self._chip_field,
@@ -67,27 +83,31 @@ class Chip:
             "value": getattr(self, self.CHIP_VALUE, ""),
         }
 
-    def from_dict(self, chip_dict):
-        """Configure the chip from a dictionary."""
+    def from_dict(self, chip_dict: Dict[str, Any]) -> None:
+        """Configure the chip from a dictionary.
+
+        Args:
+            chip_dict: Dictionary with chip configuration.
+        """
         raise NotImplementedError
 
-    def set_include(self):
+    def set_include(self) -> None:
         """Configure the chip so the content needs to be included in results."""
         self._operator = "must"
 
-    def set_exclude(self):
+    def set_exclude(self) -> None:
         """Configure the chip so content needs to be excluded in results."""
         self._operator = "must_not"
 
-    def set_optional(self):
+    def set_optional(self) -> None:
         """Configure the chip so the content is optional in results."""
         self._operator = "should"
 
-    def set_active(self):
+    def set_active(self) -> None:
         """Set the chip as active."""
         self._active = True
 
-    def set_disable(self):
+    def set_disable(self) -> None:
         """Disable the chip."""
         self._active = False
 
@@ -102,7 +122,7 @@ class DateIntervalChip(Chip):
     _DATE_FORMAT_MICROSECONDS = "%Y-%m-%dT%H:%M:%S.%f"
     _DATE_ONLY_FORMAT = "%Y-%m-%d"
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the chip."""
         super().__init__()
         self._date = None
@@ -110,15 +130,17 @@ class DateIntervalChip(Chip):
         self._after = 5
         self._unit = "m"
 
-    def add_interval(self, before, after=None, unit="m"):
+    def add_interval(
+        self, before: int, after: Optional[int] = None, unit: str = "m"
+    ) -> None:
         """Set the interval of the chip.
 
         Args:
-            before (int): the number of units that should be included
+            before: the number of units that should be included
                 before the date.
-            after (int): optional number of units after the date. If not
+            after: optional number of units after the date. If not
                 provided the value of before is used.
-            unit (str): optional string with the unit of interval. This can
+            unit: optional string with the unit of interval. This can
                 be s for seconds, m for minutes, d for days and h for hours.
                 The default value is m (minutes).
 
@@ -134,27 +156,35 @@ class DateIntervalChip(Chip):
         self._after = after
 
     @property
-    def after(self):
+    def after(self) -> int:
         """Property that returns the time interval after the date."""
         return self._after
 
     @after.setter
-    def after(self, after):
-        """Make changes to the time interval after the date."""
+    def after(self, after: int) -> None:
+        """Make changes to the time interval after the date.
+
+        Args:
+            after: Time interval after the date.
+        """
         self._after = after
 
     @property
-    def before(self):
+    def before(self) -> int:
         """Property that returns the time interval before the date."""
         return self._before
 
     @before.setter
-    def before(self, before):
-        """Make changes to the time interval before the date."""
+    def before(self, before: int) -> None:
+        """Make changes to the time interval before the date.
+
+        Args:
+            before: Time interval before the date.
+        """
         self._before = before
 
     @property
-    def date(self):
+    def date(self) -> str:
         """Property that returns back the date."""
         if not self._date:
             return ""
@@ -163,8 +193,12 @@ class DateIntervalChip(Chip):
         return self._date.strftime(self._DATE_FORMAT_MICROSECONDS)[:-3]
 
     @date.setter
-    def date(self, date):
-        """Make changes to the date."""
+    def date(self, date: str) -> None:
+        """Make changes to the date.
+
+        Args:
+            date: Date string.
+        """
         try:
             dt = datetime.datetime.strptime(date, self._DATE_FORMAT_MICROSECONDS)
         except ValueError:
@@ -180,8 +214,12 @@ class DateIntervalChip(Chip):
                     raise ValueError("Wrong date format") from exc
         self._date = dt
 
-    def from_dict(self, chip_dict):
-        """Configure the chip from a dictionary."""
+    def from_dict(self, chip_dict: Dict[str, Any]) -> None:
+        """Configure the chip from a dictionary.
+
+        Args:
+            chip_dict: Dictionary with chip configuration.
+        """
         value = chip_dict.get("value")
         if not value:
             return
@@ -204,18 +242,22 @@ class DateIntervalChip(Chip):
         self.after = int(after[1:-1])
 
     @property
-    def interval(self):
+    def interval(self) -> str:
         """A property that returns back the full interval."""
         return f"{self.date} -{self.before}{self.unit} +{self.after}{self.unit}"
 
     @property
-    def unit(self):
+    def unit(self) -> str:
         """Property that returns back the unit used."""
         return self._unit
 
     @unit.setter
-    def unit(self, unit):
-        """Make changes to the unit."""
+    def unit(self, unit: str) -> None:
+        """Make changes to the unit.
+
+        Args:
+            unit: Unit of interval.
+        """
         if unit not in ("s", "m", "d", "h"):
             raise ValueError(
                 "Unable to add interval, needs to be one of: "
@@ -235,18 +277,18 @@ class DateRangeChip(Chip):
 
     _DATE_RE = r"^[0-9]{4}-[0-9]{1,2}-[0-9]{2}$"
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the date range."""
         super().__init__()
         self._start_date = None
         self._end_date = None
         self._date_re = re.compile(self._DATE_RE)
 
-    def add_end_time(self, end_time):
+    def add_end_time(self, end_time: str) -> None:
         """Add an end time to the range.
 
         Args:
-            end_time (str): date string using the format '%Y-%m-%dT%H:%M:%s'
+            end_time: date string using the format '%Y-%m-%dT%H:%M:%s'
 
         Raises:
             ValueError: if the date format is incorrectly formatted.
@@ -270,11 +312,11 @@ class DateRangeChip(Chip):
                 raise ValueError("Wrong date format") from exc
         self._end_date = dt
 
-    def add_start_time(self, start_time):
+    def add_start_time(self, start_time: str) -> None:
         """Add a start time to the range.
 
         Args:
-            start_time (str): date string using the format '%Y-%m-%dT%H:%M:%s'
+            start_time: date string using the format '%Y-%m-%dT%H:%M:%s'
 
         Raises:
             ValueError: if the date format is incorrectly formatted.
@@ -299,7 +341,7 @@ class DateRangeChip(Chip):
         self._start_date = dt
 
     @property
-    def end_time(self):
+    def end_time(self) -> str:
         """Property that returns the end time of a range."""
         if not self._end_date:
             return ""
@@ -308,24 +350,36 @@ class DateRangeChip(Chip):
         return self._end_date.strftime(self._DATE_FORMAT_MICROSECONDS)[:-3]
 
     @end_time.setter
-    def end_time(self, end_time):
-        """Sets the new end time."""
+    def end_time(self, end_time: str) -> None:
+        """Sets the new end time.
+
+        Args:
+            end_time: New end time.
+        """
         self.add_end_time(end_time)
 
     @property
-    def date_range(self):
+    def date_range(self) -> str:
         """Property that returns back the range."""
         return f"{self.start_time},{self.end_time}"
 
     @date_range.setter
-    def date_range(self, date_range):
-        """Sets the new range of the date range chip."""
+    def date_range(self, date_range: str) -> None:
+        """Sets the new range of the date range chip.
+
+        Args:
+            date_range: Comma separated string with start and end time.
+        """
         start_time, end_time = date_range.split(",")
         self.add_start_time(start_time)
         self.add_end_time(end_time)
 
-    def from_dict(self, chip_dict):
-        """Configure the chip from a dictionary."""
+    def from_dict(self, chip_dict: Dict[str, Any]) -> None:
+        """Configure the chip from a dictionary.
+
+        Args:
+            chip_dict: Dictionary with chip configuration.
+        """
         chip_value = chip_dict.get("value")
         if not chip_value:
             return
@@ -334,7 +388,7 @@ class DateRangeChip(Chip):
         self.end_time = end
 
     @property
-    def start_time(self):
+    def start_time(self) -> str:
         """Property that returns the start time of a range."""
         if not self._start_date:
             return ""
@@ -343,8 +397,12 @@ class DateRangeChip(Chip):
         return self._start_date.strftime(self._DATE_FORMAT_MICROSECONDS)[:-3]
 
     @start_time.setter
-    def start_time(self, start_time):
-        """Sets the new start time of a range."""
+    def start_time(self, start_time: str) -> None:
+        """Sets the new start time of a range.
+
+        Args:
+            start_time: New start time.
+        """
         self.add_start_time(start_time)
 
 
@@ -354,13 +412,17 @@ class LabelChip(Chip):
     CHIP_TYPE = "label"
     CHIP_VALUE = "label"
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the chip."""
         super().__init__()
         self._label = ""
 
-    def from_dict(self, chip_dict):
-        """Configure the chip from a dictionary."""
+    def from_dict(self, chip_dict: Dict[str, Any]) -> None:
+        """Configure the chip from a dictionary.
+
+        Args:
+            chip_dict: Dictionary with chip configuration.
+        """
         chip_value = chip_dict.get("value")
         if not chip_value:
             return
@@ -368,20 +430,24 @@ class LabelChip(Chip):
         self.label = chip_value
 
     @property
-    def label(self):
+    def label(self) -> str:
         """Property that returns back the label."""
         return self._label
 
     @label.setter
-    def label(self, label):
-        """Make changes to the label."""
+    def label(self, label: str) -> None:
+        """Make changes to the label.
+
+        Args:
+            label: Label string.
+        """
         self._label = label
 
-    def use_comment_label(self):
+    def use_comment_label(self) -> None:
         """Use the comment label."""
         self._label = "__ts_comment"
 
-    def use_star_label(self):
+    def use_star_label(self) -> None:
         """Use the star label."""
         self._label = "__ts_star"
 
@@ -392,23 +458,31 @@ class TermChip(Chip):
     CHIP_TYPE = "term"
     CHIP_VALUE = "query"
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the chip."""
         super().__init__()
         self._query = ""
 
     @property
-    def field(self):
+    def field(self) -> str:
         """Property that returns back the field used to match against."""
         return self._chip_field
 
     @field.setter
-    def field(self, field):
-        """Make changes to the field used to match against."""
+    def field(self, field: str) -> None:
+        """Make changes to the field used to match against.
+
+        Args:
+            field: Field name.
+        """
         self._chip_field = field
 
-    def from_dict(self, chip_dict):
-        """Configure the term chip from a dictionary."""
+    def from_dict(self, chip_dict: Dict[str, Any]) -> None:
+        """Configure the term chip from a dictionary.
+
+        Args:
+            chip_dict: Dictionary with chip configuration.
+        """
         chip_value = chip_dict.get("value")
         if not chip_value:
             return
@@ -417,13 +491,17 @@ class TermChip(Chip):
         self.query = chip_value
 
     @property
-    def query(self):
+    def query(self) -> str:
         """Property that returns back the query."""
         return self._query
 
     @query.setter
-    def query(self, query):
-        """Make changes to the query."""
+    def query(self, query: str) -> None:
+        """Make changes to the query.
+
+        Args:
+            query: Query string.
+        """
         self._query = query
 
 
@@ -432,7 +510,12 @@ class Search(resource.SketchResource):
 
     DEFAULT_SIZE_LIMIT = 10000
 
-    def __init__(self, sketch):
+    def __init__(self, sketch: sketch_lib.Sketch) -> None:
+        """Initialize the Search object.
+
+        Args:
+            sketch: An instance of Sketch object.
+        """
         resource_uri = f"sketches/{sketch.id}/explore/"
         super().__init__(sketch=sketch, resource_uri=resource_uri)
 
@@ -454,8 +537,12 @@ class Search(resource.SketchResource):
         self._updated_at = ""
         self._use_wildcard_fields = False
 
-    def _extract_chips(self, query_filter):
-        """Extract chips from a query_filter."""
+    def _extract_chips(self, query_filter: Dict[str, Any]) -> None:
+        """Extract chips from a query_filter.
+
+        Args:
+            query_filter: Query filter dictionary.
+        """
         self._chips = []
         chips = query_filter.get("chips", [])
         if not chips:
@@ -491,20 +578,22 @@ class Search(resource.SketchResource):
 
             self._chips.append(chip)
 
-    def _execute_query(self, file_name="", count=False, stream=False):
+    def _execute_query(
+        self, file_name: str = "", count: bool = False, stream: bool = False
+    ) -> Optional[Union[Dict[str, Any], int]]:
         """Execute a search request and store the results.
 
         Args:
-            file_name (str): Optional file path to a filename that
+            file_name: Optional file path to a filename that
                 all the results will be saved to. If not provided
                 the results will be stored in the search object.
-            count (bool): Optional boolean that determines whether
+            count: Optional boolean that determines whether
                 we want to execute the query or only count the
                 number of events that the query would produce. If
                 set to True, the results will be stored in the
                 search object, and the number of events will be
                 returned.
-            stream (bool): Optional boolean that determines whether
+            stream: Optional boolean that determines whether
                 we want to stream the results to a file. This is
                 useful for large exports.
 
@@ -599,18 +688,22 @@ class Search(resource.SketchResource):
         self._raw_response = response_json
         return response_json
 
-    def add_chip(self, chip):
-        """Add a chip to the ..."""
+    def add_chip(self, chip: Chip) -> None:
+        """Add a chip to the search object.
+
+        Args:
+            chip: A chip object.
+        """
         self._chips.append(chip)
         self.commit()
 
-    def add_date_range(self, start_time, end_time):
+    def add_date_range(self, start_time: str, end_time: str) -> None:
         """Add a date range chip to the search query.
 
         Args:
-            start_time (str): a string with the start time of the range,
+            start_time: a string with the start time of the range,
                 the format should be '%Y-%m-%dT%H:%M:%S'
-            end_time (str): a string with the end time of the range,
+            end_time: a string with the end time of the range,
                 the format should be '%Y-%m-%dT%H:%M:%S'
         """
         chip = DateRangeChip()
@@ -619,21 +712,21 @@ class Search(resource.SketchResource):
         self.add_chip(chip)
 
     @property
-    def chips(self):
+    def chips(self) -> List[Chip]:
         """Property that returns all the chips in the search object."""
         return self._chips
 
-    def commit(self):
+    def commit(self) -> None:
         """Commit changes to the search object."""
         self._raw_response = None
         super().commit()
 
     @property
-    def created_at(self):
+    def created_at(self) -> str:
         """Property that returns back the creation time of a search."""
         return self._created_at
 
-    def delete(self):
+    def delete(self) -> bool:
         """Deletes the saved search from the store."""
         if not self._resource_id:
             logger.warning(
@@ -650,18 +743,22 @@ class Search(resource.SketchResource):
         return error.check_return_status(response, logger)
 
     @property
-    def description(self):
+    def description(self) -> str:
         """Property that returns back the description of the saved search."""
         return self._description
 
     @description.setter
-    def description(self, description):
-        """Make changes to the saved search description field."""
+    def description(self, description: str) -> None:
+        """Make changes to the saved search description field.
+
+        Args:
+            description: Description of the saved search.
+        """
         self._description = description
         self.commit()
 
     @property
-    def expected_size(self):
+    def expected_size(self) -> int:
         """Property that returns the expected size of the search query."""
         if self._total_elastic_size:
             return self._total_elastic_size
@@ -671,27 +768,27 @@ class Search(resource.SketchResource):
 
     def from_manual(  # pylint: disable=arguments-differ
         self,
-        query_string=None,
-        query_dsl=None,
-        query_filter=None,
-        return_fields=None,
-        max_entries=None,
-        **kwargs,
-    ):
+        query_string: Optional[str] = None,
+        query_dsl: Optional[str] = None,
+        query_filter: Optional[Dict[str, Any]] = None,
+        return_fields: Optional[str] = None,
+        max_entries: Optional[int] = None,
+        **kwargs: Any,
+    ) -> None:
         """Explore the sketch.
 
         Args:
-            query_string (str): OpenSearch query string.
-            query_dsl (str): OpenSearch query DSL as JSON string.
-            query_filter (dict): Filter for the query as a dict.
-            return_fields (str): A comma separated string with a list of fields
+            query_string: OpenSearch query string.
+            query_dsl: OpenSearch query DSL as JSON string.
+            query_filter: Filter for the query as a dict.
+            return_fields: A comma separated string with a list of fields
                 that should be included in the response. Optional and defaults
                 to None.
-            max_entries (int): Optional integer denoting a best effort to limit
+            max_entries: Optional integer denoting a best effort to limit
                 the output size to the number of events. Events are read in,
                 10k at a time so there may be more events in the answer back
                 than this number denotes, this is a best effort.
-            kwargs (dict[str, object]): Depending on the resource they may
+            kwargs: Depending on the resource they may
                 require different sets of arguments to be able to run a raw
                 API request.
 
@@ -727,11 +824,11 @@ class Search(resource.SketchResource):
 
         self.resource_data = {}
 
-    def from_saved(self, search_id):  # pylint: disable=arguments-renamed
+    def from_saved(self, search_id: int) -> None:  # pylint: disable=arguments-renamed
         """Initialize the search object from a saved search.
 
         Args:
-            search_id (int): integer value for the saved
+            search_id: integer value for the saved
                 search (primary key).
         """
         resource_uri = f"sketches/{self._sketch.id}/views/{search_id}/"
@@ -775,19 +872,31 @@ class Search(resource.SketchResource):
         self.resource_data = data
 
     @property
-    def indices(self):
+    def indices(self) -> Union[str, List[str]]:
         """Return the current set of indices used in the search."""
         return self._indices
 
     @indices.setter
-    def indices(self, indices):
-        """Make changes to the current set of indices."""
+    def indices(self, indices: Union[str, List[Union[str, int]]]) -> None:
+        """Make changes to the current set of indices.
+
+        Args:
+            indices: List of indices to search.
+        """
         if indices == "_all":
             self._indices = "_all"
             self.commit()
             return
 
-        def _is_string_or_int(item):
+        def _is_string_or_int(item: Any) -> bool:
+            """Returns whether the item is a string or an int.
+
+            Args:
+                item: The item to check.
+
+            Returns:
+                True if the item is a string or an int, False otherwise.
+            """
             return isinstance(item, (str, int))
 
         if not isinstance(indices, list):
@@ -853,13 +962,17 @@ class Search(resource.SketchResource):
         self.commit()
 
     @property
-    def max_entries(self):
+    def max_entries(self) -> int:
         """Return the maximum number of entries in the return value."""
         return self._max_entries
 
     @max_entries.setter
-    def max_entries(self, max_entries):
-        """Make changes to the max entries of return values."""
+    def max_entries(self, max_entries: int) -> None:
+        """Make changes to the max entries of return values.
+
+        Args:
+            max_entries: The maximum number of entries to return.
+        """
         self._max_entries = max_entries
         if max_entries < self.DEFAULT_SIZE_LIMIT:
             _ = self.query_filter
@@ -868,24 +981,28 @@ class Search(resource.SketchResource):
         self.commit()
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Property that returns the query name."""
         return self._name
 
     @name.setter
-    def name(self, name):
-        """Make changes to the saved search name."""
+    def name(self, name: str) -> None:
+        """Make changes to the saved search name.
+
+        Args:
+            name: Name of the saved search.
+        """
         self._name = name
         self.commit()
 
-    def order_ascending(self):
+    def order_ascending(self) -> None:
         """Set the order of objects returned back ascending."""
         # Trigger a creation of a query filter if it does not exist.
         _ = self.query_filter
         self._query_filter["order"] = "asc"
         self.commit()
 
-    def order_descending(self):
+    def order_descending(self) -> None:
         """Set the order of objects returned back descending."""
         # Trigger a creation of a query filter if it does not exist.
         _ = self.query_filter
@@ -893,13 +1010,17 @@ class Search(resource.SketchResource):
         self.commit()
 
     @property
-    def query_dsl(self):
+    def query_dsl(self) -> str:
         """Property that returns back the query DSL."""
         return self._query_dsl
 
     @query_dsl.setter
-    def query_dsl(self, query_dsl):
-        """Make changes to the query DSL of the search."""
+    def query_dsl(self, query_dsl: str) -> None:
+        """Make changes to the query DSL of the search.
+
+        Args:
+            query_dsl: OpenSearch query DSL as JSON string.
+        """
         if query_dsl and isinstance(query_dsl, str):
             query_dsl = json.loads(query_dsl)
 
@@ -911,7 +1032,7 @@ class Search(resource.SketchResource):
         self.commit()
 
     @property
-    def query_filter(self):
+    def query_filter(self) -> Dict[str, Any]:
         """Property that returns the query filter."""
         if not self._query_filter:
             self._query_filter = {
@@ -930,8 +1051,12 @@ class Search(resource.SketchResource):
         return query_filter
 
     @query_filter.setter
-    def query_filter(self, query_filter):
-        """Make changes to the query filter."""
+    def query_filter(self, query_filter: Union[str, Dict[str, Any]]) -> None:
+        """Make changes to the query filter.
+
+        Args:
+            query_filter: Filter for the query as a dict.
+        """
         if isinstance(query_filter, str):
             try:
                 query_filter = json.loads(query_filter)
@@ -946,13 +1071,18 @@ class Search(resource.SketchResource):
         self.commit()
 
     @property
-    def use_wildcard_fields(self):
+    def use_wildcard_fields(self) -> bool:
         """Return whether wildcard fields search mode is enabled."""
         return self._use_wildcard_fields
 
     @use_wildcard_fields.setter
     def use_wildcard_fields(self, enabled: bool) -> None:
-        """Enable or disable wildcard fields search mode. Defaults to False."""
+        """Enable or disable wildcard fields search mode. Defaults to False.
+
+        Args:
+            enabled: Boolean indicating if wildcard fields search
+                mode should be enabled.
+        """
         self._use_wildcard_fields = bool(enabled)
         # Sync to query_filter dictionary immediately on change
         _ = self.query_filter
@@ -960,18 +1090,26 @@ class Search(resource.SketchResource):
         self.commit()
 
     @property
-    def query_string(self):
+    def query_string(self) -> str:
         """Property that returns back the query string."""
         return self._query_string
 
     @query_string.setter
-    def query_string(self, query_string):
-        """Make changes to the query string of a saved search."""
+    def query_string(self, query_string: str) -> None:
+        """Make changes to the query string of a saved search.
+
+        Args:
+            query_string: OpenSearch query string.
+        """
         self._query_string = query_string
         self.commit()
 
-    def remove_chip(self, chip_index):
-        """Remove a chip from the saved search."""
+    def remove_chip(self, chip_index: int) -> None:
+        """Remove a chip from the saved search.
+
+        Args:
+            chip_index: Index of the chip to remove.
+        """
         chip_len = len(self._chips)
         if chip_index > (chip_len + 1):
             raise ValueError(
@@ -989,7 +1127,7 @@ class Search(resource.SketchResource):
         self.commit()
 
     @property
-    def return_fields(self):
+    def return_fields(self) -> str:
         """Property that returns the return_fields."""
         if self._return_fields:
             items = self._return_fields.split(",")
@@ -999,23 +1137,32 @@ class Search(resource.SketchResource):
         return self._return_fields
 
     @return_fields.setter
-    def return_fields(self, return_fields):
-        """Make changes to the return fields."""
+    def return_fields(self, return_fields: str) -> None:
+        """Make changes to the return fields.
+
+        Args:
+            return_fields: A comma separated string with a list of fields
+                that should be included in the response.
+        """
         self._return_fields = return_fields
         self.commit()
 
     @property
-    def return_size(self):
+    def return_size(self) -> int:
         """Return the maximum number of entries in the return value."""
         return self._max_entries
 
     @return_size.setter
-    def return_size(self, return_size):
-        """Make changes to the maximum number of entries in the return."""
+    def return_size(self, return_size: int) -> None:
+        """Make changes to the maximum number of entries in the return.
+
+        Args:
+            return_size: Maximum number of entries to return.
+        """
         self._max_entries = return_size
         self.commit()
 
-    def save(self):
+    def save(self) -> str:
         """Save the search in the database.
 
         Returns:
@@ -1077,7 +1224,7 @@ class Search(resource.SketchResource):
         self._resource_id = search_dict.get("id", 0)
         return f"Saved search to ID: {self._resource_id}"
 
-    def save_as_template(self):
+    def save_as_template(self) -> searchtemplate.SearchTemplate:
         """Save the search as a search template.
 
         Returns:
@@ -1096,19 +1243,19 @@ class Search(resource.SketchResource):
         return template
 
     @property
-    def scrolling(self):
+    def scrolling(self) -> bool:
         """Returns whether scrolling is enabled or not."""
         return self._scrolling
 
-    def scrolling_disable(self):
+    def scrolling_disable(self) -> None:
         """ "Disables scrolling."""
         self._scrolling = False
 
-    def scrolling_enable(self):
+    def scrolling_enable(self) -> None:
         """Enable scrolling."""
         self._scrolling = True
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         """Returns a dict with the response of the query."""
         if self._raw_response is None:
             self._execute_query()
@@ -1117,14 +1264,14 @@ class Search(resource.SketchResource):
 
         return self._raw_response
 
-    def to_file(self, file_name, stream=False):
+    def to_file(self, file_name: str, stream: bool = False) -> bool:
         """Saves the content of the query to a file.
 
         Args:
-            file_name (str): Full path to a file that will store the results
+            file_name: Full path to a file that will store the results
                 of the query to as a ZIP file. The ZIP file will contain a
                 METADATA file and a CSV with the results from the query.
-            stream (bool): Optional boolean that determines whether
+            stream: Optional boolean that determines whether
                 we want to stream the results to a file. This is
                 useful for large exports.
 
@@ -1137,7 +1284,7 @@ class Search(resource.SketchResource):
         self._scrolling = old_scrolling
         return True
 
-    def to_pandas(self):
+    def to_pandas(self) -> pandas.DataFrame:
         """Returns a pandas DataFrame with the response of the query."""
         if self._raw_response is None:
             self._raw_response = self._execute_query()
@@ -1190,6 +1337,6 @@ class Search(resource.SketchResource):
         return data_frame
 
     @property
-    def updated_at(self):
+    def updated_at(self) -> str:
         """Property that returns back the updated time of a search."""
         return self._updated_at

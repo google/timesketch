@@ -13,24 +13,29 @@
 # limitations under the License.
 """Timesketch API client library."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import json
+from typing import Any, Dict, Optional, Type, TYPE_CHECKING
 
 import bs4
 
 from . import definitions
 
+if TYPE_CHECKING:
+    import logging
+    import requests
 
-def _get_message(response):
+
+def _get_message(response: Optional[requests.Response]) -> str:
     """Return a formatted message string from the response text.
 
     Args:
-        response (requests.Response): a response object from a HTTP
+        response: a response object from a HTTP
             request.
 
     Returns:
-        str: a string with the message field extracted from the
+        a string with the message field extracted from the
             response.text.
     """
     if response is None:
@@ -41,12 +46,12 @@ def _get_message(response):
 
     soup = bs4.BeautifulSoup(response_text_raw, features="html.parser")
     if soup.p:
-        return soup.p.string  # pytype: disable=attribute-error
+        return str(soup.p.string)  # pytype: disable=attribute-error
 
     if isinstance(response_text_raw, bytes):
         response_text = response_text_raw.decode("utf-8")
     else:
-        response_text = response_text_raw
+        response_text = str(response_text_raw)
 
     try:
         response_dict = json.loads(response_text)
@@ -56,18 +61,18 @@ def _get_message(response):
     if not isinstance(response_dict, dict):
         return str(response_dict)
 
-    return response_dict.get("message", str(response_dict))
+    return str(response_dict.get("message", str(response_dict)))
 
 
-def _get_reason(response):
+def _get_reason(response: Optional[requests.Response]) -> str:
     """Return the reason from a response.
 
     Args:
-        response (requests.Response): a response object from a HTTP
+        response: a response object from a HTTP
             request.
 
     Returns:
-        str: a string with the reason field extracted from the
+        a string with the reason field extracted from the
             response.reason.
     """
     if response is None:
@@ -76,19 +81,21 @@ def _get_reason(response):
     if isinstance(reason, bytes):
         return reason.decode("utf-8")
 
-    return reason
+    return str(reason)
 
 
-def get_response_json(response, logger):
+def get_response_json(
+    response: requests.Response, logger: logging.Logger
+) -> Dict[str, Any]:
     """Return the JSON object from a response, logging any errors.
 
     Args:
-        response (requests.Response): a response object from a HTTP request.
-        logger (logging.Logger): a logger object that can be used to write log
+        response: a response object from a HTTP request.
+        logger: a logger object that can be used to write log
           messages.
 
     Returns:
-        dict: a dict with the decoded JSON object within the HTTP
+        a dict with the decoded JSON object within the HTTP
             response object.
 
     Raises:
@@ -119,13 +126,17 @@ def get_response_json(response, logger):
         raise ValueError("Unable to JSON decode the Timesketch API response.") from e
 
 
-def error_message(response, message=None, error=RuntimeError):
+def error_message(
+    response: requests.Response,
+    message: Optional[str] = None,
+    error: Type[Exception] = RuntimeError,
+) -> None:
     """Raise an error using error message extracted from response.
 
     Args:
-        response (requests.Response): a response object from a HTTP request.
-        message (str): Optional message to prepend to the error string.
-        error (Exception): The exception class to raise. Defaults to RuntimeError.
+        response: a response object from a HTTP request.
+        message: Optional message to prepend to the error string.
+        error: The exception class to raise. Defaults to RuntimeError.
 
     Raises:
         error: The exception specified by the error argument.
@@ -142,29 +153,29 @@ def error_message(response, message=None, error=RuntimeError):
     )
 
 
-def check_return_status(response, logger):
+def check_return_status(response: requests.Response, logger: logging.Logger) -> bool:
     """Check return status and return a boolean.
 
     Args:
-        response (requests.Response): a response object from a HTTP
+        response: a response object from a HTTP
             request.
-        logger (logging.Logger): a logger object that can be used to
+        logger: a logger object that can be used to
             write log messages.
 
     Returns:
-        bool: a boolean indicating whether the return status was in
+        a boolean indicating whether the return status was in
             the 20X range of HTTP responses.
     """
     status = response.status_code in definitions.HTTP_STATUS_CODE_20X
     if status:
-        return status
+        return bool(status)
 
     logger.warning(
         "Failed response: [{0:d}] {1:s}".format(
             response.status_code, _get_message(response)
         )
     )
-    return status
+    return bool(status)
 
 
 class Error(Exception):

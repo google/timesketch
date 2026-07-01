@@ -13,13 +13,14 @@
 # limitations under the License.
 """Timesketch API client."""
 
-from __future__ import unicode_literals
-
+from __future__ import annotations
 
 import os
 import logging
 import sys
 import time
+
+from typing import Any, Dict, List, Optional, Union, Generator, TYPE_CHECKING
 
 # pylint: disable=wrong-import-order
 import bs4
@@ -45,6 +46,14 @@ from . import sketch
 from . import user
 from . import version
 from . import sigma
+
+if TYPE_CHECKING:
+    from .credentials import AuthCredentials
+    from .sketch import Sketch
+    from .user import User
+    from .index import SearchIndex
+    from .sigma import SigmaRule, Sigma
+
 
 logger = logging.getLogger("timesketch_api.client")
 
@@ -85,18 +94,18 @@ class TimesketchApi:
     # pylint: disable=too-many-arguments
     def __init__(
         self,
-        host_uri,
-        username,
-        password="",
-        verify=True,
-        client_id="",
-        client_secret="",
-        auth_mode="userpass",
-        create_session=True,
-        retry_count=DEFAULT_RETRY_COUNT,
-        backoff_factor=0.5,
-        auth_timeout=None,
-    ):
+        host_uri: str,
+        username: str,
+        password: str = "",
+        verify: bool = True,
+        client_id: str = "",
+        client_secret: str = "",
+        auth_mode: str = "userpass",
+        create_session: bool = True,
+        retry_count: int = DEFAULT_RETRY_COUNT,
+        backoff_factor: float = 0.5,
+        auth_timeout: Optional[int] = None,
+    ) -> None:
         """Initializes the TimesketchApi object.
 
         Args:
@@ -114,7 +123,8 @@ class TimesketchApi:
                 function "set_session" needs to be called before proceeding.
             retry_count: Number of retries for HTTP requests and internal API
                 request retries. Defaults to DEFAULT_RETRY_COUNT.
-            backoff_factor: The backoff factor to use for retries. Defaults to 0.5.
+            backoff_factor: The backoff factor to use for retries.
+                Defaults to 0.5.
             auth_timeout: Optional timeout in seconds for the authentication.
 
         Raises:
@@ -157,12 +167,12 @@ class TimesketchApi:
             ) from e
 
     @property
-    def current_user(self):
+    def current_user(self) -> User:
         """Property that returns the user object of the logged in user."""
         return user.User(self)
 
     @property
-    def version(self):
+    def version(self) -> str:
         """Property that returns back the API client version."""
         version_dict = self.fetch_resource_data("version/")
         ts_version = None
@@ -177,27 +187,37 @@ class TimesketchApi:
         return "API Client: {0:s}".format(version.get_version())
 
     @property
-    def session(self):
+    def session(self) -> requests.Session:
         """Property that returns the session object."""
         if self._session is None:
             raise ValueError("Session is not set.")
         return self._session
 
-    def set_credentials(self, credential_object):
-        """Sets the credential object."""
+    def set_credentials(self, credential_object: AuthCredentials) -> None:
+        """Sets the credential object.
+
+        Args:
+            credential_object: Credential object.
+        """
         self.credentials = credential_object
 
-    def set_session(self, session_object):
-        """Sets the session object."""
+    def set_session(self, session_object: requests.Session) -> None:
+        """Sets the session object.
+
+        Args:
+            session_object: Instance of requests.Session.
+        """
         self._session = session_object
 
-    def _authenticate_session(self, session, username, password):
+    def _authenticate_session(
+        self, session: requests.Session, username: str, password: str
+    ) -> None:
         """Post username/password to authenticate the HTTP session.
 
         Args:
-            session (requests.Session): Instance of requests.Session.
-            username (str): User username.
-            password (str): User password.
+            session: Instance of requests.Session.
+            username: User username.
+            password: User password.
         """
         # Do a POST to the login handler to set up the session cookies
         data = {
@@ -218,12 +238,14 @@ class TimesketchApi:
         if response.url.split("?")[0].rstrip("/").endswith("/login"):
             raise RuntimeError("Authentication failed: Invalid username or password.")
 
-    def _set_csrf_token(self, session, bypass_oauth=False):
+    def _set_csrf_token(
+        self, session: requests.Session, bypass_oauth: bool = False
+    ) -> None:
         """Retrieve CSRF token from the server and append to HTTP headers.
 
         Args:
-            session (requests.Session): Instance of requests.Session.
-            bypass_oauth (bool): Whether to bypass OAuth.
+            session: Instance of requests.Session.
+            bypass_oauth: Whether to bypass OAuth.
         """
         # Scrape the CSRF token from the response
         if bypass_oauth:
@@ -250,34 +272,34 @@ class TimesketchApi:
 
     def _create_oauth_session(
         self,
-        client_id="",
+        client_id: str = "",
         *,
-        client_secret="",
-        client_secrets_file=None,
-        host="localhost",
-        port=8080,
-        open_browser=False,
-        run_server=True,
-        skip_open=False,
-        timeout_seconds=None,
-    ):
+        client_secret: str = "",
+        client_secrets_file: Optional[str] = None,
+        host: str = "localhost",
+        port: int = 8080,
+        open_browser: bool = False,
+        run_server: bool = True,
+        skip_open: bool = False,
+        timeout_seconds: Optional[int] = None,
+    ) -> requests.Session:
         """Return an OAuth session.
 
         Args:
-            client_id (str): The client ID if OAUTH auth is used.
-            client_secret (str): The OAUTH client secret if OAUTH is used.
-            client_secrets_file (str): Path to the JSON file that contains the client
+            client_id: The client ID if OAUTH auth is used.
+            client_secret: The OAUTH client secret if OAUTH is used.
+            client_secrets_file: Path to the JSON file that contains the client
                 secrets, in the client_secrets format.
-            host (str): Host address the OAUTH web server will bind to.
-            port (int): Port the OAUTH web server will bind to.
-            open_browser (bool): A boolean, if set to false (default) a browser window
+            host: Host address the OAUTH web server will bind to.
+            port: Port the OAUTH web server will bind to.
+            open_browser: A boolean, if set to false (default) a browser window
                 will not be automatically opened.
-            run_server (bool): A boolean, if set to true (default) a web server is
+            run_server: A boolean, if set to true (default) a web server is
                 run to catch the OAUTH request and response.
-            skip_open (bool): A booelan, if set to True (defaults to False) an
+            skip_open: A booelan, if set to True (defaults to False) an
                 authorization URL is printed on the screen to visit. This is
                 only valid if run_server is set to False.
-            timeout_seconds (int): Optional timeout in seconds for the authentication.
+            timeout_seconds: Optional timeout in seconds for the authentication.
                 If set to None (default), it will wait indefinitely.
 
         Return:
@@ -365,7 +387,7 @@ class TimesketchApi:
         self.credentials.credential = flow.credentials
         return self.authenticate_oauth_session(session)
 
-    def authenticate_oauth_session(self, session):
+    def authenticate_oauth_session(self, session: requests.Session) -> requests.Session:
         """Authenticate an OAUTH session.
 
         Args:
@@ -389,31 +411,31 @@ class TimesketchApi:
 
     def _create_session(
         self,
-        username,
-        password,
+        username: str,
+        password: str,
         *,
-        verify,
-        client_id,
-        client_secret,
-        auth_mode,
-        retry_count,
-        backoff_factor,
-        auth_timeout,
-    ):
+        verify: bool,
+        client_id: str,
+        client_secret: str,
+        auth_mode: str,
+        retry_count: int,
+        backoff_factor: float,
+        auth_timeout: Optional[int] = None,
+    ) -> requests.Session:
         """Create authenticated HTTP session for server communication.
 
         Args:
-            username (str): User to authenticate as.
-            password (str): User password.
-            verify (bool): Verify server SSL certificate.
-            client_id (str): The client ID if OAUTH auth is used.
-            client_secret (str): The OAUTH client secret if OAUTH is used.
-            auth_mode (str): The authentication mode to use. Supported values are
+            username: User to authenticate as.
+            password: User password.
+            verify: Verify server SSL certificate.
+            client_id: The client ID if OAUTH auth is used.
+            client_secret: The OAUTH client secret if OAUTH is used.
+            auth_mode: The authentication mode to use. Supported values are
                 'userpass' (username/password combo), 'http-basic'
                 (HTTP Basic authentication) and oauth
-            retry_count (int): Number of retries for HTTP requests.
-            backoff_factor (float): The backoff factor to use for retries.
-            auth_timeout (int): Optional timeout in seconds for the authentication.
+            retry_count: Number of retries for HTTP requests.
+            backoff_factor: The backoff factor to use for retries.
+            auth_timeout: Optional timeout in seconds for the authentication.
 
         Returns:
             Instance of requests.Session.
@@ -467,7 +489,9 @@ class TimesketchApi:
 
         return session
 
-    def _send_request_with_retry(self, method, resource_uri, **kwargs):
+    def _send_request_with_retry(
+        self, method: str, resource_uri: str, **kwargs: Any
+    ) -> Dict[str, Any]:
         """Makes an HTTP request with manual retries for application-level errors.
 
         This is the core private helper for all API requests. It wraps the
@@ -480,12 +504,12 @@ class TimesketchApi:
         `GET`.
 
         Args:
-            method (str): HTTP method (e.g., 'GET', 'POST').
-            resource_uri (str): The URI for the resource.
-            **kwargs: Keyword arguments passed to the request.
+            method: HTTP method (e.g., 'GET', 'POST').
+            resource_uri: The URI for the resource.
+            **kwargs: Optional arguments to send with the request.
 
         Returns:
-            dict: The JSON response data.
+            The JSON response data.
 
         Raises:
             ValueError: If JSON decoding fails after all retries.
@@ -535,7 +559,9 @@ class TimesketchApi:
         )
         raise RuntimeError(error_msg)
 
-    def fetch_resource_data(self, resource_uri, params=None):
+    def fetch_resource_data(
+        self, resource_uri: str, params: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """Makes an HTTP GET request to the specified resource URI.
 
         This method is a convenience wrapper around `_send_request_with_retry`
@@ -548,16 +574,16 @@ class TimesketchApi:
         JSON responses.
 
         Args:
-            resource_uri (str): The URI to the resource to be fetched.
-            params (dict, optional): A dictionary of URL parameters to send
+            resource_uri: The URI to the resource to be fetched.
+            params: A dictionary of URL parameters to send
                 in the GET request. Defaults to None.
 
         Returns:
-            dict: A dictionary containing the JSON response data from the API.
+            A dictionary containing the JSON response data from the API.
         """
         return self._send_request_with_retry("GET", resource_uri, params=params)
 
-    def create_sketch(self, name, description=None):
+    def create_sketch(self, name: str, description: Optional[str] = None) -> Sketch:
         """Create a new sketch.
 
         This method attempts to create a new sketch on the Timesketch server.
@@ -565,8 +591,8 @@ class TimesketchApi:
         handle transient network errors or server-side issues.
 
         Args:
-            name (str): Name of the sketch. Cannot be empty.
-            description (str): Optional description of the sketch. If not
+            name: Name of the sketch. Cannot be empty.
+            description: Optional description of the sketch. If not
                 provided, the sketch name will be used as the description.
 
         Returns:
@@ -611,7 +637,7 @@ class TimesketchApi:
         )
         raise ValueError(error_message_detail)
 
-    def create_user(self, username, password):
+    def create_user(self, username: str, password: str) -> User:
         """Create a new user.
 
         This method attempts to create a new user on the Timesketch server.
@@ -619,8 +645,8 @@ class TimesketchApi:
         handle transient network errors or server-side issues.
 
         Args:
-            username (str): Name of the user
-            password (str): Password of the user
+            username: Name of the user
+            password: Password of the user
 
         Returns:
             True if user created successfully.
@@ -644,7 +670,7 @@ class TimesketchApi:
 
         return user.User(user_id=objects[0]["id"], api=self)
 
-    def list_users(self):
+    def list_users(self) -> Generator[User, None, None]:
         """Get a list of all users.
 
         Yields:
@@ -657,7 +683,7 @@ class TimesketchApi:
             user_obj = user.User(user_id=user_id, api=self)
             yield user_obj
 
-    def get_user(self, user_id):
+    def get_user(self, user_id: int) -> User:
         """Get a user.
 
         Args:
@@ -668,7 +694,7 @@ class TimesketchApi:
         """
         return user.User(user_id=user_id, api=self)
 
-    def get_oauth_token_status(self):
+    def get_oauth_token_status(self) -> Dict[str, Any]:
         """Return a dict with OAuth token status, if one exists."""
         if not self.credentials:
             return {"status": "No stored credentials."}
@@ -677,7 +703,7 @@ class TimesketchApi:
             "expiry_time": self.credentials.credential.expiry.isoformat(),
         }
 
-    def get_sketch(self, sketch_id):
+    def get_sketch(self, sketch_id: int) -> Sketch:
         """Get a sketch.
 
         Args:
@@ -688,13 +714,15 @@ class TimesketchApi:
         """
         return sketch.Sketch(sketch_id, api=self)
 
-    def get_aggregator_info(self, name="", as_pandas=False):
+    def get_aggregator_info(
+        self, name: str = "", as_pandas: bool = False
+    ) -> Union[List[Dict[str, Any]], Dict[str, Any], pandas.DataFrame]:
         """Returns information about available aggregators.
 
         Args:
-            name (str): String with the name of an aggregator. If the name is not
+            name: String with the name of an aggregator. If the name is not
                 provided, a list with all aggregators is returned.
-            as_pandas (bool): Boolean indicating that the results will be returned
+            as_pandas: Boolean indicating that the results will be returned
                 as a Pandas DataFrame instead of a list of dicts.
 
         Returns:
@@ -734,12 +762,14 @@ class TimesketchApi:
 
         return pandas.DataFrame(lines)
 
-    def list_sketches(self, per_page=50, scope="user", include_archived=True):
+    def list_sketches(
+        self, per_page: int = 50, scope: str = "user", include_archived: bool = True
+    ) -> Generator[Sketch, None, None]:
         """Get a list of all open sketches that the user has access to.
 
         Args:
-            per_page (int): Number of items per page when paginating. Default is 50.
-            scope (str): What scope to get sketches as. Default to user.
+            per_page: Number of items per page when paginating. Default is 50.
+            scope: What scope to get sketches as. Default to user.
                 user: sketches owned by the user
                 recent: sketches that the user has actively searched in
                 shared: sketches shared with the user (but not owned by them)
@@ -747,7 +777,7 @@ class TimesketchApi:
                 archived: get archived sketches
                 search: pass additional search query
                 all: all sketches the user has access to (owned and shared)
-            include_archived (bool): If archived sketches should be returned.
+            include_archived: If archived sketches should be returned.
 
         Yields:
             Sketch objects instances.
@@ -778,7 +808,7 @@ class TimesketchApi:
                 )
                 yield sketch_obj
 
-    def get_searchindex(self, searchindex_id):
+    def get_searchindex(self, searchindex_id: int) -> SearchIndex:
         """Get a searchindex.
 
         Args:
@@ -789,7 +819,9 @@ class TimesketchApi:
         """
         return index.SearchIndex(searchindex_id, api=self)
 
-    def create_searchindex(self, searchindex_name: str, opensearch_index_name: str):
+    def create_searchindex(
+        self, searchindex_name: str, opensearch_index_name: str
+    ) -> SearchIndex:
         """Create a new SearchIndex.
 
         This method attempts to create a new searchindex on the Timesketch server.
@@ -837,11 +869,11 @@ class TimesketchApi:
         )
         raise ValueError(error_message_detail)
 
-    def check_celery_status(self, job_id=""):
+    def check_celery_status(self, job_id: str = "") -> List[Dict[str, Any]]:
         """Return information about outstanding celery tasks or a specific one.
 
         Args:
-            job_id (str): Optional Celery job identification string. If
+            job_id: Optional Celery job identification string. If
                 provided that specific job ID is queried, otherwise
                 a check for all outstanding jobs is checked.
 
@@ -856,7 +888,7 @@ class TimesketchApi:
 
         return response.get("objects", [])
 
-    def list_searchindices(self):
+    def list_searchindices(self) -> Generator[SearchIndex, None, None]:
         """Yields all searchindices that the user has access to.
 
         Yields:
@@ -865,7 +897,6 @@ class TimesketchApi:
         response = self.fetch_resource_data("searchindices/")
         response_objects = response.get("objects")
         if not response_objects:
-            yield None
             return
 
         for index_dict in response_objects[0]:
@@ -876,20 +907,22 @@ class TimesketchApi:
             )
             yield index_obj
 
-    def refresh_oauth_token(self):
+    def refresh_oauth_token(self) -> None:
         """Refresh an OAUTH token if one is defined."""
         if not self.credentials:
             return
         request = google.auth.transport.requests.Request()
         self.credentials.credential.refresh(request)
 
-    def list_sigmarules(self, as_pandas=False):
+    def list_sigmarules(
+        self, as_pandas: bool = False
+    ) -> Union[List[SigmaRule], pandas.DataFrame]:
         """Fetches Sigma rules from the database.
         Fetches all Sigma rules stored in the database on the system
         and returns a list of SigmaRule objects of the rules.
 
         Args:
-            as_pandas (bool): Boolean indicating that the results will be returned
+            as_pandas: Boolean indicating that the results will be returned
                 as a Pandas DataFrame instead of a list of SigmaRuleObjects.
 
         Returns:
@@ -919,7 +952,7 @@ class TimesketchApi:
             rules.append(index_obj)
         return rules
 
-    def create_sigmarule(self, rule_yaml):
+    def create_sigmarule(self, rule_yaml: str) -> SigmaRule:
         """Adds a single Sigma rule to the database.
 
         Adds a single Sigma rule to the database when `/sigmarules/` is called
@@ -935,7 +968,7 @@ class TimesketchApi:
         to handle transient network errors or server-side issues.
 
         Args:
-            rule_yaml (str): YAML of the Sigma Rule.
+            rule_yaml: YAML of the Sigma Rule.
 
         Returns:
             Instance of a Sigma object.
@@ -961,7 +994,7 @@ class TimesketchApi:
         rule_uuid = objects[0]["rule_uuid"]
         return self.get_sigmarule(rule_uuid)
 
-    def get_sigmarule(self, rule_uuid):
+    def get_sigmarule(self, rule_uuid: str) -> SigmaRule:
         """Fetches a single Sigma rule from the database.
         Fetches a single Sigma rule selected by the `UUID`
 
@@ -976,7 +1009,7 @@ class TimesketchApi:
 
         return sigma_obj
 
-    def parse_sigmarule_by_text(self, rule_text):
+    def parse_sigmarule_by_text(self, rule_text: str) -> Sigma:
         """Obtain a parsed Sigma rule by providing text.
 
         Will parse a provided text `rule_yaml`, parse it and return as SigmaRule
@@ -1009,12 +1042,16 @@ class VerboseRetry(Retry):
     MaxRetryError reason.
     """
 
-    def increment(self, *args, **kwargs):
+    def increment(self, *args: Any, **kwargs: Any) -> VerboseRetry:
         """Increment the retry counter and potentially raise MaxRetryError.
 
         This method is called by urllib3 before each retry attempt. It's overridden
         here to add custom logging for 5xx errors and to enhance the final
         MaxRetryError message with server response details and attempt count.
+
+        Args:
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
         """
         response = kwargs.get("response")
         decoded_body = None
