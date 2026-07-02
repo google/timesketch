@@ -655,20 +655,25 @@ def main(args=None):
         try:
             sketches = ts_client.get_sketches_by_name(sketch_name)
             if len(sketches) > 1:
-                if options.sketch_strategy == 'newest':
+                if options.sketch_strategy == "newest":
                     my_sketch = sorted(
                         sketches, key=lambda s: s.created_at, reverse=True
                     )[0]
-                elif options.sketch_strategy == 'oldest':
-                    my_sketch = sorted(
-                        sketches, key=lambda s: s.created_at
-                    )[0]
+                elif options.sketch_strategy == "oldest":
+                    my_sketch = sorted(sketches, key=lambda s: s.created_at)[0]
                 else:
                     # ask user for clarification using cli_input
-                    print("Multiple sketches found with the name '{0:s}':".format(sketch_name))
+                    print(
+                        "Multiple sketches found with the name '{0:s}':".format(
+                            sketch_name
+                        )
+                    )
                     for s in sketches:
-                        print(" - [{0:d}] created_at: {1:s}, by {2:s}".format(
-                            s.id, s.created_at, s.creator))
+                        print(
+                            " - [{0:d}] created_at: {1:s}, by {2:s}".format(
+                                s.id, s.created_at, s.creator
+                            )
+                        )
 
                     selected_option = None
                     while selected_option is None:

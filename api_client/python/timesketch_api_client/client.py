@@ -692,8 +692,8 @@ class TimesketchApi:
         """Get a sketch by name.
 
         Args:
-            sketch_name (str): The name of the sketch to find. 
-                Warning: Timesketch allows multiple sketches with the same name. 
+            sketch_name (str): The name of the sketch to find.
+                Warning: Timesketch allows multiple sketches with the same name.
                 The client library should therefore handle this potential conflict.
 
         Raises:
@@ -707,7 +707,9 @@ class TimesketchApi:
         # also matches on partial (ILIKE) matches by default
         sketches = [
             sketch_obj
-            for sketch_obj in self.list_sketches(search_query=sketch_name, scope="search")
+            for sketch_obj in self.list_sketches(
+                search_query=sketch_name, scope="search"
+            )
             if sketch_obj.name == sketch_name
         ]
 
@@ -773,7 +775,7 @@ class TimesketchApi:
 
         Args:
             per_page (int): Number of items per page when paginating. Default is 50.
-            scope (str): What scope to get sketches as. Default to user, unless 
+            scope (str): What scope to get sketches as. Default to user, unless
                 search_query is specified.
                 user: sketches owned by the user
                 recent: sketches that the user has actively searched in

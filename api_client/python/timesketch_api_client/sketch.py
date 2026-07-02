@@ -193,7 +193,7 @@ class Sketch(resource.BaseResource):
             if not username_string:
                 return ""
             return username_string
-        except Exception as e:
+        except (AttributeError, TypeError) as e:
             logger.error("Error getting sketch creator: %s", e)
             return ""
 

@@ -94,10 +94,12 @@ class TimesketchApiTest(unittest.TestCase):
     def test_get_sketches_by_name_duplicates(self):
         """Test get_sketches_by_name returns multiple sketches with same name."""
         with mock.patch.object(self.api_client, "list_sketches") as mock_list:
-            sketch_1 = sketch_lib.Sketch(sketch_id=1, api=self.api_client,
-                                         sketch_name="duplicate")
-            sketch_2 = sketch_lib.Sketch(sketch_id=2, api=self.api_client,
-                                         sketch_name="duplicate")
+            sketch_1 = sketch_lib.Sketch(
+                sketch_id=1, api=self.api_client, sketch_name="duplicate"
+            )
+            sketch_2 = sketch_lib.Sketch(
+                sketch_id=2, api=self.api_client, sketch_name="duplicate"
+            )
             mock_list.return_value = iter([sketch_1, sketch_2])
 
             sketches = self.api_client.get_sketches_by_name("duplicate")
@@ -110,8 +112,9 @@ class TimesketchApiTest(unittest.TestCase):
     def test_get_sketches_by_name_case_sensitive(self):
         """Test that get_sketches_by_name matching is case-sensitive."""
         with mock.patch.object(self.api_client, "list_sketches") as mock_list:
-            sketch_1 = sketch_lib.Sketch(sketch_id=1, api=self.api_client,
-                                         sketch_name="My Sketch")
+            sketch_1 = sketch_lib.Sketch(
+                sketch_id=1, api=self.api_client, sketch_name="My Sketch"
+            )
             mock_list.return_value = iter([sketch_1])
 
             with self.assertRaises(KeyError):
