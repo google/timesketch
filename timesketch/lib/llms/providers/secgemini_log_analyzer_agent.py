@@ -54,6 +54,11 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
     NAME = "secgemini_log_analyzer_agent"
     SUPPORTS_STREAMING = True
 
+    _shared_byot = None
+    _byot_lock = asyncio.Lock()
+    _active_requests = 0
+    _idle_timer = None
+
     def __init__(self, config: dict, **kwargs: Any):
         """Initialize the LLM provider.
 
@@ -72,6 +77,9 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
 
         self.host = self.config.get("host")
         self.meta_config = self.config.get("meta", {})
+        self.upload_logs_to_secgemini = self.config.get(
+            "upload_logs_to_secgemini", False
+        )
 
         try:
             if self.host:
@@ -84,42 +92,82 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
         self._events_sent = 0
         self._session = None
         self.session_id = None
+        self._byot = None
 
-    async def _run_async_stream(self, log_path, prompt):
+    async def _run_async_stream(self, prompt, log_path=None, sketch=None):
         """Initializes a SecGemini session and streams the analysis response.
 
-        This is an async helper method that:
-        1. Creates a new SecGemini session.
-        2. Uploads the local log file to the session.
-        3. Streams the analysis results for the given prompt.
-        4. If debugging is enabled, streams the raw sec-gemini response to a log.
-
-        Args:
-            log_path (Path): The local filesystem path to the JSONL log file.
-            prompt (str): The analysis prompt to send to the agent.
-
-        Yields:
-            str: The content chunks of the streamed response from the agent.
+        This method supports two modes:
+        1. Local Mode (BYOT): If upload_logs_to_secgemini is False (default),
+           it starts a local BYOT tunnel and exposes OpenSearch search and
+           describe tools without uploading log files.
+        2. Remote Mode: If upload_logs_to_secgemini is True, it uploads the
+           local log file to the SecGemini session for analysis.
         """
-        # Start the client connection first
+        if not self.upload_logs_to_secgemini:
+            # pylint: disable=import-outside-toplevel
+            from sec_gemini.byot import ByotService, ByotState
+            from timesketch.lib.llms.providers.timesketch_mcp import (
+                make_timesketch_mcp,
+            )
+
+            async with SecGeminiLogAnalyzer._byot_lock:
+                if SecGeminiLogAnalyzer._idle_timer is not None:
+                    SecGeminiLogAnalyzer._idle_timer.cancel()
+                    SecGeminiLogAnalyzer._idle_timer = None
+
+                if SecGeminiLogAnalyzer._shared_byot is not None:
+                    try:
+                        status = SecGeminiLogAnalyzer._shared_byot.status()
+                        if status.state in (ByotState.ERROR, ByotState.STOPPED):
+                            logger.warning(
+                                "Shared BYOT service is in '%s' state. "
+                                "Discarding to restart...",
+                                status.state,
+                            )
+                            try:
+                                await SecGeminiLogAnalyzer._shared_byot.stop()
+                            except Exception:  # pylint: disable=broad-exception-caught
+                                pass
+                            SecGeminiLogAnalyzer._shared_byot = None
+                    except Exception as e:  # pylint: disable=broad-exception-caught
+                        logger.warning(
+                            "Failed to check shared BYOT service status: %s", e
+                        )
+                        SecGeminiLogAnalyzer._shared_byot = None
+
+                SecGeminiLogAnalyzer._active_requests += 1
+
+                if SecGeminiLogAnalyzer._shared_byot is None:
+                    logger.info(
+                        "Starting local BYOT service reverse tunnel (in-process)..."
+                    )
+                    SecGeminiLogAnalyzer._shared_byot = ByotService(
+                        api_key=self.api_key, max_retries=-1
+                    )
+                    mcp = make_timesketch_mcp()
+                    await SecGeminiLogAnalyzer._shared_byot.start(tools=[mcp])
+                    logger.info("Waiting for BYOT connection to establish...")
+                    await SecGeminiLogAnalyzer._shared_byot.wait_connected(timeout=10.0)
+                else:
+                    logger.info("Reusing existing shared BYOT service.")
+
+            self._byot = SecGeminiLogAnalyzer._shared_byot
+
         await self.sg_client.start()
 
         try:
-            # Create session via the sessions manager
             self._session = await self.sg_client.sessions.create()
             self.session_id = self._session.id
             logger.info("Started new SecGemini session: '%s'", self.session_id)
 
-            # Upload logs file using the new files.upload API
-            await self._session.files.upload(str(log_path), content_type="text/plain")
-            logger.info("Uploaded logs file: '%s'", log_path)
+            if self.upload_logs_to_secgemini:
+                await self._session.files.upload(
+                    str(log_path), content_type="text/plain"
+                )
+                logger.info("Uploaded logs file: '%s'", log_path)
 
             logger.info("Starting the SecGemini analysis...")
-            logger.info(
-                "NOTE: 'ConnectionClosedOK' errors from the SecGemini client in the "
-                "log are expected. The client automatically reconnects during "
-                "long-running analysis."
-            )
 
             debug_log_file = None
             if current_app.config.get("DEBUG"):
@@ -129,10 +177,13 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                 flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
                 try:
                     debug_log_file = os.fdopen(
-                        os.open(log_file_path, flags, 0o600), "w", encoding="utf-8"
+                        os.open(log_file_path, flags, 0o600),
+                        "w",
+                        encoding="utf-8",
                     )
                     logger.info(
-                        "SecGemini raw response is being streamed to: %s", log_file_path
+                        "SecGemini raw response is being streamed to: %s",
+                        log_file_path,
                     )
                 except (IOError, FileExistsError) as e:
                     logger.error(
@@ -144,8 +195,6 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                     debug_log_file = None
 
             try:
-                # Trigger the prompt first
-                logger.info("Sending prompt to SecGemini: '%s'", prompt[:100])
                 meta = {"config.mode": "dfir"}
                 if self.meta_config:
                     for key, val in self.meta_config.items():
@@ -154,10 +203,28 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                         else:
                             meta[key] = str(val)
 
-                await self._session.prompt(prompt, meta=meta)
-                logger.info("Prompt sent successfully!")
+                final_prompt = prompt
+                if not self.upload_logs_to_secgemini:
+                    local_instructions = (
+                        "You MUST query the logs by calling the "
+                        "`describe_available_logs` and `search_logs` tools "
+                        f"provided to you, passing '{sketch.id}' as the "
+                        "`ticket_id` argument."
+                    )
+                    final_prompt = local_instructions + "\n\n" + prompt
+                else:
+                    remote_instructions = (
+                        "IMPORTANT: The log records have been uploaded directly to "
+                        "your session environment as a file. There are no "
+                        "describe_available_logs or search_logs tools. You "
+                        "MUST analyze the uploaded log file directly."
+                    )
+                    final_prompt = remote_instructions + "\n\n" + prompt
 
-                # Stream messages using messages.stream()
+                logger.info("Sending prompt to SecGemini: '%s'", final_prompt[:100])
+                await self._session.prompt(final_prompt, meta=meta)
+
+                # Stream response messages
                 async for response in self._session.messages.stream():
                     if debug_log_file:
                         try:
@@ -238,16 +305,47 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                 if debug_log_file:
                     debug_log_file.close()
                     logger.info(
-                        "Finished writing SecGemini debug log: %s", log_file_path
+                        "Finished writing SecGemini debug log: %s",
+                        log_file_path,
                     )
         finally:
+            if not self.upload_logs_to_secgemini:
+                async with SecGeminiLogAnalyzer._byot_lock:
+                    SecGeminiLogAnalyzer._active_requests -= 1
+                    if (
+                        SecGeminiLogAnalyzer._active_requests == 0
+                        and SecGeminiLogAnalyzer._shared_byot is not None
+                    ):
+                        loop = asyncio.get_running_loop()
+                        SecGeminiLogAnalyzer._idle_timer = loop.call_later(
+                            300.0,
+                            lambda: asyncio.create_task(
+                                SecGeminiLogAnalyzer._stop_idle_byot()
+                            ),
+                        )
+
             # Ensure client is properly closed
             await self.sg_client.close()
+
+    @classmethod
+    async def _stop_idle_byot(cls):
+        """Stops the BYOT service if it is still idle."""
+        async with cls._byot_lock:
+            if cls._active_requests == 0 and cls._shared_byot is not None:
+                logger.info("BYOT service idle for 5 minutes. Stopping service...")
+                try:
+                    await cls._shared_byot.stop()
+                except Exception as e:  # pylint: disable=broad-exception-caught
+                    logger.error("Error stopping idle BYOT service: %s", e)
+                finally:
+                    cls._shared_byot = None
+                    cls._idle_timer = None
 
     def generate_stream_from_logs(
         self,
         log_events_generator: Iterable[Dict[str, Any]],
         prompt: str = None,
+        sketch: Any = None,
     ) -> Generator[str, None, None]:
         """Analyzes a stream of log events using the SecGemini log analysis agent.
 
@@ -265,6 +363,7 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
             log_events_generator: An iterable of dictionaries, where each
                                   dictionary is a Timesketch log event.
             prompt: The prompt to send to the SecGemini agent for analysis.
+            sketch: The Timesketch sketch object.
 
         Yields:
             str: Chunks of the raw JSON string response from the LLM provider.
@@ -274,6 +373,37 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                 "LLM_LOG_ANALYZER_DEFAULT_PROMPT",
                 "Perform a forensics investigation on the provided logs.",
             )
+
+        if not self.upload_logs_to_secgemini:
+            if not sketch:
+                raise ValueError("Local log analysis (BYOT) requires a sketch object.")
+
+            async def main_local():
+                async for chunk in self._run_async_stream(prompt=prompt, sketch=sketch):
+                    yield chunk
+
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+
+            gen = main_local()
+            log_trigger = 0
+            while True:
+                try:
+                    chunk = loop.run_until_complete(gen.__anext__())
+                    if chunk is not None:
+                        log_trigger += 1
+                        if log_trigger % 50 == 0:
+                            logger.info(
+                                "[%s] SecGemini is still processing...",
+                                self.session_id,
+                            )
+                        yield chunk
+                except StopAsyncIteration:
+                    break
+            return
 
         with tempfile.NamedTemporaryFile(
             mode="w", delete=True, suffix=".jsonl", encoding="utf-8"
@@ -321,7 +451,9 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
             )
 
             async def main():
-                async for chunk in self._run_async_stream(log_path, prompt):
+                async for chunk in self._run_async_stream(
+                    prompt=prompt, log_path=log_path
+                ):
                     yield chunk
 
             try:
