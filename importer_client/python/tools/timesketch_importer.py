@@ -670,11 +670,20 @@ def main(args=None):
                         print(" - [{0:d}] created_at: {1:s}, by {2:s}".format(
                             s.id, s.created_at, s.creator))
 
-                    selected_option = cli_input.ask_question(
-                        "Select the sketch to use by entering the corresponding number",
-                        input_type=int,
-                        default=sketches[0].id,
-                    )
+                    selected_option = None
+                    while selected_option is None:
+                        try:
+                            selected_option = cli_input.ask_question(
+                                "Select the sketch to use by entering the"
+                                " corresponding number",
+                                input_type=int,
+                                default=sketches[0].id,
+                            )
+                        except ValueError:
+                            print(
+                                "Invalid input. Please enter a valid"
+                                " integer (e.g. {0:d}).".format(sketches[0].id)
+                            )
                     try:
                         # select sketch by ID from the sketches list
                         my_sketch = next(s for s in sketches if s.id == selected_option)
