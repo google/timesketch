@@ -398,7 +398,7 @@ class OpenSearchLogStore(ls.LogStore):
                         results=[],
                         error_messages=[str(e)],
                     )
-        except Exception as e:
+        except Exception:
             logger.exception("Fatal error in OpenSearchLogStore.search_logs")
             raise
 
