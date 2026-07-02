@@ -103,6 +103,16 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
            describe tools without uploading log files.
         2. Remote Mode: If upload_logs_to_secgemini is True, it uploads the
            local log file to the SecGemini session for analysis.
+
+        Args:
+            prompt (str): The analysis prompt to send to the agent.
+            log_path (Path, optional): The local filesystem path to the JSONL
+                log file (used in remote/upload mode).
+            sketch (Sketch, optional): The active Timesketch Sketch object (used
+                in local/BYOT mode).
+
+        Yields:
+            str: The content chunks of the streamed response from the agent.
         """
         if not self.upload_logs_to_secgemini:
             # pylint: disable=import-outside-toplevel
