@@ -168,7 +168,7 @@ class Sketch(resource.BaseResource):
         Returns:
             str: Sketch creation time as string.
         """
-        data = self.lazyload_data(refresh_cache=True)
+        data = self.lazyload_data()
         objects = data.get("objects")
         if not objects:
             return ""
@@ -183,7 +183,7 @@ class Sketch(resource.BaseResource):
         Returns:
             str: Sketch creator as string.
         """
-        data = self.lazyload_data(refresh_cache=True)
+        data = self.lazyload_data()
         objects = data.get("objects")
         if not objects:
             return ""
