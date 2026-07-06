@@ -442,18 +442,13 @@ def validate_api_token():
     return abort(HTTP_STATUS_CODE_BAD_REQUEST, "User is not authenticated.")
 
 
-@auth_views.route("/login/google_openid_connect/", methods=["GET"])
-def google_openid_connect():
-    """Handler for the Google OpenID Connect callback.
-
-    Reference:
-    https://developers.google.com/identity/protocols/OpenIDConnect
+def _get_oidc_csrf_validated_code():
+    """Validate the OIDC callback request and return the authorization code.
 
     Returns:
-        Redirect response.
+        The `code` query parameter from the OIDC callback request.
     """
     error = request.args.get("error", None)
-
     if error:
         current_app.logger.error(f"OAuth2 flow error: {error}")
         return abort(HTTP_STATUS_CODE_BAD_REQUEST, f"OAuth2 flow error: {error!s}")
@@ -470,6 +465,18 @@ def google_openid_connect():
     if client_csrf_token != server_csrf_token:
         return abort(HTTP_STATUS_CODE_BAD_REQUEST, "Invalid CSRF token")
 
+    return code
+
+
+def _fetch_validated_oidc_jwt(code):
+    """Fetch and validate the OIDC JWT for an authorization code.
+
+    Args:
+        code: Authorization code returned by the OIDC provider.
+
+    Returns:
+        The decoded JWT as a dict.
+    """
     try:
         encoded_jwt = get_encoded_jwt_over_https(code)
     except JwtFetchError as e:
@@ -490,7 +497,9 @@ def google_openid_connect():
 
     # Fetch the public key and try to validate the JWT.
     try:
-        public_key = get_public_key_for_jwt(encoded_jwt, discovery_document["jwks_uri"])
+        public_key = get_public_key_for_jwt(
+            encoded_jwt, discovery_document["jwks_uri"]
+        )
         decoded_jwt = decode_jwt(encoded_jwt, public_key, algorithm, expected_audience)
         validate_jwt(decoded_jwt, expected_issuer, expected_domain)
     except (JwtValidationError, JwtKeyError) as e:
@@ -500,15 +509,34 @@ def google_openid_connect():
             f"Unable to validate request, with error: {e!s}",
         )
 
-    validated_email = decoded_jwt.get("email")
-    allowed_users = current_app.config.get("GOOGLE_OIDC_ALLOWED_USERS")
+    return decoded_jwt
 
-    # Check if the authenticating user is allowed.
-    if allowed_users:
-        if validated_email not in allowed_users:
-            return abort(
-                HTTP_STATUS_CODE_UNAUTHORIZED, "Unauthorized request, user not allowed"
-            )
+
+def _check_oidc_user_allowed(validated_email):
+    """Abort if GOOGLE_OIDC_ALLOWED_USERS is set and the user isn't in it."""
+    allowed_users = current_app.config.get("GOOGLE_OIDC_ALLOWED_USERS")
+    if allowed_users and validated_email not in allowed_users:
+        return abort(
+            HTTP_STATUS_CODE_UNAUTHORIZED, "Unauthorized request, user not allowed"
+        )
+    return None
+
+
+@auth_views.route("/login/google_openid_connect/", methods=["GET"])
+def google_openid_connect():
+    """Handler for the Google OpenID Connect callback.
+
+    Reference:
+    https://developers.google.com/identity/protocols/OpenIDConnect
+
+    Returns:
+        Redirect response.
+    """
+    code = _get_oidc_csrf_validated_code()
+    decoded_jwt = _fetch_validated_oidc_jwt(code)
+
+    validated_email = decoded_jwt.get("email")
+    _check_oidc_user_allowed(validated_email)
 
     user = User.get_or_create(username=validated_email, name=validated_email)
     login_user(user)
