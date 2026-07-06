@@ -42,6 +42,7 @@ from timesketch.lib.google_auth import get_public_key_for_jwt
 from timesketch.lib.google_auth import get_oauth2_discovery_document
 from timesketch.lib.google_auth import get_oauth2_authorize_url
 from timesketch.lib.google_auth import get_encoded_jwt_over_https
+from timesketch.lib.google_auth import get_groups_from_jwt
 from timesketch.lib.google_auth import decode_jwt
 from timesketch.lib.google_auth import validate_jwt
 from timesketch.lib.google_auth import JwtValidationError
@@ -450,7 +451,7 @@ def _get_oidc_csrf_validated_code():
     """
     error = request.args.get("error", None)
     if error:
-        current_app.logger.error(f"OAuth2 flow error: {error}")
+        current_app.logger.error("OAuth2 flow error: %s", error)
         return abort(HTTP_STATUS_CODE_BAD_REQUEST, f"OAuth2 flow error: {error!s}")
 
     try:
@@ -497,9 +498,7 @@ def _fetch_validated_oidc_jwt(code):
 
     # Fetch the public key and try to validate the JWT.
     try:
-        public_key = get_public_key_for_jwt(
-            encoded_jwt, discovery_document["jwks_uri"]
-        )
+        public_key = get_public_key_for_jwt(encoded_jwt, discovery_document["jwks_uri"])
         decoded_jwt = decode_jwt(encoded_jwt, public_key, algorithm, expected_audience)
         validate_jwt(decoded_jwt, expected_issuer, expected_domain)
     except (JwtValidationError, JwtKeyError) as e:
@@ -522,6 +521,122 @@ def _check_oidc_user_allowed(validated_email):
     return None
 
 
+def _get_oidc_token_groups(decoded_jwt):
+    """Extract the configured groups claim and the token's group names.
+
+    Returns:
+        Tuple of (groups_claim, token_groups).
+    """
+    groups_claim = current_app.config.get("GOOGLE_OIDC_GROUPS_CLAIM")
+    groups_regex = current_app.config.get("GOOGLE_OIDC_GROUPS_REGEX")
+    token_groups = get_groups_from_jwt(
+        decoded_jwt,
+        claim_name=groups_claim,
+        separator=current_app.config.get("GOOGLE_OIDC_GROUPS_SEPARATOR"),
+        regex_pattern=rf"{groups_regex}" if groups_regex else None,
+    )
+    return groups_claim, token_groups
+
+
+def _enforce_oidc_allowed_groups(groups_claim, token_groups, validated_email):
+    """Abort if GOOGLE_OIDC_ALLOWED_GROUPS is set and the user isn't a member.
+
+    Returns:
+        The configured allowed groups list, or None if not configured.
+    """
+    allowed_groups = current_app.config.get("GOOGLE_OIDC_ALLOWED_GROUPS")
+    if not allowed_groups:
+        return None
+
+    if not groups_claim:
+        current_app.logger.warning(
+            "GOOGLE_OIDC_ALLOWED_GROUPS is set but GOOGLE_OIDC_GROUPS_CLAIM "
+            "is not configured. Access control will reject all users."
+        )
+
+    if not set(token_groups) & set(allowed_groups):
+        current_app.logger.warning(
+            "Unauthorized OIDC login attempt for user [%s]: not a member "
+            "of any allowed group %s (token groups: %s)",
+            validated_email,
+            allowed_groups,
+            token_groups,
+        )
+        return abort(
+            HTTP_STATUS_CODE_UNAUTHORIZED,
+            "Unauthorized request, user is not a member of an allowed group",
+        )
+
+    return allowed_groups
+
+
+def _resolve_oidc_groups_to_sync(token_groups, allowed_groups):
+    """Filter token groups down to those that should be synced to Timesketch.
+
+    If GOOGLE_OIDC_ALLOWED_GROUPS is configured, only groups also present in
+    that allowlist are created/kept in Timesketch.
+    """
+    if not allowed_groups:
+        return token_groups
+    return [group for group in token_groups if group in allowed_groups]
+
+
+def _sync_user_groups(user, groups_to_sync):
+    """Add the user to any Timesketch groups in `groups_to_sync`."""
+    for group_name in groups_to_sync:
+        group = Group.get_or_create(name=group_name, display_name=group_name)
+        if group not in user.groups:
+            user.groups.append(group)
+
+
+def _remove_stale_user_groups(user, groups_to_sync):
+    """Remove the user from Timesketch groups no longer in `groups_to_sync`."""
+    for group in list(user.groups):
+        if group.name not in groups_to_sync:
+            user.groups.remove(group)
+
+
+def _sync_admin_privileges(user, is_admin_group_member, remove_stale, validated_email):
+    """Grant/revoke admin privileges based on OIDC admin group membership."""
+    if is_admin_group_member and not user.admin:
+        user.admin = True
+        current_app.logger.info(
+            "User [%s] granted admin privileges via OIDC admin group membership",
+            validated_email,
+        )
+    elif remove_stale and user.admin and not is_admin_group_member:
+        user.admin = False
+        current_app.logger.info(
+            "Admin privileges removed from user [%s] (no longer member of "
+            "admin group)",
+            validated_email,
+        )
+
+
+def _sync_oidc_groups(
+    user, groups_claim, token_groups, allowed_groups, validated_email
+):
+    """Sync Timesketch group membership and admin privileges from the token.
+
+    No-op unless a groups claim is configured and
+    GOOGLE_OIDC_GROUPS_SYNC_ENABLED is set.
+    """
+    if not (groups_claim and current_app.config.get("GOOGLE_OIDC_GROUPS_SYNC_ENABLED")):
+        return
+
+    groups_to_sync = _resolve_oidc_groups_to_sync(token_groups, allowed_groups)
+    _sync_user_groups(user, groups_to_sync)
+
+    admin_group = current_app.config.get("GOOGLE_OIDC_ADMIN_GROUP", "")
+    is_admin_group_member = admin_group in token_groups
+    remove_stale = bool(current_app.config.get("GOOGLE_OIDC_GROUPS_REMOVE_STALE"))
+
+    _sync_admin_privileges(user, is_admin_group_member, remove_stale, validated_email)
+
+    if remove_stale:
+        _remove_stale_user_groups(user, groups_to_sync)
+
+
 @auth_views.route("/login/google_openid_connect/", methods=["GET"])
 def google_openid_connect():
     """Handler for the Google OpenID Connect callback.
@@ -538,8 +653,18 @@ def google_openid_connect():
     validated_email = decoded_jwt.get("email")
     _check_oidc_user_allowed(validated_email)
 
+    groups_claim, token_groups = _get_oidc_token_groups(decoded_jwt)
+    allowed_groups = _enforce_oidc_allowed_groups(
+        groups_claim, token_groups, validated_email
+    )
+
     user = User.get_or_create(username=validated_email, name=validated_email)
     login_user(user)
+
+    _sync_oidc_groups(user, groups_claim, token_groups, allowed_groups, validated_email)
+
+    db_session.add(user)
+    db_session.commit()
 
     # Log the user in and setup the session.
     if current_user.is_authenticated:
