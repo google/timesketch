@@ -13,20 +13,22 @@
 # limitations under the License.
 """Timesketch OpenSearch LogStore MCP integration."""
 
-import logging
+import argparse
 import json
-import inspect
+import logging
 from datetime import datetime, timezone
 from typing import Any, Iterable, Optional
 from flask import current_app
-from fastmcp import FastMCP
-from mcp.types import ToolAnnotations
 
 from sec_gemini.logs_mcp.common import logstore as ls
 from sec_gemini.logs_mcp.backends.sqlite.sqlite import _localize_in_utc_if_naive
-from sec_gemini.logs_mcp.backends.sqlite import multi_db_tools
 
-from timesketch.models.sketch import Sketch
+from timesketch.models import db_session
+from timesketch.models.user import User
+from timesketch.models.sketch import Sketch, Timeline, Analysis
+from timesketch.models.sigma import SigmaRule
+from timesketch.models.annotations import Comment, Label, Status
+from timesketch.models.acl import AccessControlEntry
 from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 from timesketch.lib.llms.providers.plaso_types import PLASO_DATA_TYPE_DESCRIPTIONS
 
@@ -117,13 +119,20 @@ def _build_keyword_clause(kw: str) -> dict:
 class OpenSearchLogStore(ls.LogStore):
     """OpenSearch-backed LogStore implementation for Timesketch."""
 
-    def __init__(self, sketch_id: int):
+    def __init__(self, sketch_id: Optional[int] = None):
+        if sketch_id is None:
+            parser = argparse.ArgumentParser()
+            parser.add_argument("--sketch_id", type=int, required=True)
+            args, _ = parser.parse_known_args()
+            sketch_id = args.sketch_id
         self.sketch_id = sketch_id
+        from timesketch.app import create_app
+        self.app = create_app()
 
     async def describe_logs(self) -> ls.LogDescriptions:
-        with current_app.app_context():
+        with self.app.app_context():
             datastore = OpenSearchDataStore()
-            sketch_db = Sketch.query.get(self.sketch_id)
+            sketch_db = db_session.query(Sketch).get(self.sketch_id)
             if not sketch_db:
                 return ls.LogDescriptions(
                     status=ls.ResultStatus.ERROR,
@@ -269,9 +278,9 @@ class OpenSearchLogStore(ls.LogStore):
         exclude_log_type: Optional[Any] = None,
     ) -> ls.SearchResult:
         try:
-            with current_app.app_context():
+            with self.app.app_context():
                 datastore = OpenSearchDataStore()
-                sketch_db = Sketch.query.get(self.sketch_id)
+                sketch_db = db_session.query(Sketch).get(self.sketch_id)
                 if not sketch_db:
                     return ls.SearchResult(
                         status=ls.ResultStatus.ERROR,
@@ -401,35 +410,3 @@ class OpenSearchLogStore(ls.LogStore):
         except Exception:
             logger.exception("Fatal error in OpenSearchLogStore.search_logs")
             raise
-
-
-class DynamicLogStoreMap(dict):
-    """Dynamic dict subclass returning OpenSearchLogStore per sketch/ticket ID."""
-
-    def __contains__(self, key: Any) -> bool:
-        return True
-
-    def __getitem__(self, key: Any) -> OpenSearchLogStore:
-        try:
-            sketch_id = int(key)
-        except (ValueError, TypeError) as exc:
-            raise KeyError(f"Invalid sketch_id format: {key}") from exc
-        return OpenSearchLogStore(sketch_id)
-
-
-def make_timesketch_mcp() -> FastMCP:
-    """Creates a FastMCP instance with timesketch tools registered."""
-    mcp = FastMCP("timesketch-logs")
-
-    multi_db_tools.LOG_STORES = DynamicLogStoreMap()
-
-    mcp.tool(
-        description=inspect.getdoc(multi_db_tools.describe_available_logs),
-        annotations=ToolAnnotations(readOnlyHint=True),
-    )(multi_db_tools.describe_available_logs)
-    mcp.tool(
-        description=inspect.getdoc(multi_db_tools.search_logs),
-        annotations=ToolAnnotations(readOnlyHint=True),
-    )(multi_db_tools.search_logs)
-
-    return mcp

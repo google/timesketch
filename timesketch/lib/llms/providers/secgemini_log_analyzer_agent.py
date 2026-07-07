@@ -22,7 +22,9 @@ import tempfile
 from datetime import datetime
 from typing import Any, Dict, Generator, Iterable, Optional
 
+import flask
 from flask import current_app
+import httpx
 
 from timesketch.lib.llms.providers import interface
 from timesketch.lib.llms.providers import manager
@@ -54,10 +56,6 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
     NAME = "secgemini_log_analyzer_agent"
     SUPPORTS_STREAMING = True
 
-    _shared_byot = None
-    _byot_lock = asyncio.Lock()
-    _active_requests = 0
-    _idle_timer = None
 
     def __init__(self, config: dict, **kwargs: Any):
         """Initialize the LLM provider.
@@ -114,62 +112,58 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
         Yields:
             str: The content chunks of the streamed response from the agent.
         """
-        if not self.upload_logs_to_secgemini:
-            # pylint: disable=import-outside-toplevel
-            from sec_gemini.byot import ByotService, ByotState
-            from timesketch.lib.llms.providers.timesketch_mcp import (
-                make_timesketch_mcp,
-            )
-
-            async with SecGeminiLogAnalyzer._byot_lock:
-                if SecGeminiLogAnalyzer._idle_timer is not None:
-                    SecGeminiLogAnalyzer._idle_timer.cancel()
-                    SecGeminiLogAnalyzer._idle_timer = None
-
-                if SecGeminiLogAnalyzer._shared_byot is not None:
-                    try:
-                        status = SecGeminiLogAnalyzer._shared_byot.status()
-                        if status.state in (ByotState.ERROR, ByotState.STOPPED):
-                            logger.warning(
-                                "Shared BYOT service is in '%s' state. "
-                                "Discarding to restart...",
-                                status.state,
-                            )
-                            try:
-                                await SecGeminiLogAnalyzer._shared_byot.stop()
-                            except Exception:  # pylint: disable=broad-exception-caught
-                                pass
-                            SecGeminiLogAnalyzer._shared_byot = None
-                    except Exception as e:  # pylint: disable=broad-exception-caught
-                        logger.warning(
-                            "Failed to check shared BYOT service status: %s", e
-                        )
-                        SecGeminiLogAnalyzer._shared_byot = None
-
-                SecGeminiLogAnalyzer._active_requests += 1
-
-                if SecGeminiLogAnalyzer._shared_byot is None:
-                    logger.info(
-                        "Starting local BYOT service reverse tunnel (in-process)..."
-                    )
-                    SecGeminiLogAnalyzer._shared_byot = ByotService(
-                        api_key=self.api_key, max_retries=-1
-                    )
-                    mcp = make_timesketch_mcp()
-                    await SecGeminiLogAnalyzer._shared_byot.start(tools=[mcp])
-                    logger.info("Waiting for BYOT connection to establish...")
-                    await SecGeminiLogAnalyzer._shared_byot.wait_connected(timeout=10.0)
-                else:
-                    logger.info("Reusing existing shared BYOT service.")
-
-            self._byot = SecGeminiLogAnalyzer._shared_byot
-
         await self.sg_client.start()
 
         try:
             self._session = await self.sg_client.sessions.create()
             self.session_id = self._session.id
             logger.info("Started new SecGemini session: '%s'", self.session_id)
+
+            if not self.upload_logs_to_secgemini:
+
+                timesketch_url = None
+                session_cookie = None
+                if flask.has_request_context():
+                    timesketch_url = flask.request.url_root.rstrip("/")
+                    session_cookie = flask.request.cookies.get("session")
+
+                if not timesketch_url:
+                    timesketch_url = current_app.config.get(
+                        "TIMESKETCH_EXTERNAL_URL", "http://127.0.0.1:5000"
+                    ).rstrip("/")
+
+                bot_url = current_app.config.get(
+                    "LLM_LOG_ANALYZER_BOT_URL", "http://127.0.0.1:8008"
+                )
+
+                if not session_cookie:
+                    logger.warning(
+                        "No active Flask request session cookie found. "
+                        "Fallback to dev key or mock authentication."
+                    )
+                    session_cookie = "dev-mock-session"
+
+                bot_start_url = f"{bot_url.rstrip('/')}/tunnel/start"
+                payload = {
+                    "session_id": self.session_id,
+                    "api_key": self.api_key,
+                    "timesketch_url": timesketch_url,
+                    "session_cookie": session_cookie,
+                    "sketch_id": sketch.id,
+                }
+                logger.info("Contacting bot container to start BYOT tunnel...")
+                async with httpx.AsyncClient(timeout=15.0) as client:
+                    res = await client.post(bot_start_url, json=payload)
+                    if res.status_code != 200:
+                        raise RuntimeError(
+                            f"Failed to start BYOT tunnel on bot container: {res.text}"
+                        )
+                logger.info("BYOT tunnel started successfully on bot container.")
+
+                await self._session.mcps.set([f"byot-{self.session_id}"])
+                logger.info(
+                    "Mounted unique client 'byot-%s' to session.", self.session_id
+                )
 
             if self.upload_logs_to_secgemini:
                 await self._session.files.upload(
@@ -218,8 +212,7 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                     local_instructions = (
                         "You MUST query the logs by calling the "
                         "`describe_available_logs` and `search_logs` tools "
-                        f"provided to you, passing '{sketch.id}' as the "
-                        "`ticket_id` argument."
+                        "provided to you."
                     )
                     final_prompt = local_instructions + "\n\n" + prompt
                 else:
@@ -319,37 +312,25 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                         log_file_path,
                     )
         finally:
-            if not self.upload_logs_to_secgemini:
-                async with SecGeminiLogAnalyzer._byot_lock:
-                    SecGeminiLogAnalyzer._active_requests -= 1
-                    if (
-                        SecGeminiLogAnalyzer._active_requests == 0
-                        and SecGeminiLogAnalyzer._shared_byot is not None
-                    ):
-                        loop = asyncio.get_running_loop()
-                        SecGeminiLogAnalyzer._idle_timer = loop.call_later(
-                            300.0,
-                            lambda: asyncio.create_task(
-                                SecGeminiLogAnalyzer._stop_idle_byot()
-                            ),
+            if not self.upload_logs_to_secgemini and self.session_id:
+                # Stop/cleanup the BYOT tunnel on the bot container
+                try:
+
+                    bot_url = current_app.config.get(
+                        "LLM_LOG_ANALYZER_BOT_URL", "http://127.0.0.1:8008"
+                    )
+                    bot_stop_url = f"{bot_url.rstrip('/')}/tunnel/stop"
+                    async with httpx.AsyncClient(timeout=10.0) as client:
+                        await client.post(
+                            bot_stop_url, json={"session_id": self.session_id}
                         )
+                except Exception as e:  # pylint: disable=broad-except
+                    logger.warning(
+                        "Failed to notify bot container to stop tunnel: %s", e
+                    )
 
             # Ensure client is properly closed
             await self.sg_client.close()
-
-    @classmethod
-    async def _stop_idle_byot(cls):
-        """Stops the BYOT service if it is still idle."""
-        async with cls._byot_lock:
-            if cls._active_requests == 0 and cls._shared_byot is not None:
-                logger.info("BYOT service idle for 5 minutes. Stopping service...")
-                try:
-                    await cls._shared_byot.stop()
-                except Exception as e:  # pylint: disable=broad-exception-caught
-                    logger.error("Error stopping idle BYOT service: %s", e)
-                finally:
-                    cls._shared_byot = None
-                    cls._idle_timer = None
 
     def generate_stream_from_logs(
         self,
