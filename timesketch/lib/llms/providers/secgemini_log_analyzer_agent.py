@@ -160,11 +160,6 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                         )
                 logger.info("BYOT tunnel started successfully on bot container.")
 
-                await self._session.mcps.set([f"byot-{self.session_id}"])
-                logger.info(
-                    "Mounted unique client 'byot-%s' to session.", self.session_id
-                )
-
             if self.upload_logs_to_secgemini:
                 await self._session.files.upload(
                     str(log_path), content_type="text/plain"
@@ -202,10 +197,14 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                 meta = {"config.mode": "dfir"}
                 if self.meta_config:
                     for key, val in self.meta_config.items():
+                        if key in ("sec-gemini-enabled-byots", "config.mode", "mode"):
+                            continue
                         if isinstance(val, bool):
                             meta[key] = "true" if val else "false"
                         else:
                             meta[key] = str(val)
+                if not self.upload_logs_to_secgemini:
+                    meta["sec-gemini-enabled-byots"] = f"byot-{self.session_id}"
 
                 final_prompt = prompt
                 if not self.upload_logs_to_secgemini:
