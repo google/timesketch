@@ -79,13 +79,7 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
             "upload_logs_to_secgemini", False
         )
 
-        try:
-            if self.host:
-                self.sg_client = SecGemini(api_key=self.api_key, host=self.host)
-            else:
-                self.sg_client = SecGemini(api_key=self.api_key)
-        except Exception as e:
-            raise ValueError(f"Failed to initialize SecGemini client: {e}") from e
+        self.sg_client = None
 
         self._events_sent = 0
         self._session = None
@@ -112,6 +106,15 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
         Yields:
             str: The content chunks of the streamed response from the agent.
         """
+        if not self.sg_client:
+            try:
+                if self.host:
+                    self.sg_client = SecGemini(api_key=self.api_key, host=self.host)
+                else:
+                    self.sg_client = SecGemini(api_key=self.api_key)
+            except Exception as e:
+                raise ValueError(f"Failed to initialize SecGemini client: {e}") from e
+
         await self.sg_client.start()
 
         try:
