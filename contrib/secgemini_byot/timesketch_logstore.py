@@ -33,6 +33,15 @@ logger = logging.getLogger("timesketch.byot.logstore")
 EPOCH_START = datetime.datetime(1970, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
 
 
+def _safe_str(val: Any, default: str = "") -> str:
+    """Safely converts a value to a string, handling pandas NaN and None."""
+    if val is None:
+        return default
+    if isinstance(val, float) and math.isnan(val):
+        return default
+    return str(val).strip()
+
+
 def _escape_opensearch_query(k: str) -> str:
     """Escapes OpenSearch reserved characters including backslashes."""
     # Backslash must be escaped first
@@ -127,8 +136,10 @@ class TimesketchLogStore(ls.LogStore):
             )
             objects = type_res.data.get("objects")
             buckets = []
-            if objects and isinstance(objects, list) and objects[0]:
-                buckets = objects[0].get("field_bucket", {}).get("buckets", [])
+            if objects and isinstance(objects, list) and isinstance(objects[0], dict):
+                field_bucket = objects[0].get("field_bucket")
+                if isinstance(field_bucket, dict):
+                    buckets = field_bucket.get("buckets", [])
         except Exception as e:  # pylint: disable=broad-exception-caught
             logger.exception("Failed to discover unique log types")
             return ls.LogDescriptions(
@@ -242,21 +253,33 @@ class TimesketchLogStore(ls.LogStore):
                     aggregator_name="date_histogram",
                     aggregator_parameters=aggregator_params,
                 )
-                raw_objects = agg_obj.resource_data.get("objects", [])
-                if raw_objects:
-                    agg_data = raw_objects[0].get("date_histogram", {})
-                    hist_buckets = agg_data.get("buckets", [])
+                resource_data = agg_obj.resource_data
+                raw_objects = (
+                    resource_data.get("objects", [])
+                    if isinstance(resource_data, dict)
+                    else []
+                )
 
-                    if hist_buckets and isinstance(hist_buckets[0], list):
-                        hist_buckets = hist_buckets[0]
+                hist_buckets = []
+                if (
+                    raw_objects
+                    and isinstance(raw_objects, list)
+                    and isinstance(raw_objects[0], dict)
+                ):
+                    agg_data = raw_objects[0].get("date_histogram")
+                    if isinstance(agg_data, dict):
+                        hist_buckets = agg_data.get("buckets", [])
 
-                    for row in hist_buckets:
-                        d_raw = row.get("datetime") or row.get("key_as_string")
-                        if d_raw:
-                            d_str = str(d_raw)[:10]
-                            c_val = int(row.get("count") or row.get("doc_count") or 0)
-                            if c_val > 0:
-                                day_counts.append((d_str, c_val))
+                if hist_buckets and isinstance(hist_buckets[0], list):
+                    hist_buckets = hist_buckets[0]
+
+                for row in hist_buckets:
+                    d_raw = row.get("datetime") or row.get("key_as_string")
+                    if d_raw:
+                        d_str = str(d_raw)[:10]
+                        c_val = int(row.get("count") or row.get("doc_count") or 0)
+                        if c_val > 0:
+                            day_counts.append((d_str, c_val))
             except Exception:  # pylint: disable=broad-exception-caught
                 logger.exception("Failed to run date histogram aggregation for %s", dt)
                 error_suffix = " ERROR: Failed to compute date histogram."
@@ -389,12 +412,12 @@ class TimesketchLogStore(ls.LogStore):
 
         res = []
         for _, row in results_df.iterrows():
-            msg = str(row.get("message", ""))
+            msg = _safe_str(row.get("message"))
 
             found_hashes = []
             for field_name in hash_fields:
                 val = row.get(field_name)
-                if val and str(val).strip() and str(val).lower() != "n/a":
+                if val and _safe_str(val) and _safe_str(val).lower() != "n/a":
                     found_hashes.append(f"{field_name}={val}")
 
             if found_hashes:
@@ -420,9 +443,9 @@ class TimesketchLogStore(ls.LogStore):
             merged_tags = sorted(
                 list(
                     set(
-                        str(t)
+                        _safe_str(t)
                         for t in tags_list + yara_list
-                        if t and str(t).lower() != "n/a"
+                        if _safe_str(t) and _safe_str(t).lower() != "n/a"
                     )
                 )
             )
@@ -430,10 +453,10 @@ class TimesketchLogStore(ls.LogStore):
 
             res.append(
                 ls.LogRecordResult(
-                    record_id=str(row.get("_id", "")),
-                    log_type=str(row.get("data_type", "none")),
+                    record_id=_safe_str(row.get("_id")),
+                    log_type=_safe_str(row.get("data_type"), default="none"),
                     timestamp=_parse_datetime(row.get("datetime")),
-                    timestamp_desc=str(row.get("timestamp_desc", "null")),
+                    timestamp_desc=_safe_str(row.get("timestamp_desc"), default="null"),
                     message=msg,
                     enrichment=enrich,
                 )
