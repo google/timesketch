@@ -340,8 +340,7 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                     raise e
                 except Exception as e:  # pylint: disable=broad-exception-caught
                     logger.error(
-                        "Failed to auto-grant read permission to bot user "
-                        "'%s': %s",
+                        "Failed to auto-grant read permission to bot user '%s': %s",
                         self.byot_username,
                         e,
                         exc_info=True,
