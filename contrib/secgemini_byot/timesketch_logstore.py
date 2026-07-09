@@ -19,7 +19,10 @@ import logging
 import math
 from typing import Any, Iterable, Optional
 
+# pylint: disable=import-error
 from sec_gemini.logs_mcp.common import logstore as ls
+
+# pylint: enable=import-error
 from timesketch_api_client import client as ts_client
 from timesketch_api_client import search
 
@@ -289,7 +292,7 @@ class TimesketchLogStore(ls.LogStore):
         must_contain_all_of: Optional[Iterable[str]] = None,
         must_not_contain_any_of: Optional[Iterable[str]] = None,
         order_by: ls.Order = ls.Order.CHRONOLOGICAL,
-        exclude_log_type: Optional[Any] = None,
+        exclude_log_type: Optional[Any] = None,  # pylint: disable=unused-argument
     ) -> ls.SearchResult:
         """Executes a search mapped directly to OpenSearch query strings."""
         return await asyncio.to_thread(

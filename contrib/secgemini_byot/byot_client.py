@@ -24,6 +24,7 @@ from fastmcp import FastMCP
 from mcp.types import ToolAnnotations
 from sec_gemini.byot import ByotService
 from sec_gemini.logs_mcp.backends.sqlite import multi_db_tools
+
 # pylint: enable=import-error
 from timesketch_api_client import client as ts_client
 
