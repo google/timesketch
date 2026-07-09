@@ -41,8 +41,6 @@ def _escape_opensearch_query(k: str) -> str:
         "+",
         "-",
         "=",
-        "&&",
-        "||",
         ">",
         "<",
         "!",
