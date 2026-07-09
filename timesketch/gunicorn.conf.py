@@ -68,9 +68,9 @@ def get_debug_status():
 DEBUG = get_debug_status()
 
 # Worker Configuration
-worker_class = os.environ.get("WSGI_WORKER_CLASS") or "sync"
+worker_class = os.environ.get("WSGI_WORKER_CLASS") or "gthread"
 threads_val = os.environ.get("NUM_WSGI_THREADS")
-threads = int(threads_val) if threads_val and threads_val.isdigit() else 1
+threads = int(threads_val) if threads_val and threads_val.isdigit() else 4
 workers_val = os.environ.get("NUM_WSGI_WORKERS")
 workers = int(workers_val) if workers_val and workers_val.isdigit() else 1
 
