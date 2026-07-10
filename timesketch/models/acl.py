@@ -416,9 +416,7 @@ class AccessControlMixin:
         if not user:
             raise ValueError(f"User not found: {username}")
 
-        user_ace = self._get_ace(
-            permission=permission, user=user, check_group=False
-        )
+        user_ace = self._get_ace(permission=permission, user=user, check_group=False)
         if user_ace:
             self.revoke_permission(permission=permission, user=user)
             return True
