@@ -281,6 +281,15 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                         "Finished writing SecGemini debug log: %s", log_file_path
                     )
         finally:
+            if self._session and hasattr(self._session, "close"):
+                try:
+                    await self._session.close()
+                except Exception as e:  # pylint: disable=broad-exception-caught
+                    logger.debug(
+                        "Ignored error closing remote session %s: %s",
+                        self.session_id,
+                        e,
+                    )
             # Ensure client is properly closed
             await self.sg_client.close()
 

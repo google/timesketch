@@ -89,6 +89,12 @@ class AclModelTest(BaseTest):
             self.sketch1.has_permission(permission="read", user=self.user2)
         )
 
+        # 5b. Revoking again when no direct ACE exists should return False
+        success = self.sketch1.revoke_permission_by_username(
+            permission="read", username="test2@example.com"
+        )
+        self.assertFalse(success)
+
         # 6. Raise ValueError on non-existent user (grant)
         with self.assertRaises(ValueError):
             self.sketch1.grant_permission_by_username(

@@ -388,8 +388,6 @@ class AccessControlMixin:
 
         if not self.has_permission(user=user, permission=permission):
             self.grant_permission(permission=permission, user=user)
-            db_session.add(self)
-            db_session.commit()
             return True
 
         return False
@@ -402,7 +400,8 @@ class AccessControlMixin:
             username: The username of the collaborator.
 
         Returns:
-            bool: True if the permission was successfully revoked.
+            bool: True if a direct permission ACE existed and was revoked,
+                  False if the user had no direct permission to revoke.
 
         Raises:
             ValueError: If the username cannot be resolved to a database User.
@@ -417,8 +416,14 @@ class AccessControlMixin:
         if not user:
             raise ValueError(f"User not found: {username}")
 
-        self.revoke_permission(permission=permission, user=user)
-        return True
+        user_ace = self._get_ace(
+            permission=permission, user=user, check_group=False
+        )
+        if user_ace:
+            self.revoke_permission(permission=permission, user=user)
+            return True
+
+        return False
 
     def revoke_permission(self, permission, user=None, group=None):
         """Revoke permission for user/group on the object.
