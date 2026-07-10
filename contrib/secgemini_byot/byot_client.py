@@ -114,9 +114,17 @@ async def main():
         await byot.wait_connected()
         logger.info("Tunnel connected successfully! Listening for tool calls...")
 
-        # Keep running until terminated
+        # Monitor tunnel health periodically; exit on failure for Docker restart
         while True:
-            await asyncio.sleep(3600)
+            await asyncio.sleep(5)
+            status = byot.status()
+            if status.state.name in ("ERROR", "STOPPED"):
+                logger.error(
+                    "Tunnel entered %s state (error: %s). Exiting for restart...",
+                    status.state.name,
+                    status.error,
+                )
+                sys.exit(1)
     except asyncio.CancelledError:
         logger.info("Shutting down BYOT client...")
     except Exception:  # pylint: disable=broad-exception-caught

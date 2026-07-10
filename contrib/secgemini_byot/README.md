@@ -40,6 +40,7 @@ Pass the credentials and configurations via environment variables:
 ```bash
 docker run -d \
   --name timesketch-byot-client \
+  --restart unless-stopped \
   -e TIMESKETCH_URL="<Timesketch-URL>" \
   -e TIMESKETCH_USERNAME="<sec-gemini-bot>" \
   -e TIMESKETCH_PASSWORD="<password>" \
@@ -47,6 +48,13 @@ docker run -d \
   -e TUNNEL_NAME="byot-sec-gemini-bot" \
   timesketch-secgemini-byot
 ```
+
+> [!TIP]
+> **Automatic Recovery:** We strongly recommend running the container with
+> `--restart unless-stopped` (or `--restart always`). The BYOT client runs an
+> internal health check every 5 seconds and will exit automatically if the
+> reverse tunnel disconnects, allowing Docker to restart it and re-establish a
+> clean websocket connection within seconds.
 
 > [!NOTE]
 > If running in a local development environment (e.g., Docker Compose), you may
