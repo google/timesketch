@@ -14,10 +14,13 @@ EVTX_URL="https://github.com/log2timeline/plaso/raw/main/test_data/evtx/System.e
 EVTX_FILE="System.evtx"
 OUT_PLASO="evtx_${PLASO_VERSION}.plaso"
 
+# Clean up the downloaded EVTX file on exit
+trap 'rm -f "${EVTX_FILE}"' EXIT
+
 echo "Downloading System.evtx..."
 wget -q -O "${EVTX_FILE}" "${EVTX_URL}"
 
 echo "Running log2timeline with plaso version: ${PLASO_VERSION}..."
-docker run --rm -u $(id -u):$(id -g) -v "$(pwd):/data" "log2timeline/plaso:${PLASO_VERSION}" log2timeline.py --storage_file "/data/${OUT_PLASO}" "/data/${EVTX_FILE}"
+docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd):/data" "log2timeline/plaso:${PLASO_VERSION}" log2timeline.py --storage_file "/data/${OUT_PLASO}" "/data/${EVTX_FILE}"
 
 echo "Successfully generated: ${OUT_PLASO}"
