@@ -82,7 +82,7 @@ class ImportPlasoFilterTest(interface.BaseEndToEndTest):
         sketch = self.api.create_sketch(name=f"test_plaso_filter_import_{rand}")
         self.sketch = sketch
 
-        file_name = "evtx_20250918.plaso"
+        file_name = "evtx_20260512.plaso"
 
         # This filter should limit the number of events to 3.
         filter_expression = 'data_type is "fs:stat"'

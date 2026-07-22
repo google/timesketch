@@ -26,7 +26,7 @@ class AggregationTest(interface.BaseEndToEndTest):
     """End to end tests for aggregation functionality."""
 
     NAME = "aggregation_test"
-    TEST_PLASO_FILE = "evtx_20250918.plaso"
+    TEST_PLASO_FILE = "evtx_20260512.plaso"
     TEST_PLASO_FILE_NAME = f"{TEST_PLASO_FILE}_{NAME}.plaso"
 
     def __init__(self):

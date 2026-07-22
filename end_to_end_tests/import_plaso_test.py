@@ -32,7 +32,7 @@ class ImportPlasoTest(interface.BaseEndToEndTest):
         self.sketch = sketch
 
         file_path = (
-            "/usr/local/src/timesketch/end_to_end_tests/test_data/evtx_20250918.plaso"
+            "/usr/local/src/timesketch/end_to_end_tests/test_data/evtx_20260512.plaso"
         )
         self.import_timeline(file_path, sketch=sketch)
         timeline = sketch.list_timelines()[0]
