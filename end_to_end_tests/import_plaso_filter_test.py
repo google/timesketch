@@ -27,7 +27,7 @@ class ImportPlasoFilterTest(interface.BaseEndToEndTest):
     NAME = "import_plaso_filter_test"
 
     def import_timeline(
-        self, filename, index_name=None, sketch=None, filter_expression=None
+        self, filename, index_name=None, sketch=None, entry_threshold=None, filter_expression=None
     ):
         """Import a Plaso file with an optional filter.
 
@@ -35,6 +35,7 @@ class ImportPlasoFilterTest(interface.BaseEndToEndTest):
             filename (str): Filename of the file to be imported.
             index_name (str): The OpenSearch index to store the documents in.
             sketch (Sketch): Optional sketch object to add the timeline to.
+            entry_threshold (int): Optional chunk size threshold for imports.
             filter_expression (str): Plaso event filter expression.
 
         Returns:
