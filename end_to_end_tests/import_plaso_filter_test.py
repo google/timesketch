@@ -27,7 +27,12 @@ class ImportPlasoFilterTest(interface.BaseEndToEndTest):
     NAME = "import_plaso_filter_test"
 
     def import_timeline(
-        self, filename, index_name=None, sketch=None, entry_threshold=None, filter_expression=None
+        self,
+        filename,
+        index_name=None,
+        sketch=None,
+        entry_threshold=None,
+        filter_expression=None,
     ):
         """Import a Plaso file with an optional filter.
 
