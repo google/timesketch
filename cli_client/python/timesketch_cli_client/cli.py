@@ -13,7 +13,6 @@
 # limitations under the License.
 """Timesketch CLI client."""
 
-import inspect
 import sys
 
 import click
