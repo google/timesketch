@@ -10,17 +10,15 @@ if [ -z "$1" ]; then
 fi
 
 PLASO_VERSION="$1"
-EVTX_URL="https://github.com/log2timeline/plaso/raw/main/test_data/evtx/System.evtx"
-EVTX_FILE="System.evtx"
-OUT_PLASO="evtx_${PLASO_VERSION}.plaso"
+EVTX_FILE="../end_to_end_tests/test_data/System_3205_events.evtx"
+OUT_PLASO="../end_to_end_tests/test_data/evtx_${PLASO_VERSION}.plaso"
 
-# Clean up the downloaded EVTX file on exit
-trap 'rm -f "${EVTX_FILE}"' EXIT
-
-echo "Downloading System.evtx..."
-wget -q -O "${EVTX_FILE}" "${EVTX_URL}"
+if [ ! -f "${EVTX_FILE}" ]; then
+    echo "Error: Could not find ${EVTX_FILE}"
+    exit 1
+fi
 
 echo "Running log2timeline with plaso version: ${PLASO_VERSION}..."
-docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd):/data" "log2timeline/plaso:${PLASO_VERSION}" log2timeline.py --storage_file "/data/${OUT_PLASO}" "/data/${EVTX_FILE}"
+docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd)/..:/data" "log2timeline/plaso:${PLASO_VERSION}" log2timeline.py --storage_file "/data/end_to_end_tests/test_data/evtx_${PLASO_VERSION}.plaso" "/data/end_to_end_tests/test_data/System_3205_events.evtx"
 
 echo "Successfully generated: ${OUT_PLASO}"
