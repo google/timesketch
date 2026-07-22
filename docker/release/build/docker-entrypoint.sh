@@ -2,6 +2,8 @@
 
 # Default Gunicorn settings
 NUM_WSGI_WORKERS="${NUM_WSGI_WORKERS:-4}"
+WSGI_WORKER_CLASS="${WSGI_WORKER_CLASS:-gthread}"
+NUM_WSGI_THREADS="${NUM_WSGI_THREADS:-4}"
 GUNICORN_CONF=$(python3 -c "import os, timesketch; print(os.path.join(os.path.dirname(timesketch.__file__), 'gunicorn.conf.py'))")
 
 if [ "$1" = "timesketch-web" ]; then
@@ -10,6 +12,8 @@ if [ "$1" = "timesketch-web" ]; then
            -c ${GUNICORN_CONF} \
            --error-logfile /var/log/timesketch/wsgi_error.log --log-level info \
            --capture-output --timeout 600 --limit-request-line 8190 \
+           --worker-class "${WSGI_WORKER_CLASS}" \
+           --threads "${NUM_WSGI_THREADS}" \
            --workers ${NUM_WSGI_WORKERS} \
            --max-requests 1000 --max-requests-jitter 100 \
            timesketch.wsgi:application
@@ -20,6 +24,8 @@ elif [ "$1" = "timesketch-web-legacy" ]; then
            -c ${GUNICORN_CONF}  \
            --error-logfile /var/log/timesketch/wsgi_legacy_error.log --log-level info \
            --capture-output --timeout 600 --limit-request-line 8190 \
+           --worker-class "${WSGI_WORKER_CLASS}" \
+           --threads "${NUM_WSGI_THREADS}" \
            --workers ${NUM_WSGI_WORKERS} \
            --max-requests 1000 --max-requests-jitter 100 \
            timesketch.wsgi:application
@@ -30,6 +36,8 @@ elif [ "$1" = "timesketch-web-v3" ]; then
            -c ${GUNICORN_CONF}  \
            --error-logfile /var/log/timesketch/wsgi_v3_error.log --log-level info \
            --capture-output --timeout 600 --limit-request-line 8190 \
+           --worker-class "${WSGI_WORKER_CLASS}" \
+           --threads "${NUM_WSGI_THREADS}" \
            --workers ${NUM_WSGI_WORKERS} \
            --max-requests 1000 --max-requests-jitter 100 \
            timesketch.wsgi:application

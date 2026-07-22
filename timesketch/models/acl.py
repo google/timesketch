@@ -354,11 +354,74 @@ class AccessControlMixin:
             db_session.commit()
             return
 
-        # Grant permission to a user.
         if not self._get_ace(permission, user=user, check_group=False):
             self.acl.append(self.AccessControlEntry(permission=permission, user=user))
             db_session.add(self)
             db_session.commit()
+
+    def grant_permission_by_username(self, permission: str, username: str) -> bool:
+        """Grants permission on this object to a user by username.
+
+        This is a wrapper that resolves the username to a User object, checks
+        existing permissions, and then calls the lower-level grant_permission.
+
+        Args:
+            permission: The permission string (e.g. 'read').
+            username: The username of the collaborator.
+
+        Returns:
+            bool: True if the permission was newly granted,
+                  False if the user already had the permission.
+
+        Raises:
+            ValueError: If the username cannot be resolved to a database User.
+        """
+        user = User.query.filter_by(username=username).first()
+
+        # Fallback: support domain stripping (matching standard sharing endpoint)
+        if not user and "@" in username:
+            base_username = username.split("@")[0].strip()
+            user = User.query.filter_by(username=base_username).first()
+
+        if not user:
+            raise ValueError(f"User not found: {username}")
+
+        if not self.has_permission(user=user, permission=permission):
+            self.grant_permission(permission=permission, user=user)
+            return True
+
+        return False
+
+    def revoke_permission_by_username(self, permission: str, username: str) -> bool:
+        """Revokes permission on this object for a user by username.
+
+        Args:
+            permission: The permission string (e.g. 'read').
+            username: The username of the collaborator.
+
+        Returns:
+            bool: True if a direct permission ACE existed and was revoked,
+                  False if the user had no direct permission to revoke.
+
+        Raises:
+            ValueError: If the username cannot be resolved to a database User.
+        """
+        user = User.query.filter_by(username=username).first()
+
+        # Fallback: support domain stripping (matching standard sharing endpoint)
+        if not user and "@" in username:
+            base_username = username.split("@")[0].strip()
+            user = User.query.filter_by(username=base_username).first()
+
+        if not user:
+            raise ValueError(f"User not found: {username}")
+
+        user_ace = self._get_ace(permission=permission, user=user, check_group=False)
+        if user_ace:
+            self.revoke_permission(permission=permission, user=user)
+            return True
+
+        return False
 
     def revoke_permission(self, permission, user=None, group=None):
         """Revoke permission for user/group on the object.
@@ -379,7 +442,7 @@ class AccessControlMixin:
             return
 
         # Revoke permission for a user.
-        user_ace = self._get_ace(permission=permission, user=user)
+        user_ace = self._get_ace(permission=permission, user=user, check_group=False)
         if user_ace:
             for ace in user_ace:
                 self.acl.remove(ace)
