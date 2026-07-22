@@ -66,17 +66,18 @@ class ImportPlasoFilterTest(interface.BaseEndToEndTest):
         # Poll for readiness (simplified from base class for this specific test)
         max_retries = 30
         for _ in range(max_retries):
-            try:
-                if timeline:
+            if timeline:
+                try:
                     timeline.lazyload_data(refresh_cache=True)
-                    if timeline.status == "ready":
-                        break
-                    if timeline.status == "fail":
-                        raise RuntimeError(
-                            f"Timeline failed processing: {timeline.status}"
-                        )
-            except Exception as e:  # pylint: disable=broad-exception-caught
-                print(f"An exception occurred while polling for timeline status: {e}")
+                except Exception as e:  # pylint: disable=broad-exception-caught
+                    print(
+                        f"An exception occurred while polling for timeline status: {e}"
+                    )
+
+                if timeline.status == "ready":
+                    break
+                if timeline.status == "fail":
+                    raise RuntimeError(f"Timeline failed processing: {timeline.status}")
             time.sleep(2)
 
         return timeline
@@ -88,7 +89,7 @@ class ImportPlasoFilterTest(interface.BaseEndToEndTest):
         sketch = self.api.create_sketch(name=f"test_plaso_filter_import_{rand}")
         self.sketch = sketch
 
-        file_name = "evtx_20260512.plaso"
+        file_name = interface.get_plaso_filename()
 
         # This filter should limit the number of events to 3.
         filter_expression = 'data_type is "fs:stat"'

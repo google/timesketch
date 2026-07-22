@@ -42,6 +42,27 @@ ADMINUSERNAME = "admin"
 ADMINPASSWORD = "admin"
 
 
+
+def get_plaso_filename():
+    """Return the correct plaso test filename based on the installed acstore version.
+
+    The storage format of Plaso changes periodically. The E2E tests are run in both
+    local development environments (which use older, stable Plaso libraries) and
+    in CI environments (which use newer, staging Plaso libraries). This helper dynamically
+    detects the supported storage format at runtime to ensure the test suite uses a Plaso
+    file that the local environment can successfully parse, avoiding format version errors.
+
+    Returns:
+        str: The filename of the appropriate plaso file (e.g., 'evtx_20260516.plaso' or 'evtx_20260512.plaso').
+    """
+    try:
+        from acstore.sqlite_store import SQLiteAttributeContainerStore
+        if SQLiteAttributeContainerStore._READ_COMPATIBLE_FORMAT_VERSION >= 20260516:
+            return "evtx_20260516.plaso"
+    except (ImportError, AttributeError):
+        pass
+    return "evtx_20260512.plaso"
+
 class BaseEndToEndTest(object):
     """Base class for end to end tests.
 

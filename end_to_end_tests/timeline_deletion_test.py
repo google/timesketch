@@ -119,18 +119,18 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         )
 
         # 1. Create Timeline A (Sibling)
-        self.import_timeline("sigma_events.csv", sketch=sketch, index_name="timeline_a")
+        self.import_timeline("sigma_events.csv", sketch=sketch, index_name=f"timeline_a_{rand}")
         _ = sketch.lazyload_data(refresh_cache=True)
         timeline_a = sketch.list_timelines()[0]
         index_name = timeline_a.index.index_name
 
-        # 2. Delete Timeline A
-        timeline_a.delete()
-
-        # 3. Create Timeline B (Failed) sharing the same index
+        # 2. Create Timeline B sharing the same index BEFORE deleting A
         timeline_b = self.import_timeline(
-            "evtx_part.csv", sketch=sketch, index_name="timeline_b_failed"
+            "evtx_part.csv", sketch=sketch, index_name=index_name
         )
+
+        # 3. Delete Timeline A
+        timeline_a.delete()
 
         # Reload the sketch and find Timeline B from the list of timelines.
         _ = sketch.lazyload_data(refresh_cache=True)

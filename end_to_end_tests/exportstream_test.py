@@ -21,7 +21,7 @@ class ExportStreamTest(interface.BaseEndToEndTest):
     """End to end tests for export stream functionality."""
 
     NAME = "export_stream_test"
-    TEST_PLASO_FILE = "evtx_20260512.plaso"
+    TEST_PLASO_FILE = interface.get_plaso_filename()
 
     def setup(self):
         """Import test timeline."""
