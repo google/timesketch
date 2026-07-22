@@ -119,7 +119,9 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         )
 
         # 1. Create Timeline A (Sibling)
-        self.import_timeline("sigma_events.csv", sketch=sketch, index_name=f"timeline_a_{rand}")
+        self.import_timeline(
+            "sigma_events.csv", sketch=sketch, index_name=f"timeline_a_{rand}"
+        )
         _ = sketch.lazyload_data(refresh_cache=True)
         timeline_a = sketch.list_timelines()[0]
         index_name = timeline_a.index.index_name
