@@ -21,7 +21,7 @@ from click.testing import CliRunner
 
 from timesketch_api_client import test_lib as api_test_lib
 from timesketch_cli_client import test_lib
-from timesketch_cli_client.cli import TimesketchCli
+from timesketch_cli_client.cli import TimesketchCli, cli
 from timesketch_cli_client.commands.config import config_group
 
 
@@ -172,3 +172,114 @@ output_format = tabular
             self.assertEqual(
                 cli_context.config_assistant.get_config("username"), "custom_user"
             )
+
+    @mock.patch("timesketch_cli_client.cli.timesketch_config.get_client", autospec=True)
+    def test_cli_custom_config_section(self, mock_get_client):
+        """Test passing --config-section via CLI invocation."""
+        mock_get_client.return_value = mock.MagicMock()
+
+        custom_config = """
+[timesketch]
+host_uri = http://127.0.0.1
+username = default_user
+auth_mode = oauth
+verify = True
+
+[custom_section]
+host_uri = http://custom.example.com
+username = custom_user
+auth_mode = oauth
+client_id = myid
+client_secret = secret
+verify = True
+
+[cli]
+output_format = tabular
+"""
+        with tempfile.NamedTemporaryFile(mode="w") as fw:
+            fw.write(custom_config)
+            fw.seek(0)
+
+            runner = CliRunner()
+            result = runner.invoke(
+                cli,
+                [
+                    "--config",
+                    fw.name,
+                    "--config-section",
+                    "custom_section",
+                    "config",
+                    "get",
+                    "output",
+                ],
+            )
+            self.assertEqual(result.exit_code, 0)
+            mock_get_client.assert_called_once_with(
+                config_path=fw.name,
+                config_section="custom_section",
+                load_cli_config=True,
+            )
+
+    @mock.patch("timesketch_cli_client.cli.timesketch_config.get_client", autospec=True)
+    def test_cli_non_existent_config_section(self, mock_get_client):
+        """Test passing a non-existent --config-section via CLI invocation."""
+        mock_get_client.return_value = mock.MagicMock()
+
+        custom_config = """
+[timesketch]
+host_uri = http://127.0.0.1
+username = default_user
+auth_mode = oauth
+verify = True
+
+[cli]
+output_format = tabular
+"""
+        with tempfile.NamedTemporaryFile(mode="w") as fw:
+            fw.write(custom_config)
+            fw.seek(0)
+
+            runner = CliRunner()
+            result = runner.invoke(
+                cli,
+                [
+                    "--config",
+                    fw.name,
+                    "--config-section",
+                    "missing_section",
+                    "config",
+                    "get",
+                    "output",
+                ],
+            )
+            self.assertEqual(result.exit_code, 1)
+            self.assertIn(
+                "ERROR: Section [missing_section] not found in config file",
+                result.output,
+            )
+            mock_get_client.assert_not_called()
+
+    @mock.patch("timesketch_cli_client.cli.timesketch_config.get_client", autospec=True)
+    def test_cli_non_existent_config_file(self, mock_get_client):
+        """Test passing a custom section when config file doesn't exist."""
+        mock_get_client.return_value = mock.MagicMock()
+
+        runner = CliRunner()
+        result = runner.invoke(
+            cli,
+            [
+                "--config",
+                "/nonexistent/path/to/rc",
+                "--config-section",
+                "missing_section",
+                "config",
+                "get",
+                "output",
+            ],
+        )
+        self.assertEqual(result.exit_code, 1)
+        self.assertIn(
+            "ERROR: Config file /nonexistent/path/to/rc does not exist",
+            result.output,
+        )
+        mock_get_client.assert_not_called()
