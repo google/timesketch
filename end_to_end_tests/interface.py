@@ -56,6 +56,7 @@ def get_plaso_filename():
         str: The filename of the appropriate plaso file.
     """
     import logging  # pylint: disable=import-outside-toplevel
+
     logger = logging.getLogger(__name__)
 
     try:
@@ -64,7 +65,7 @@ def get_plaso_filename():
 
         # pylint: disable=protected-access
         version = SQLiteAttributeContainerStore._READ_COMPATIBLE_FORMAT_VERSION
-        
+
         if version >= 20260516:
             plaso_file = "evtx_20260516.plaso"
         elif version >= 20260512:
@@ -73,14 +74,20 @@ def get_plaso_filename():
             plaso_file = "evtx_20250918.plaso"
         else:
             plaso_file = "evtx_20221023.plaso"
-            
-        logger.info("acstore format version %s detected. Using test file: %s", version, plaso_file)
+
+        logger.info(
+            "acstore format version %s detected. Using test file: %s",
+            version,
+            plaso_file,
+        )
         return plaso_file
     except (ImportError, AttributeError):
         pass
-    
+
     # Safest old fallback
-    logger.info("Could not determine acstore version. Falling back to test file: evtx_20221023.plaso")
+    logger.info(
+        "Could not determine acstore version. Falling back to test file: evtx_20221023.plaso"
+    )
     return "evtx_20221023.plaso"
 
 
