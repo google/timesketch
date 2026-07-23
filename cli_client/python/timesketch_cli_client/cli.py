@@ -25,6 +25,7 @@ from requests.exceptions import ConnectionError as RequestConnectionError
 # pylint: disable=import-error
 from timesketch_api_client import client
 from timesketch_api_client import config as timesketch_config
+
 # pylint: enable=import-error
 
 from timesketch_cli_client.commands import analyze
@@ -54,7 +55,7 @@ class TimesketchCli:
 
     def __init__(
         self,
-        api_client: Optional['client.TimesketchApi'] = None,
+        api_client: Optional["client.TimesketchApi"] = None,
         sketch_from_flag: Optional[int] = None,
         conf_file: str = "",
         output_format_from_flag: Optional[str] = None,
