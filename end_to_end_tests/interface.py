@@ -61,10 +61,10 @@ def get_plaso_filename():
 
     try:
         # pylint: disable=import-outside-toplevel
-        from acstore.sqlite_store import SQLiteAttributeContainerStore
+        import plaso
 
-        # pylint: disable=protected-access
-        version = SQLiteAttributeContainerStore._READ_COMPATIBLE_FORMAT_VERSION
+        version = int(plaso.__version__)
+        logger.info("Detected plaso version %d.", version)
 
         if version >= 20260516:
             plaso_file = "evtx_20260516.plaso"
@@ -74,21 +74,30 @@ def get_plaso_filename():
             plaso_file = "evtx_20250918.plaso"
         else:
             plaso_file = "evtx_20221023.plaso"
-
-        logger.info(
-            "acstore format version %s detected. Using test file: %s",
-            version,
-            plaso_file,
-        )
+        logger.info("Using test file: %s", plaso_file)
         return plaso_file
-    except (ImportError, AttributeError):
-        pass
+    except ImportError:
+        logger.info("Could not import plaso, falling back to acstore format version.")
+        try:
+            # pylint: disable=import-outside-toplevel
+            from acstore.sqlite_store import SQLiteAttributeContainerStore
 
-    # Safest old fallback
-    logger.info(
-        "Could not determine acstore version. Falling back to test file: evtx_20221023.plaso"
-    )
-    return "evtx_20221023.plaso"
+            # pylint: disable=protected-access
+            version = SQLiteAttributeContainerStore._READ_COMPATIBLE_FORMAT_VERSION
+
+            if version >= 20230327:
+                plaso_file = "evtx_20260516.plaso"
+            else:
+                plaso_file = "evtx_20221023.plaso"
+            logger.info(
+                "acstore format version %d detected. Using test file: %s",
+                version,
+                plaso_file,
+            )
+            return plaso_file
+        except (ImportError, AttributeError) as e:
+            logger.warning("Could not import acstore, using default plaso file: %s", e)
+            return "evtx_20221023.plaso"
 
 
 class BaseEndToEndTest(object):
