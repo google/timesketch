@@ -391,8 +391,9 @@ class UploadTest(interface.BaseEndToEndTest):
         sketch = self.api.create_sketch(name=f"test_plaso_import_{rand}")
         self.sketch = sketch
 
+        test_filename = interface.get_plaso_filename()
         file_path = (
-            "/usr/local/src/timesketch/end_to_end_tests/test_data/evtx_20260512.plaso"
+            f"/usr/local/src/timesketch/end_to_end_tests/test_data/{test_filename}"
         )
         self.import_timeline(file_path, sketch=sketch)
         timeline = sketch.list_timelines()[0]
