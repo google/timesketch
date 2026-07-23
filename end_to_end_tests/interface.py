@@ -66,7 +66,9 @@ def get_plaso_filename():
         version = int(plaso.__version__)
         logger.info("Detected plaso version %d.", version)
 
-        if version >= 20260516:
+        if version >= 20260720:
+            plaso_file = "evtx_20260720.plaso"
+        elif version >= 20260516:
             plaso_file = "evtx_20260516.plaso"
         elif version >= 20260512:
             plaso_file = "evtx_20260512.plaso"
