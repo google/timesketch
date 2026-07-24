@@ -70,7 +70,6 @@ services:
       retries: 5
 
   postgres:
-    container_name: postgres
     image: postgres:13.1-alpine
     environment:
       - POSTGRES_USER=timesketch
@@ -84,7 +83,6 @@ services:
       retries: 5
 
   redis:
-    container_name: redis
     image: redis:7.2.11-alpine
     restart: always
     healthcheck:
@@ -95,7 +93,6 @@ services:
       retries: 5
 
   prometheus:
-    container_name: prometheus
     image: prom/prometheus:v2.24.1
     user: root
     volumes:
@@ -105,7 +102,6 @@ services:
     command: --config.file=/etc/prometheus/prometheus.yml --log.level=warn
 
   # notebook:
-  #   container_name: notebook
   #   image: us-docker.pkg.dev/osdfir-registry/timesketch/notebook:latest
   #   ports:
   #     - 127.0.0.1:8844:8844
@@ -117,7 +113,6 @@ services:
   #     - /tmp/:/usr/local/src/picadata/
 
   otel-collector:
-    container_name: otel-collector
     image: otel/opentelemetry-collector:0.100.0
     user: "0"
     command: ["--config=/etc/otel-collector-config.yaml"]
@@ -132,7 +127,6 @@ services:
       - telemetry
 
   jaeger:
-    container_name: jaeger
     image: jaegertracing/jaeger:2.17.0
     restart: always
     command: #security settings to enable otel from outside
