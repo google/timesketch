@@ -67,17 +67,19 @@ class ImportPlasoFilterTest(interface.BaseEndToEndTest):
         max_retries = 30
         for _ in range(max_retries):
             if timeline:
+                status = None
                 try:
                     timeline.lazyload_data(refresh_cache=True)
+                    status = timeline.status
                 except Exception as e:  # pylint: disable=broad-exception-caught
                     print(
                         f"An exception occurred while polling for timeline status: {e}"
                     )
 
-                if timeline.status == "ready":
+                if status == "ready":
                     break
-                if timeline.status == "fail":
-                    raise RuntimeError(f"Timeline failed processing: {timeline.status}")
+                if status == "fail":
+                    raise RuntimeError(f"Timeline failed processing: {status}")
             time.sleep(2)
 
         return timeline

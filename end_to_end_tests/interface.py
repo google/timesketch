@@ -62,8 +62,11 @@ def get_plaso_filename():
     try:
         # pylint: disable=import-outside-toplevel
         import plaso
+        import re
 
-        version = int(plaso.__version__)
+        # Extract leading digits to handle suffixes like .dev0 or rc1 safely
+        version_match = re.match(r"^\d+", plaso.__version__)
+        version = int(version_match.group(0)) if version_match else 0
         logger.info("Detected plaso version %d.", version)
 
         if version >= 20260720:
