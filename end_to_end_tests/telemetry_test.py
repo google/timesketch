@@ -55,7 +55,7 @@ class TelemetryTest(interface.BaseEndToEndTest):
         # Manually send a dummy trace directly to the otel-collector OTLP HTTP receiver
         trace_id = uuid.uuid4().hex
         span_id = uuid.uuid4().hex[:16]
-        now_nano = int(time.time() * 1e9)
+        now_nano = time.time_ns()
 
         payload = {
             "resourceSpans": [
