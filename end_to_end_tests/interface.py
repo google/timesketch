@@ -42,7 +42,7 @@ ADMINUSERNAME = "admin"
 ADMINPASSWORD = "admin"
 
 
-def get_plaso_filename():
+def get_plaso_filename() -> str:
     """Return the correct plaso test filename based on the installed acstore version.
 
     The storage format of Plaso changes periodically. The E2E tests are run in both
