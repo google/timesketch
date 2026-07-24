@@ -81,8 +81,12 @@ def get_plaso_filename() -> str:
             plaso_file = "evtx_20221023.plaso"
         logger.info("Using test file: %s", plaso_file)
         return plaso_file
-    except ImportError:
-        logger.info("Could not import plaso, falling back to acstore format version.")
+    except (ImportError, AttributeError, TypeError) as e:
+        logger.info(
+            "Could not import plaso or read version, falling back to acstore "
+            "format version: %s",
+            e,
+        )
         try:
             # pylint: disable=import-outside-toplevel
             from acstore.sqlite_store import SQLiteAttributeContainerStore

@@ -60,6 +60,8 @@ class ImportPlasoFilterTest(interface.BaseEndToEndTest):
             streamer.set_provider("e2e test interface")
             if filter_expression:
                 streamer.set_plaso_event_filter(filter_expression)
+            if entry_threshold is not None:
+                streamer.set_entry_threshold(entry_threshold)
             streamer.add_file(file_path)
             timeline = streamer.timeline
 
