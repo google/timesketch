@@ -104,8 +104,8 @@ def get_plaso_filename() -> str:
                 plaso_file,
             )
             return plaso_file
-        except (ImportError, AttributeError) as e:
-            logger.warning("Could not import acstore, using default plaso file: %s", e)
+        except (ImportError, AttributeError) as err:
+            logger.warning("Could not import acstore, using default plaso file: %s", err)
             return "evtx_20221023.plaso"
 
 
