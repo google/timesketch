@@ -107,7 +107,7 @@ class TelemetryTest(interface.BaseEndToEndTest):
                     if data:
                         found = True
                         break
-            except requests.exceptions.RequestException:
+            except (requests.exceptions.RequestException, ValueError):
                 pass
             time.sleep(1)
 
