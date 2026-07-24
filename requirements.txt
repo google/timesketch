@@ -11,6 +11,7 @@ opentelemetry-instrumentation-flask>=0.63b1
 opentelemetry-instrumentation-celery>=0.63b1
 opentelemetry-instrumentation-sqlalchemy>=0.63b1
 google-cloud-trace>=1.19.0
+opentelemetry-resourcedetector-gcp>=1.12.0a0
 opentelemetry-exporter-gcp-trace>=1.12.0
 opentelemetry-exporter-otlp>=1.42.1
 Flask==3.1.3
