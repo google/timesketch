@@ -21,6 +21,7 @@ import pandas as pd
 
 from timesketch_cli_client.commands import attribute as attribute_command
 from timesketch_api_client import search
+from timesketch_api_client.error import NotFoundError
 
 
 @click.group("sketch")
@@ -348,31 +349,72 @@ def delete_sketch(ctx: click.Context, force_delete: bool) -> None:
         force_delete (bool): If true, delete immediately.
     """
     sketch = ctx.obj.sketch
-    # if sketch is archived, exit
-    if sketch.is_archived():
+
+    # Initialize with default values. Preserve cached sketch_name if it exists.
+    sketch_name = getattr(sketch, "_sketch_name", None) or "<Unknown/Deleted>"
+    sketch_desc = "N/A"
+    sketch_status = "N/A"
+    sketch_labels = "N/A"
+    timelines = []
+
+    try:
+        is_archived = sketch.is_archived()
+    except NotFoundError as e:  # pylint: disable=unused-variable
+        click.echo(
+            f"Warning: Sketch {sketch.id} appears to be soft-deleted or inaccessible."
+        )
+        if not force_delete:
+            click.echo("If you want to permanently delete it, use --force_delete")
+            ctx.exit(1)
+        is_archived = False
+
+    if is_archived:
         click.echo("Error Sketch is archived")
         ctx.exit(1)
+
+    try:
+        sketch_name = sketch.name
+        sketch_desc = sketch.description
+        sketch_status = sketch.status
+        sketch_labels = sketch.labels
+        timelines = sketch.list_timelines()
+    except NotFoundError as e:  # pylint: disable=unused-variable
+        pass
 
     # Dryrun:
     if not force_delete:
         click.echo("Would delete the following things (use --force_delete to execute)")
+
     click.echo(
-        f"Sketch: {sketch.id} {sketch.name} {sketch.description} {sketch.status} Labels: {sketch.labels}"  # pylint: disable=line-too-long
+        f"Sketch: {sketch.id} {sketch_name} {sketch_desc} {sketch_status} Labels: {sketch_labels}"  # pylint: disable=line-too-long
     )
 
-    for timeline in sketch.list_timelines():
+    for timeline in timelines:
+        timeline_desc = "N/A"
+        timeline_status = "N/A"
+        try:
+            # timeline.description and timeline.status lazy-load from the API.
+            timeline_desc = timeline.description
+            timeline_status = timeline.status
+        except NotFoundError as e:  # pylint: disable=unused-variable
+            pass
         click.echo(
-            f"  Timeline: {timeline.id} {timeline.name} {timeline.description} {timeline.status}"  # pylint: disable=line-too-long
+            f"  Timeline: {timeline.id} {timeline.name} {timeline_desc} {timeline_status}"  # pylint: disable=line-too-long
         )
 
     if force_delete:
         # --- Check the response for success or error ---
         try:
             sketch.delete(force_delete=force_delete)
-            click.echo(f"Sketch {sketch.id} '{sketch.name}' successfully deleted.")
+            click.echo(f"Sketch {sketch.id} '{sketch_name}' successfully deleted.")
+        except NotFoundError:
+            click.echo(
+                f"Failed to delete sketch {sketch.id} '{sketch_name}'. Error: Sketch was not found (perhaps already permanently deleted?)."  # pylint: disable=line-too-long
+            )
+            ctx.exit(1)
         except RuntimeError as e:
             click.echo(
-                f"Failed to delete sketch {sketch.id} '{sketch.name}'. Error: {e}"
+                f"Failed to delete sketch {sketch.id} '{sketch_name}'. Error: {e}"
             )
             ctx.exit(1)
 
