@@ -13,13 +13,22 @@
 # limitations under the License.
 """Timesketch API client library."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import json
 import logging
 
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import TYPE_CHECKING
+
 from . import error
 from . import resource
+
+if TYPE_CHECKING:
+    from .client import TimesketchApi
 
 logger = logging.getLogger("timesketch_api.index")
 
@@ -32,20 +41,26 @@ class SearchIndex(resource.BaseResource):
         api: An instance of TimesketchApi object.
     """
 
-    def __init__(self, searchindex_id, api, searchindex_name=None):
+    def __init__(
+        self,
+        searchindex_id: int,
+        api: TimesketchApi,
+        searchindex_name: Optional[str] = None,
+    ) -> None:
         """Initializes the SearchIndex object.
 
         Args:
             searchindex_id: Primary key ID of the searchindex.
+            api: An instance of TimesketchApi object.
             searchindex_name: Name of the searchindex (optional).
         """
         self.id = searchindex_id
-        self._labels = []
+        self._labels: List[str] = []
         self._searchindex_name = searchindex_name
         resource_uri = f"searchindices/{self.id}/"
         super().__init__(api=api, resource_uri=resource_uri)
 
-    def _get_object_dict(self):
+    def _get_object_dict(self) -> Dict[str, Any]:
         """Returns the object dict from the resources dict."""
         data = self.lazyload_data()
         objects = data.get("objects", [])
@@ -55,18 +70,18 @@ class SearchIndex(resource.BaseResource):
         return objects[0]
 
     @property
-    def fields(self):
+    def fields(self) -> List[Dict[str, Any]]:
         """Property that returns the fields in the index mappings."""
         index_data = self.lazyload_data(refresh_cache=True)
         meta = index_data.get("meta", {})
         return meta.get("fields", [])
 
     @property
-    def has_timeline_id(self):
+    def has_timeline_id(self) -> bool:
         """Property that returns back whether a __ts_timeline_id field is set.
 
         Returns:
-            bool: True if the data uses __timeline_id field to distinguish
+            True if the data uses __timeline_id field to distinguish
                 different data sets in an index, False if the entire index
                 is the data set.
         """
@@ -75,7 +90,7 @@ class SearchIndex(resource.BaseResource):
         return meta.get("contains_timeline_id", False)
 
     @property
-    def labels(self):
+    def labels(self) -> List[str]:
         """Property that returns the SearchIndex labels."""
         if self._labels:
             return self._labels
@@ -93,7 +108,7 @@ class SearchIndex(resource.BaseResource):
         return self._labels
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Property that returns searchindex name.
 
         Returns:
@@ -105,7 +120,7 @@ class SearchIndex(resource.BaseResource):
         return self._searchindex_name
 
     @property
-    def index_name(self):
+    def index_name(self) -> str:
         """Property that returns OpenSearch index name.
 
         Returns:
@@ -115,7 +130,7 @@ class SearchIndex(resource.BaseResource):
         return index_data.get("index_name", "unknown index name")
 
     @property
-    def status(self):
+    def status(self) -> str:
         """Property that returns the index status.
 
         Returns:
@@ -130,8 +145,12 @@ class SearchIndex(resource.BaseResource):
         return status.get("status")
 
     @status.setter
-    def status(self, status):
-        """Set the SearchIndex status."""
+    def status(self, status: str) -> None:
+        """Set the SearchIndex status.
+
+        Args:
+            status: The status to set.
+        """
         resource_url = f"{self.api.api_root}/searchindices/{self.id}/"
         data = {"status": status}
         response = self.api.session.post(resource_url, json=data)
@@ -139,12 +158,12 @@ class SearchIndex(resource.BaseResource):
         _ = error.check_return_status(response, logger)
 
     @property
-    def description(self):
+    def description(self) -> str:
         """Property that returns the description of the index."""
         index_data = self._get_object_dict()
         return index_data.get("description", "no description provided")
 
-    def delete(self):
+    def delete(self) -> bool:
         """Deletes the index."""
         resource_url = "{0:s}/searchindices/{1:d}/".format(self.api.api_root, self.id)
         response = self.api.session.delete(resource_url)
