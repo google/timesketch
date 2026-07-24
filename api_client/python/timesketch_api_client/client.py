@@ -688,6 +688,36 @@ class TimesketchApi:
         """
         return sketch.Sketch(sketch_id, api=self)
 
+    def get_sketches_by_name(self, sketch_name: str) -> list[sketch.Sketch]:
+        """Get a sketch by name.
+
+        Args:
+            sketch_name (str): The name of the sketch to find.
+                Warning: Timesketch allows multiple sketches with the same name.
+                The client library should therefore handle this potential conflict.
+
+        Raises:
+            KeyError: If no sketch with the specified name is found.
+
+        Returns:
+            list[sketch.Sketch]: A list of sketch objects.
+        """
+
+        # We still need to verify the match for the sketch name, as the search_query
+        # also matches on partial (ILIKE) matches by default
+        sketches = [
+            sketch_obj
+            for sketch_obj in self.list_sketches(
+                search_query=sketch_name, scope="search"
+            )
+            if sketch_obj.name == sketch_name
+        ]
+
+        if not sketches:
+            raise KeyError(f"Sketch with name '{sketch_name}' not found.")
+
+        return sketches
+
     def get_aggregator_info(self, name="", as_pandas=False):
         """Returns information about available aggregators.
 
@@ -734,12 +764,19 @@ class TimesketchApi:
 
         return pandas.DataFrame(lines)
 
-    def list_sketches(self, per_page=50, scope="user", include_archived=True):
+    def list_sketches(
+        self,
+        per_page=50,
+        scope="user",
+        include_archived=True,
+        search_query=None,
+    ):
         """Get a list of all open sketches that the user has access to.
 
         Args:
             per_page (int): Number of items per page when paginating. Default is 50.
-            scope (str): What scope to get sketches as. Default to user.
+            scope (str): What scope to get sketches as. Default to user, unless
+                search_query is specified.
                 user: sketches owned by the user
                 recent: sketches that the user has actively searched in
                 shared: sketches shared with the user (but not owned by them)
@@ -748,15 +785,26 @@ class TimesketchApi:
                 search: pass additional search query
                 all: all sketches the user has access to (owned and shared)
             include_archived (bool): If archived sketches should be returned.
+            search_query (str): A query string to search for sketches by name
+                or description. When provided, the scope is automatically set
+                to "search" so that filtering happens server-side. The results
+                are then exact-matched against the query in Python to eliminate
+                partial (ILIKE) matches.
 
         Yields:
             Sketch objects instances.
         """
+        if search_query:  # ensure coherent behaviour when giving search_query
+            scope = "search"
+
         url_params = {
             "per_page": per_page,
             "scope": scope,
             "include_archived": include_archived,
         }
+
+        if search_query:
+            url_params["search_query"] = search_query
         # Start with the first page
         page = 1
         has_next_page = True
