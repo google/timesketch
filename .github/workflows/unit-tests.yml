@@ -35,8 +35,18 @@ jobs:
       - name: Install dependencies
         run: |
           pip install pipenv
-          # --pre is required because opentelemetry-resourcedetector-gcp currently only has alpha releases available
-          pipenv install --pre -d
+          # pipenv auto-converts requirements.txt to Pipfile if missing, but fails on alpha packages.
+          # We manually create a Pipfile that allows pre-releases before running pipenv.
+          cat <<EOF > Pipfile
+          [[source]]
+          url = "https://pypi.org/simple"
+          verify_ssl = true
+          name = "pypi"
+
+          [pipenv]
+          allow_prereleases = true
+          EOF
+          pipenv install -d
           pipenv run pip install -r requirements.txt
           pipenv run pip install -r test_requirements.txt
           pipenv run pip install -e ./api_client/python
