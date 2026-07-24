@@ -42,6 +42,73 @@ ADMINUSERNAME = "admin"
 ADMINPASSWORD = "admin"
 
 
+def get_plaso_filename() -> str:
+    """Return the correct plaso test filename based on the installed acstore version.
+
+    The storage format of Plaso changes periodically. The E2E tests are run in both
+    local development environments (which use older, stable Plaso libraries) and
+    in CI environments (which use newer, staging Plaso libraries). This helper
+    dynamically detects the supported storage format at runtime to ensure the
+    test suite uses a Plaso file that the local environment can successfully parse,
+    avoiding format version errors.
+
+    Returns:
+        str: The filename of the appropriate plaso file.
+    """
+    import logging  # pylint: disable=import-outside-toplevel
+
+    logger = logging.getLogger(__name__)
+
+    try:
+        # pylint: disable=import-outside-toplevel
+        import plaso
+        import re
+
+        # Extract leading digits to handle suffixes like .dev0 or rc1 safely
+        version_match = re.match(r"^\d+", plaso.__version__)
+        version = int(version_match.group(0)) if version_match else 0
+        logger.info("Detected plaso version %d.", version)
+
+        if version >= 20260720:
+            plaso_file = "evtx_20260720.plaso"
+        elif version >= 20260516:
+            plaso_file = "evtx_20260516.plaso"
+        elif version >= 20260512:
+            plaso_file = "evtx_20260512.plaso"
+        elif version >= 20250918:
+            plaso_file = "evtx_20250918.plaso"
+        else:
+            plaso_file = "evtx_20221023.plaso"
+        logger.info("Using test file: %s", plaso_file)
+        return plaso_file
+    except (ImportError, AttributeError, TypeError) as e:
+        logger.info(
+            "Could not import plaso or read version, falling back to acstore "
+            "format version: %s",
+            e,
+        )
+        try:
+            # pylint: disable=import-outside-toplevel
+            from acstore.sqlite_store import SQLiteAttributeContainerStore
+
+            # pylint: disable=protected-access
+            version = SQLiteAttributeContainerStore._READ_COMPATIBLE_FORMAT_VERSION
+
+            if version >= 20230327:
+                plaso_file = "evtx_20260516.plaso"
+            else:
+                plaso_file = "evtx_20221023.plaso"
+            logger.info(
+                "acstore format version %d detected. Using test file: %s",
+                version,
+                plaso_file,
+            )
+            return plaso_file
+        except (ImportError, AttributeError) as err:
+            logger.warning("Could not import acstore, using default plaso file: %s", err)
+            return "evtx_20221023.plaso"
+
+
 class BaseEndToEndTest(object):
     """Base class for end to end tests.
 

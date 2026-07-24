@@ -27,7 +27,12 @@ class ImportPlasoFilterTest(interface.BaseEndToEndTest):
     NAME = "import_plaso_filter_test"
 
     def import_timeline(
-        self, filename, index_name=None, sketch=None, filter_expression=None
+        self,
+        filename,
+        index_name=None,
+        sketch=None,
+        entry_threshold=None,
+        filter_expression=None,
     ):
         """Import a Plaso file with an optional filter.
 
@@ -35,6 +40,7 @@ class ImportPlasoFilterTest(interface.BaseEndToEndTest):
             filename (str): Filename of the file to be imported.
             index_name (str): The OpenSearch index to store the documents in.
             sketch (Sketch): Optional sketch object to add the timeline to.
+            entry_threshold (int): Optional chunk size threshold for imports.
             filter_expression (str): Plaso event filter expression.
 
         Returns:
@@ -54,23 +60,28 @@ class ImportPlasoFilterTest(interface.BaseEndToEndTest):
             streamer.set_provider("e2e test interface")
             if filter_expression:
                 streamer.set_plaso_event_filter(filter_expression)
+            if entry_threshold is not None:
+                streamer.set_entry_threshold(entry_threshold)
             streamer.add_file(file_path)
             timeline = streamer.timeline
 
         # Poll for readiness (simplified from base class for this specific test)
         max_retries = 30
         for _ in range(max_retries):
-            try:
-                if timeline:
+            if timeline:
+                status = None
+                try:
                     timeline.lazyload_data(refresh_cache=True)
-                    if timeline.status == "ready":
-                        break
-                    if timeline.status == "fail":
-                        raise RuntimeError(
-                            f"Timeline failed processing: {timeline.status}"
-                        )
-            except Exception as e:  # pylint: disable=broad-exception-caught
-                print(f"An exception occurred while polling for timeline status: {e}")
+                    status = timeline.status
+                except Exception as e:  # pylint: disable=broad-exception-caught
+                    print(
+                        f"An exception occurred while polling for timeline status: {e}"
+                    )
+
+                if status == "ready":
+                    break
+                if status == "fail":
+                    raise RuntimeError(f"Timeline failed processing: {status}")
             time.sleep(2)
 
         return timeline
@@ -82,7 +93,7 @@ class ImportPlasoFilterTest(interface.BaseEndToEndTest):
         sketch = self.api.create_sketch(name=f"test_plaso_filter_import_{rand}")
         self.sketch = sketch
 
-        file_name = "evtx_20250918.plaso"
+        file_name = interface.get_plaso_filename()
 
         # This filter should limit the number of events to 3.
         filter_expression = 'data_type is "fs:stat"'

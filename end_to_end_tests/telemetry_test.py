@@ -50,6 +50,74 @@ class TelemetryTest(interface.BaseEndToEndTest):
         self._wait_for_jaeger()
         self.import_timeline("evtx_direct.csv")
 
+    def test_00_infrastructure_readiness(self):
+        """Verify that otel-collector and Jaeger are reachable and working."""
+        # Manually send a dummy trace directly to the otel-collector OTLP HTTP receiver
+        trace_id = uuid.uuid4().hex
+        span_id = uuid.uuid4().hex[:16]
+        now_nano = time.time_ns()
+
+        payload = {
+            "resourceSpans": [
+                {
+                    "resource": {
+                        "attributes": [
+                            {
+                                "key": "service.name",
+                                "value": {"stringValue": "infrastructure_probe"},
+                            }
+                        ]
+                    },
+                    "scopeSpans": [
+                        {
+                            "spans": [
+                                {
+                                    "traceId": trace_id,
+                                    "spanId": span_id,
+                                    "name": "probe_span",
+                                    "kind": 1,
+                                    "startTimeUnixNano": str(now_nano),
+                                    "endTimeUnixNano": str(now_nano + 1000000),
+                                }
+                            ]
+                        }
+                    ],
+                }
+            ]
+        }
+
+        try:
+            response = requests.post(
+                "http://otel-collector:4318/v1/traces", json=payload, timeout=5
+            )
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            self.assertions.fail(f"Failed to send probe to otel-collector: {e}")
+
+        # Poll Jaeger to see if the trace arrived
+        jaeger_api_url = "http://jaeger:16686/api"
+        query_url = f"{jaeger_api_url}/traces/{trace_id}"
+
+        found = False
+        for _ in range(30):
+            try:
+                resp = requests.get(query_url, timeout=5)
+                if resp.status_code == 200:
+                    data = resp.json().get("data", [])
+                    if data:
+                        found = True
+                        break
+            except (requests.exceptions.RequestException, ValueError):
+                pass
+            time.sleep(1)
+
+        self.assertions.assertTrue(
+            found,
+            f"Infrastructure broken: Sent trace {trace_id} to otel-collector but it "
+            "never appeared in Jaeger. Check docker compose services.",
+        )
+        print("OTEL-Collector to Jaeger pipeline is working!")
+
     def test_telemetry_connectivity(self):
         """Verify that OpenTelemetry spans are successfully exported to Jaeger."""
         jaeger_api_url = "http://jaeger:16686/api"
