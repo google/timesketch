@@ -80,6 +80,8 @@ class TimesketchCli:
             if not actual_conf_file:
                 home_path = os.path.expanduser("~")
                 actual_conf_file = os.path.join(home_path, ".timesketchrc")
+            else:
+                actual_conf_file = os.path.expanduser(actual_conf_file)
 
             if os.path.isfile(actual_conf_file):
                 parser = configparser.ConfigParser()
