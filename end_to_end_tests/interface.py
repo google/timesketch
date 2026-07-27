@@ -48,7 +48,7 @@ def get_plaso_filename() -> str:
     Returns:
         str: The filename of the appropriate plaso file.
     """
-    return "evtx_20260720.plaso"
+    return os.environ.get("TEST_PLASO_FILE", "evtx_20260720.plaso")
 
 
 class BaseEndToEndTest(object):
