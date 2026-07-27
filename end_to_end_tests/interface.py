@@ -48,7 +48,7 @@ def get_plaso_filename() -> str:
     Returns:
         str: The filename of the appropriate plaso file.
     """
-    return os.environ.get("TEST_PLASO_FILE", "evtx_20260720.plaso")
+    return os.environ.get("TEST_PLASO_FILE", "evtx_20260512.plaso")
 
 
 class BaseEndToEndTest(object):
@@ -154,16 +154,23 @@ class BaseEndToEndTest(object):
                     f"{file_path}"
                 ) from e
 
+            if status == "fail":
+                if retry_count > 3:
+                    raise RuntimeError(
+                        f"Failed to import {filename} into sketch {sketch.id}. "
+                        "Timeline status is 'fail'."
+                    )
+
             if not timeline.index:
                 retry_count += 1
                 time.sleep(sleep_time_seconds)
                 continue
 
-            if status == "fail" or timeline.index.status == "fail":
+            if timeline.index.status == "fail":
                 if retry_count > 3:
                     raise RuntimeError(
                         f"Failed to import {filename} into sketch {sketch.id}. "
-                        "Timeline or Index status is 'fail'."
+                        "Index status is 'fail'."
                     )
 
             if status == "ready" and timeline.index.status == "ready":
