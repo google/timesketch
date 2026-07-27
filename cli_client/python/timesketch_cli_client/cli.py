@@ -57,7 +57,7 @@ class TimesketchCli:
         self,
         api_client: Optional["client.TimesketchApi"] = None,
         sketch_from_flag: Optional[int] = None,
-        conf_file: str = "",
+        conf_file: Optional[str] = "",
         output_format_from_flag: Optional[str] = None,
         config_section: str = DEFAULT_CONFIG_SECTION,
     ):
