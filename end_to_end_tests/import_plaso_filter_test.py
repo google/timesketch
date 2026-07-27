@@ -68,6 +68,8 @@ class ImportPlasoFilterTest(interface.BaseEndToEndTest):
         # Poll for readiness (simplified from base class for this specific test)
         max_retries = 30
         for _ in range(max_retries):
+            if not timeline:
+                timeline = streamer.timeline
             if timeline:
                 status = None
                 try:

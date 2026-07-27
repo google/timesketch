@@ -84,7 +84,9 @@ class TelemetryTest(interface.BaseEndToEndTest):
                 time.sleep(1)
 
         if last_error:
-            self.assertions.fail(f"Failed to send probe to otel-collector: {last_error}")
+            self.assertions.fail(
+                f"Failed to send probe to otel-collector: {last_error}"
+            )
 
         # Poll Jaeger to see if the trace arrived
         jaeger_api_url = "http://jaeger:16686/api"
@@ -99,7 +101,7 @@ class TelemetryTest(interface.BaseEndToEndTest):
                     if data:
                         found = True
                         break
-            except (requests.exceptions.RequestException, ValueError):
+            except (requests.exceptions.RequestException, ValueError, AttributeError):
                 pass
             time.sleep(1)
 
@@ -165,7 +167,7 @@ class TelemetryTest(interface.BaseEndToEndTest):
                         )
                         if str(sketch_id_val) == str(self.sketch.id):
                             return tags
-            except (requests.exceptions.RequestException, ValueError):
+            except (requests.exceptions.RequestException, ValueError, AttributeError):
                 pass
             time.sleep(1)
         return None
