@@ -42,11 +42,14 @@ def list_intelligence(
     """List all intelligence.
 
     Args:
-        ctx (click.Context) (required): Click context object.
-        header (bool) (optional): Include header in output. (default is to show header)
-        columns (str) (optional): Comma separated list of columns to show.
+        header: Include header in output. (default is to show header)
+        columns: Comma separated list of columns to show.
             (default: ioc,type)
                 Other options: externalURI, tags
+
+    Outputs:
+        Note: The output format is determined by the global '--output-format'
+        flag or the context's 'output_format' setting.
     """
 
     if not columns:
@@ -129,9 +132,8 @@ def add_intelligence(
     Reference: https://timesketch.org/guides/user/intelligence/
 
     Args:
-        ctx:  (click.Context) (required) Click context object.
         ioc: IOC value.
-        ioc_type: Type of the intelligence. This is defined in the ontology file.
+        ioc_type: Type of the intelligence. Defined in the ontology file.
             If a string doesn't match any of the aforementioned IOC types,
             the type will fall back to other.
         tags: Comma separated list of tags.
