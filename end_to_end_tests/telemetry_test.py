@@ -28,27 +28,88 @@ class TelemetryTest(interface.BaseEndToEndTest):
 
     NAME = "telemetry_test"
 
-    def _wait_for_jaeger(self):
-        """Wait for Jaeger API to become reachable."""
-        jaeger_api_url = "http://jaeger:16686/api"
+    def setup(self):
+        """Import a test timeline to ensure search works."""
+        self._check_infrastructure_readiness()
+        self.import_timeline("evtx_direct.csv")
+
+    def _check_infrastructure_readiness(self):
+        """Verify that otel-collector and Jaeger are reachable and working."""
+        # Manually send a dummy trace directly to the otel-collector OTLP HTTP receiver
+        trace_id = uuid.uuid4().hex
+        span_id = uuid.uuid4().hex[:16]
+        now_nano = time.time_ns()
+
+        payload = {
+            "resourceSpans": [
+                {
+                    "resource": {
+                        "attributes": [
+                            {
+                                "key": "service.name",
+                                "value": {"stringValue": "infrastructure_probe"},
+                            }
+                        ]
+                    },
+                    "scopeSpans": [
+                        {
+                            "spans": [
+                                {
+                                    "traceId": trace_id,
+                                    "spanId": span_id,
+                                    "name": "probe_span",
+                                    "kind": 1,
+                                    "startTimeUnixNano": str(now_nano),
+                                    "endTimeUnixNano": str(now_nano + 1000000),
+                                }
+                            ]
+                        }
+                    ],
+                }
+            ]
+        }
+
+        # Wait for otel-collector to accept the trace
         last_error = None
         for _ in range(30):
             try:
-                response = requests.get(f"{jaeger_api_url}/services", timeout=5)
+                response = requests.post(
+                    "http://otel-collector:4318/v1/traces", json=payload, timeout=5
+                )
                 response.raise_for_status()
-                return
+                last_error = None
+                break
             except requests.exceptions.RequestException as e:
                 last_error = e
                 time.sleep(1)
 
-        self.assertions.fail(
-            f"Jaeger is not reachable at {jaeger_api_url}: {last_error}"
-        )
+        if last_error:
+            self.assertions.fail(
+                f"Failed to send probe to otel-collector: {last_error}"
+            )
 
-    def setup(self):
-        """Import a test timeline to ensure search works."""
-        self._wait_for_jaeger()
-        self.import_timeline("evtx_direct.csv")
+        # Poll Jaeger to see if the trace arrived
+        jaeger_api_url = "http://jaeger:16686/api"
+        query_url = f"{jaeger_api_url}/traces/{trace_id}"
+
+        found = False
+        for _ in range(30):
+            try:
+                resp = requests.get(query_url, timeout=5)
+                if resp.status_code == 200:
+                    data = resp.json().get("data", [])
+                    if data:
+                        found = True
+                        break
+            except (requests.exceptions.RequestException, ValueError, AttributeError):
+                pass
+            time.sleep(1)
+
+        self.assertions.assertTrue(
+            found,
+            f"Infrastructure broken: Sent trace {trace_id} to otel-collector but it "
+            "never appeared in Jaeger. Check docker compose services.",
+        )
 
     def test_telemetry_connectivity(self):
         """Verify that OpenTelemetry spans are successfully exported to Jaeger."""
@@ -106,7 +167,7 @@ class TelemetryTest(interface.BaseEndToEndTest):
                         )
                         if str(sketch_id_val) == str(self.sketch.id):
                             return tags
-            except (requests.exceptions.RequestException, ValueError):
+            except (requests.exceptions.RequestException, ValueError, AttributeError):
                 pass
             time.sleep(1)
         return None
