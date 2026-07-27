@@ -154,7 +154,7 @@ output_format = tabular
 """
         with tempfile.NamedTemporaryFile(mode="w") as fw:
             fw.write(custom_config)
-            fw.seek(0)
+            fw.flush()
 
             cli_context = TimesketchCli(
                 api_client=None, conf_file=fw.name, config_section="custom_section"
