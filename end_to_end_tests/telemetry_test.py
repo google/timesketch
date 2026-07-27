@@ -28,29 +28,12 @@ class TelemetryTest(interface.BaseEndToEndTest):
 
     NAME = "telemetry_test"
 
-    def _wait_for_jaeger(self):
-        """Wait for Jaeger API to become reachable."""
-        jaeger_api_url = "http://jaeger:16686/api"
-        last_error = None
-        for _ in range(30):
-            try:
-                response = requests.get(f"{jaeger_api_url}/services", timeout=5)
-                response.raise_for_status()
-                return
-            except requests.exceptions.RequestException as e:
-                last_error = e
-                time.sleep(1)
-
-        self.assertions.fail(
-            f"Jaeger is not reachable at {jaeger_api_url}: {last_error}"
-        )
-
     def setup(self):
         """Import a test timeline to ensure search works."""
-        self._wait_for_jaeger()
+        self._check_infrastructure_readiness()
         self.import_timeline("evtx_direct.csv")
 
-    def test_00_infrastructure_readiness(self):
+    def _check_infrastructure_readiness(self):
         """Verify that otel-collector and Jaeger are reachable and working."""
         # Manually send a dummy trace directly to the otel-collector OTLP HTTP receiver
         trace_id = uuid.uuid4().hex
@@ -86,13 +69,22 @@ class TelemetryTest(interface.BaseEndToEndTest):
             ]
         }
 
-        try:
-            response = requests.post(
-                "http://otel-collector:4318/v1/traces", json=payload, timeout=5
-            )
-            response.raise_for_status()
-        except requests.exceptions.RequestException as e:
-            self.assertions.fail(f"Failed to send probe to otel-collector: {e}")
+        # Wait for otel-collector to accept the trace
+        last_error = None
+        for _ in range(30):
+            try:
+                response = requests.post(
+                    "http://otel-collector:4318/v1/traces", json=payload, timeout=5
+                )
+                response.raise_for_status()
+                last_error = None
+                break
+            except requests.exceptions.RequestException as e:
+                last_error = e
+                time.sleep(1)
+
+        if last_error:
+            self.assertions.fail(f"Failed to send probe to otel-collector: {last_error}")
 
         # Poll Jaeger to see if the trace arrived
         jaeger_api_url = "http://jaeger:16686/api"
@@ -116,7 +108,6 @@ class TelemetryTest(interface.BaseEndToEndTest):
             f"Infrastructure broken: Sent trace {trace_id} to otel-collector but it "
             "never appeared in Jaeger. Check docker compose services.",
         )
-        print("OTEL-Collector to Jaeger pipeline is working!")
 
     def test_telemetry_connectivity(self):
         """Verify that OpenTelemetry spans are successfully exported to Jaeger."""
