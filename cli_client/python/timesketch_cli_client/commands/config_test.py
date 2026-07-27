@@ -237,7 +237,7 @@ output_format = tabular
 """
         with tempfile.NamedTemporaryFile(mode="w") as fw:
             fw.write(custom_config)
-            fw.seek(0)
+            fw.flush()
 
             runner = CliRunner()
             result = runner.invoke(
