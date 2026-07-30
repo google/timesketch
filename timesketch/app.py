@@ -219,6 +219,16 @@ def create_app(
     # Setup CSRF protection for the whole application
     CSRFProtect(app)
 
+    # The direct-query package holds its own long-lived OpenSearch client so
+    # that a paged export does not rebuild the connection pool on every page.
+    # Built here rather than on first use so that a malformed cluster
+    # configuration is reported at startup. Imported inside the factory to
+    # keep the resource package out of the module import graph.
+    # pylint: disable=import-outside-toplevel
+    from timesketch.api.v1.resources.direct_query.base import configure_client
+
+    configure_client(app)
+
     if app.config.get("ENABLE_PROFILING", False) and not app.config.get("TESTING"):
         # pylint: disable=import-outside-toplevel
         from werkzeug.middleware.profiler import ProfilerMiddleware
