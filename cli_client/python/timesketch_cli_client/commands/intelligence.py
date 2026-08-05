@@ -55,7 +55,7 @@ def list_intelligence(
     if not columns:
         columns = "ioc,type"
 
-    columns = columns.split(",")
+    columns_list = columns.split(",")
 
     output = ctx.obj.output_format
     sketch = ctx.obj.sketch
@@ -72,10 +72,10 @@ def list_intelligence(
         click.echo(json.dumps(intelligence, indent=4, sort_keys=True))
     elif output == "text":
         if header:
-            click.echo("\t".join(columns))
+            click.echo("\t".join(columns_list))
         for entry in intelligence:
             row = []
-            for column in columns:
+            for column in columns_list:
                 if column == "tags":
                     row.append(",".join(entry.get(column, [])))
                 else:
@@ -83,10 +83,10 @@ def list_intelligence(
             click.echo("\t".join(row))
     elif output == "csv":
         if header:
-            click.echo(",".join(columns))
+            click.echo(",".join(columns_list))
         for entry in intelligence:
             row = []
-            for column in columns:
+            for column in columns_list:
                 if column == "tags":
                     # Tags can be multiple values but they should only be
                     # one value on the csv so we join them with a comma
@@ -142,12 +142,12 @@ def add_intelligence(
 
     # Create a tags dict from the comma separated list
     if tags:
-        tags = tags.split(",")
-        tags = {tag: [] for tag in tags}
+        tags_list = tags.split(",")
+        tags_dict = {tag: [] for tag in tags_list}
     else:
-        tags = []
+        tags_dict = []
 
-    ioc_dict = {"ioc": ioc, "type": ioc_type, "tags": tags}
+    ioc_dict = {"ioc": ioc, "type": ioc_type, "tags": tags_dict}
     # Put the ioc in a nested object to match the format of the API
     data = {"data": [ioc_dict]}
     try:
