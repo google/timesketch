@@ -57,7 +57,9 @@ def importer(ctx: click.Context, name: str, timeout: Optional[int], file_path: s
 
     # Poll the timeline status and wait for the timeline to be ready
     click.echo("Indexing .. ", nl=False)
-    max_time_seconds = timeout if timeout is not None else 600  # default timeout for the importer
+    max_time_seconds = (
+        timeout if timeout is not None else 600
+    )  # default timeout for the importer
     sleep_time_seconds = 5  # Sleep between API calls
     max_retries = max_time_seconds / sleep_time_seconds
     retry_count = 0
