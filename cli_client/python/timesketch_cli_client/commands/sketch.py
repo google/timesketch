@@ -549,11 +549,11 @@ def export_only_with_annotations(
             if output_format == "csv":
                 fh.write(final_df.to_csv(index=False, header=True, lineterminator="\n"))
             elif output_format == "jsonl":
-                json_str = (
-                    final_df.to_json(orient="records", lines=True, date_format="iso")
-                    or ""
+                json_str = final_df.to_json(
+                    orient="records", lines=True, date_format="iso"
                 )
-                fh.write(json_str + "\n")
+                if json_str:
+                    fh.write(json_str)
 
         end_time = time.time()
         click.echo(
