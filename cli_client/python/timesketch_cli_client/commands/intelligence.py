@@ -145,7 +145,7 @@ def add_intelligence(
         tags_list = tags.split(",")
         tags_dict = {tag: [] for tag in tags_list}
     else:
-        tags_dict = []
+        tags_dict = {}
 
     ioc_dict = {"ioc": ioc, "type": ioc_type, "tags": tags_dict}
     # Put the ioc in a nested object to match the format of the API
