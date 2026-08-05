@@ -48,7 +48,7 @@ def list_sigmarules(ctx: click.Context, header: bool, columns: str):
     if not columns:
         columns = "rule_uuid,title"
 
-    columns = columns.split(",")
+    columns_list = columns.split(",")
 
     output = ctx.obj.output_format
     try:
@@ -65,10 +65,10 @@ def list_sigmarules(ctx: click.Context, header: bool, columns: str):
         click.echo(sigma_rules.to_csv(header=header))
     elif output == "text":
         click.echo(
-            sigma_rules.to_string(index=header, columns=columns),
+            sigma_rules.to_string(index=header, columns=columns_list),
         )
     else:
-        click.echo(sigma_rules.to_string(index=header, columns=columns))
+        click.echo(sigma_rules.to_string(index=header, columns=columns_list))
 
 
 @sigma_group.command("describe")
