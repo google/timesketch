@@ -15,7 +15,7 @@
 
 import time
 import json
-from typing import Optional
+from typing import Optional, cast
 import click
 import pandas as pd
 
@@ -459,7 +459,7 @@ def export_only_with_annotations(
         )
 
     start_time = time.time()
-    all_events_df = (
+    all_events_df: pd.DataFrame = (
         pd.DataFrame()
     )  # Initialize an empty DataFrame to hold combined results
 
@@ -500,8 +500,9 @@ def export_only_with_annotations(
                 if not events_df.empty:
                     click.echo(f"    Found {len(events_df)} events.")
                     # Concatenate results, ignore index to avoid conflicts
-                    all_events_df = pd.concat(
-                        [all_events_df, events_df], ignore_index=True
+                    all_events_df = cast(
+                        pd.DataFrame,
+                        pd.concat([all_events_df, events_df], ignore_index=True),
                     )
                 else:
                     click.echo("    Found 0 events.")
@@ -548,10 +549,11 @@ def export_only_with_annotations(
             if output_format == "csv":
                 fh.write(final_df.to_csv(index=False, header=True, lineterminator="\n"))
             elif output_format == "jsonl":
-                fh.write(
+                json_str = (
                     final_df.to_json(orient="records", lines=True, date_format="iso")
-                    + "\n"
+                    or ""
                 )
+                fh.write(json_str + "\n")
 
         end_time = time.time()
         click.echo(
