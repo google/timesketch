@@ -56,6 +56,32 @@ class SearchTest(unittest.TestCase):
         objects = search_dict.get("objects", [])
         self.assertEqual(len(objects), 1)
 
+    def test_to_pandas_timeline_fields(self):
+        """Test that to_pandas maps the timeline to its name."""
+        search_obj = search.Search(sketch=self.sketch)
+        search_obj.return_fields = "message,__ts_timeline_id"
+        search_obj._raw_response = {
+            "objects": [
+                {
+                    "_source": {"message": "foo", "__ts_timeline_id": 1},
+                    "_id": "a1",
+                    "_type": "generic_event",
+                    "_index": "test",
+                },
+                {
+                    "_source": {"message": "bar", "__ts_timeline_id": 2},
+                    "_id": "a2",
+                    "_type": "generic_event",
+                    "_index": "test",
+                },
+            ]
+        }
+        data_frame = search_obj.to_pandas()
+        self.assertEqual(list(data_frame.columns), ["message", "__ts_timeline_id"])
+        self.assertEqual(
+            list(data_frame["__ts_timeline_id"]), ["test", "test"]
+        )
+
     def test_range_chip(self):
         """Test date range chip."""
         chip = search.DateRangeChip()
