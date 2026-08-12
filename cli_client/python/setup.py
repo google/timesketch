@@ -42,7 +42,7 @@ setup(
             "click",
             "tabulate",
             "pandas",
-            "timesketch-api-client",
+            "timesketch-api-client>=20260611",
             "timesketch-import-client",
         ]
     ),

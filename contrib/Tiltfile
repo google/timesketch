@@ -39,7 +39,7 @@ local_resource(
     serve_cmd=wait_cmd
     + " && "
     + refresh_config_cmd
-    + " && docker exec -i timesketch-dev bash -c 'pkill -f \"[g]unicorn\" || true' && docker exec -i timesketch-dev gunicorn -c /usr/local/src/timesketch/timesketch/gunicorn.conf.py --reload --bind 0.0.0.0:5000 --log-level debug --capture-output --timeout 600 --workers 4 timesketch.wsgi:application",
+    + " && docker exec -i timesketch-dev bash -c 'pkill -f \"[g]unicorn\" || true' && docker exec -i timesketch-dev gunicorn -c /usr/local/src/timesketch/timesketch/gunicorn.conf.py --reload --bind 0.0.0.0:5000 --log-level debug --capture-output --timeout 600 timesketch.wsgi:application",
     deps=config_deps,
     ignore=["**/node_modules/**"],
     labels=["backend"],

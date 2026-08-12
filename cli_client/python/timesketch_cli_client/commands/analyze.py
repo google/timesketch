@@ -47,9 +47,8 @@ def run_analyzer(ctx: click.Context, analyzer_name: str, timeline_id: int):
     """Run an analyzer on one or more timelines.
 
     Args:
-        ctx (click.Context) (required): Click CLI context object.
-        analyzer_name (str) (required): Name of the analyzer to run.
-        timeline_id (int) (required): Timeline ID of the timeline to analyze.
+        analyzer_name: Name of the analyzer to run.
+        timeline_id: Timeline ID of the timeline to analyze.
     """
     sketch = ctx.obj.sketch
     timelines = []
@@ -91,10 +90,10 @@ def run_analyzer(ctx: click.Context, analyzer_name: str, timeline_id: int):
 def list_analyzers(ctx: click.Context):
     """List all available analyzers.
 
-    Args:
-        ctx (click.Context) (required): Click CLI context object.
-        output-format: Output format to use. Available values:
-            'json','text' or 'tabular'
+    Outputs:
+        Note: The output format is determined by the global '--output-format'
+        flag or the context's 'output_format' setting.
+        Available values: 'json', 'text', or 'tabular'.
     """
     sketch = ctx.obj.sketch
     output = ctx.obj.output_format
@@ -150,11 +149,14 @@ def analyzer_results(
     """Show the results of an analyzer run on one or more timelines.
 
     Args:
-        ctx (click.Context) (required): Click CLI context object.
-        analyzer_name (str) (required): Name of the analyzer that was run.
-        timeline_id (int) (required): Timeline ID of the timeline to analyze.
-        show_dependent (bool) (optional): Show dependent analyzers. (default: False)
-            using output_format json will always include the dependent analyzers
+        analyzer_name: Name of the analyzer that was run.
+        timeline_id: Timeline ID of the timeline to analyze.
+        show_dependent: Show dependent analyzers.
+
+    Outputs:
+        Note: The output format is determined by the global '--output-format'
+        flag or the context's 'output_format' setting.
+        Using output_format json will always include the dependent analyzers.
     """
     sketch = ctx.obj.sketch
     output = ctx.obj.output_format
