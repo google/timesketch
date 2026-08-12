@@ -14,15 +14,15 @@
 """Tests for sketch command."""
 
 import unittest
-import mock
+from unittest import mock
 import pandas as pd
 
 from click.testing import CliRunner
 
 from timesketch_api_client import test_lib as api_test_lib
 
-from .. import test_lib
-from .sketch import sketch_group
+from timesketch_cli_client import test_lib
+from timesketch_cli_client.commands.sketch import sketch_group
 
 
 class SketchTest(unittest.TestCase):

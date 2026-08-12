@@ -16,6 +16,9 @@ services:
         condition: service_healthy
     environment:
       - PYTHONUNBUFFERED=1
+      - WSGI_WORKER_CLASS=gthread
+      - NUM_WSGI_THREADS=2
+      - NUM_WSGI_WORKERS=2
       - POSTGRES_USER=timesketch
       - POSTGRES_PASSWORD=password
       - POSTGRES_ADDRESS=postgres
@@ -41,7 +44,7 @@ services:
 
   opensearch:
     container_name: opensearch
-    image: opensearchproject/opensearch:2.19.5
+    image: opensearchproject/opensearch:3.7.0
     restart: always
     environment:
       - discovery.type=single-node

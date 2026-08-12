@@ -210,6 +210,10 @@ export default {
         return ''
       }
 
+      if (lastToken === '*') {
+        return ''
+      }
+
       return lastToken
     },
     matches() {

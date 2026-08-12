@@ -33,13 +33,25 @@ def events_group():
 )
 @click.option("--comment", required=False, help="Comment to add to the event.")
 @click.pass_context
-def annotate(ctx, timeline_id, event_id, tag, comment):
+def annotate(
+    ctx: click.Context,
+    timeline_id: int,
+    event_id: str,
+    tag: Optional[str],
+    comment: Optional[str],
+) -> None:
     """Annotate to an event.
 
     This can be used to add tags and comments to an event.
 
     If neither tag or comment are specified, the command will return the
     current annotations for the event.
+
+    Args:
+        timeline_id: ID of the timeline.
+        event_id: ID of the event.
+        tag: Tag to add.
+        comment: Comment to add.
     """
     sketch = ctx.obj.sketch
     timeline = sketch.get_timeline(timeline_id=timeline_id)
@@ -100,8 +112,21 @@ def annotate(ctx, timeline_id, event_id, tag, comment):
     help="Timestamp description of the event.",
 )
 @click.pass_context
-def add_event(ctx, message, date, attributes, timestamp_desc):
-    """Add an event to the sketch."""
+def add_event(
+    ctx: click.Context,
+    message: str,
+    date: str,
+    attributes: Optional[str],
+    timestamp_desc: str,
+) -> None:
+    """Add an event to the sketch.
+
+    Args:
+        message: Message of the event.
+        date: Date of the event.
+        attributes: Attributes of the event.
+        timestamp_desc: Description of the timestamp.
+    """
     sketch = ctx.obj.sketch
     output = ctx.obj.output_format
 
@@ -149,11 +174,10 @@ def tag_mod(
     the command lists the event's current tags.
 
     Args:
-        ctx (click.Context): The Click context object, containing the sketch.
-        timeline_id (int): The ID of the timeline containing the event.
-        event_id (str): The ID of the event to modify.
-        tag (Optional[str]): The tag to remove from the event, or a comma-separated
-                             list of tags. If None, lists the event's tags.
+        timeline_id: The ID of the timeline containing the event.
+        event_id: The ID of the event to modify.
+        tag: The tag to remove from the event, or a comma-separated
+            list of tags. If None, lists the event's tags.
 
     Errors:
         * If the specified timeline or event does not exist.
