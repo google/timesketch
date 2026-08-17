@@ -254,7 +254,9 @@ class CliClientE2ETest(interface.BaseEndToEndTest):
             1,
             f"CLI command 'sketch delete --force_delete' unexpectedly succeeded on a soft-deleted sketch for a non-admin.\nOutput:\n{result_force.output}\nException:\n{result_force.exception}",  # pylint: disable=line-too-long
         )
-        self.assertions.assertIn("Failed to delete sketch", result_force.output)
+        self.assertions.assertIn(
+            "not found or you do not have permission", result_force.output
+        )
 
 
 # Register the new test class with the test manager

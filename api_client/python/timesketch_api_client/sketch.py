@@ -995,12 +995,16 @@ class Sketch(resource.BaseResource):
             return timelines
 
         for timeline_dict in objects[0].get("timelines", []):
+            searchindex = timeline_dict.get("searchindex")
+            searchindex_name = ""
+            if isinstance(searchindex, dict):
+                searchindex_name = searchindex.get("index_name", "")
             timeline_obj = timeline.Timeline(
-                timeline_id=timeline_dict["id"],
+                timeline_id=timeline_dict.get("id"),
                 sketch_id=self.id,
                 api=self.api,
-                name=timeline_dict["name"],
-                searchindex=timeline_dict["searchindex"]["index_name"],
+                name=timeline_dict.get("name"),
+                searchindex=searchindex_name,
             )
             timelines.append(timeline_obj)
         return timelines

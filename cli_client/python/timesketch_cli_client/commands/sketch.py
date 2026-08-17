@@ -337,17 +337,14 @@ def delete_sketch(ctx: click.Context, force_delete: bool) -> None:
 
     try:
         is_archived = sketch.is_archived()
-    except NotFoundError as e:  # pylint: disable=unused-variable
+    except NotFoundError:
         click.echo(
-            f"Warning: Sketch {sketch.id} appears to be soft-deleted or inaccessible."
+            f"Error: Sketch {sketch.id} not found or you do not have permission to access it."
         )
-        if not force_delete:
-            click.echo("If you want to permanently delete it, use --force_delete")
-            ctx.exit(1)
-        is_archived = False
+        ctx.exit(1)
 
     if is_archived:
-        click.echo("Error Sketch is archived")
+        click.echo("Error: Sketch is archived.")
         ctx.exit(1)
 
     try:

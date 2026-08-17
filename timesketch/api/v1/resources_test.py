@@ -271,6 +271,47 @@ class SketchResourceTest(BaseTest):
         response = self.client.get("/api/v1/sketches/2/")
         self.assert403(response)
 
+    def test_get_sketch_for_admin_no_read_permission(self):
+        """Admin request to get a sketch without explicit read permission."""
+        self.login_admin()
+        response = self.client.get("/api/v1/sketches/1/")
+        self.assert200(response)
+        sketch_obj = response.json["objects"][0]
+        self.assertEqual(sketch_obj["id"], 1)
+        self.assertEqual(sketch_obj["status"][0]["status"], "admin_view")
+        self.assertEqual(len(sketch_obj["timelines"]), 1)
+        self.assertEqual(sketch_obj["timelines"][0]["name"], "<Restricted>")
+        self.assertEqual(sketch_obj["timelines"][0]["description"], "")
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_get_sketch_for_admin_soft_deleted(self):
+        """Admin request to get a soft-deleted sketch with read permission."""
+        # Grant admin explicit read permission on sketch 1
+        self.sketch1.grant_permission(permission="read", user=self.useradmin)
+        self.login_admin()
+
+        # Soft-delete sketch 1
+        delete_response = self.client.delete(self.resource_url)
+        self.assert200(delete_response)
+
+        # Admin gets the soft-deleted sketch
+        response = self.client.get(self.resource_url)
+        self.assert200(response)
+        sketch_obj = response.json["objects"][0]
+        self.assertEqual(sketch_obj["status"][0]["status"], "deleted")
+        self.assertEqual(len(sketch_obj["timelines"]), 1)
+        self.assertEqual(sketch_obj["timelines"][0]["name"], "Timeline 1")
+
+    def test_get_sketch_for_admin_non_admin_forbidden(self):
+        """Non-admin invocation of _get_sketch_for_admin is rejected."""
+        self.login()
+        with self.client:
+            self.client.get("/")
+            from timesketch.api.v1.resources.sketch import SketchResource
+            from werkzeug.exceptions import Forbidden
+            with self.assertRaises(Forbidden):
+                SketchResource._get_sketch_for_admin(self.sketch1)
+
     def test_create_a_sketch(self):
         """Authenticated request to create a sketch."""
         self.login()
