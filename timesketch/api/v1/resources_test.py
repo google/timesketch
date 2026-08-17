@@ -18,6 +18,7 @@ import shutil
 import tempfile
 import json
 from unittest import mock
+from werkzeug.exceptions import Forbidden
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
@@ -46,6 +47,7 @@ from timesketch.lib.llms.providers import interface as llm_interface
 from timesketch.lib.llms.providers import manager as llm_manager
 from timesketch.lib.llms.features import interface as feature_interface
 from timesketch.api.v1.resources import llm
+from timesketch.api.v1.resources import sketch as sketch_resources
 
 
 class ResourceMixinTest(BaseTest):
@@ -307,10 +309,9 @@ class SketchResourceTest(BaseTest):
         self.login()
         with self.client:
             self.client.get("/")
-            from timesketch.api.v1.resources.sketch import SketchResource
-            from werkzeug.exceptions import Forbidden
+            # pylint: disable=protected-access
             with self.assertRaises(Forbidden):
-                SketchResource._get_sketch_for_admin(self.sketch1)
+                sketch_resources.SketchResource._get_sketch_for_admin(self.sketch1)
 
     def test_create_a_sketch(self):
         """Authenticated request to create a sketch."""

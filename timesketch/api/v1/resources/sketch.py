@@ -367,7 +367,7 @@ class SketchResource(resources.ResourceMixin, Resource):
                         "deleted": timeline_status == "deleted",
                     }
                 )
-            else: # for admins, only redacted information are needed
+            else:  # for admins, only redacted information are needed
                 timelines.append(
                     {
                         "id": timeline.id,

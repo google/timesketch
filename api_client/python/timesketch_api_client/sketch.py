@@ -998,7 +998,7 @@ class Sketch(resource.BaseResource):
             searchindex = timeline_dict.get("searchindex")
             searchindex_name = ""
             if isinstance(searchindex, dict):
-                searchindex_name = searchindex.get("index_name", "")
+                searchindex_name = searchindex.get("index_name") or ""
             timeline_obj = timeline.Timeline(
                 timeline_id=timeline_dict.get("id"),
                 sketch_id=self.id,

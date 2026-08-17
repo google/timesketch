@@ -339,7 +339,8 @@ def delete_sketch(ctx: click.Context, force_delete: bool) -> None:
         is_archived = sketch.is_archived()
     except NotFoundError:
         click.echo(
-            f"Error: Sketch {sketch.id} not found or you do not have permission to access it."
+            f"Error: Sketch {sketch.id} not found or you do not have permission "
+            f"to access it."
         )
         ctx.exit(1)
 
