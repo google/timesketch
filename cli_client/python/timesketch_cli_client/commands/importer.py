@@ -16,7 +16,6 @@
 import sys
 import time
 
-from typing import Optional
 import click
 from timesketch_import_client import importer as import_client
 
@@ -26,7 +25,7 @@ from timesketch_import_client import importer as import_client
 @click.option("--timeout", type=int, default=600, help="Seconds to wait for indexing.")
 @click.argument("file_path", type=click.Path(exists=True))
 @click.pass_context
-def importer(ctx: click.Context, name: str, timeout: Optional[int], file_path: str):
+def importer(ctx: click.Context, name: str, timeout: int, file_path: str):
     """Import timeline.
 
     Args:
@@ -57,7 +56,7 @@ def importer(ctx: click.Context, name: str, timeout: Optional[int], file_path: s
 
     # Poll the timeline status and wait for the timeline to be ready
     click.echo("Indexing .. ", nl=False)
-    max_time_seconds = timeout or 600
+    max_time_seconds = timeout
     sleep_time_seconds = 5  # Sleep between API calls
     max_retries = max_time_seconds / sleep_time_seconds
     retry_count = 0
