@@ -54,27 +54,30 @@ def importer(ctx: click.Context, name: str, timeout: int, file_path: str):
 
         click.echo("Done")
 
-    # Poll the timeline status and wait for the timeline to be ready
-    click.echo("Indexing .. ", nl=False)
-    max_time_seconds = timeout
-    sleep_time_seconds = 5  # Sleep between API calls
-    max_retries = max_time_seconds / sleep_time_seconds
-    retry_count = 0
-    while True:
-        if retry_count >= max_retries:
-            click.echo(
-                (
-                    "WARNING: The command timed out before indexing finished. "
-                    "The timeline will continue to be indexed in the background"
+    if timeout > 0:
+        # Poll the timeline status and wait for the timeline to be ready
+        click.echo("Indexing .. ", nl=False)
+        max_time_seconds = timeout
+        sleep_time_seconds = 5  # Sleep between API calls
+        max_retries = max_time_seconds / sleep_time_seconds
+        retry_count = 0
+        while True:
+            if retry_count >= max_retries:
+                click.echo(
+                    (
+                        "WARNING: The command timed out before indexing finished. "
+                        "The timeline will continue to be indexed in the background"
+                    )
                 )
-            )
-            break
-        status = timeline.status
-        # TODO: Do something with other statuses? (e.g. failed)
-        if status == "ready":
-            click.echo("Done")
-            break
-        retry_count += 1
-        time.sleep(sleep_time_seconds)
+                break
+            status = timeline.status
+            # TODO: Do something with other statuses? (e.g. failed)
+            if status == "ready":
+                click.echo("Done")
+                break
+            retry_count += 1
+            time.sleep(sleep_time_seconds)
+    else:
+        click.echo("Timeline will be indexed in the background")
 
     click.echo(f"Timeline imported: {timeline.name}")
