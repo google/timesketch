@@ -459,9 +459,9 @@ def export_only_with_annotations(
         )
 
     start_time = time.time()
-    all_events_df = (
-        pd.DataFrame()
-    )  # Initialize an empty DataFrame to hold combined results
+    events_dfs: list[pd.DataFrame] = (
+        []
+    )  # Initialize an empty list to hold combined results
 
     search_max_entries = 10000  # Use a large number for 'unlimited' search
 
@@ -499,10 +499,8 @@ def export_only_with_annotations(
                 events_df = search_obj.to_pandas()
                 if not events_df.empty:
                     click.echo(f"    Found {len(events_df)} events.")
-                    # Concatenate results, ignore index to avoid conflicts
-                    all_events_df = pd.concat(
-                        [all_events_df, events_df], ignore_index=True
-                    )
+                    # Append to list to avoid slow repeated concats
+                    events_dfs.append(events_df)
                 else:
                     click.echo("    Found 0 events.")
             except Exception as search_err:  # pylint: disable=broad-except
@@ -512,9 +510,11 @@ def export_only_with_annotations(
                 )
                 # Continue to next search type
 
-        if all_events_df.empty:
+        if not events_dfs:
             click.echo("\nNo annotated events found across all search types.")
             return
+
+        all_events_df = pd.concat(events_dfs, ignore_index=True)
 
         # Deduplicate based on event ID ('_id' column)
         # Keep the first occurrence if duplicates exist
