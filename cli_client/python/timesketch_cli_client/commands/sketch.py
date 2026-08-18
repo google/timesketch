@@ -15,7 +15,7 @@
 
 import time
 import json
-from typing import Optional, cast
+from typing import Optional
 import click
 import pandas as pd
 
@@ -459,7 +459,9 @@ def export_only_with_annotations(
         )
 
     start_time = time.time()
-    events_dfs: list[pd.DataFrame] = []  # Initialize an empty list to hold combined results
+    events_dfs: list[pd.DataFrame] = (
+        []
+    )  # Initialize an empty list to hold combined results
 
     search_max_entries = 10000  # Use a large number for 'unlimited' search
 
