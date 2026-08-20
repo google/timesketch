@@ -73,7 +73,9 @@ class TimesketchCli:
         self.sketch_from_flag = sketch_from_flag
         self.output_format_from_flag = output_format_from_flag
 
-        if not api_client:
+        if api_client:
+            self.api = api_client
+        else:
             # Check if the config file exists and contains the requested section.
             actual_conf_file = conf_file
             if not actual_conf_file:
@@ -113,7 +115,6 @@ class TimesketchCli:
                 click.echo("ERROR: Cannot connect to the Timesketch server.")
                 sys.exit(1)
 
-        self.api: "client.TimesketchApi" = api_client
         self.config_assistant = timesketch_config.ConfigAssistant()
         self.config_assistant.load_config_file(
             conf_file, section=config_section, load_cli_config=True
