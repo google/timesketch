@@ -126,6 +126,10 @@ class TimesketchCli:
         Returns:
             Sketch object.
         """
+        if not self.api:
+            click.echo("ERROR: API client is not initialized.")
+            sys.exit(1)
+
         active_sketch = None
         sketch_from_config = self.config_assistant.get_config("sketch")
 
