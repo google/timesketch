@@ -70,7 +70,6 @@ class TimesketchCli:
             output_format_from_flag: Output format to use.
             config_section: The config section to use.
         """
-        self.api = api_client
         self.sketch_from_flag = sketch_from_flag
         self.output_format_from_flag = output_format_from_flag
 
@@ -114,6 +113,7 @@ class TimesketchCli:
                 click.echo("ERROR: Cannot connect to the Timesketch server.")
                 sys.exit(1)
 
+        self.api: "client.TimesketchApi" = api_client
         self.config_assistant = timesketch_config.ConfigAssistant()
         self.config_assistant.load_config_file(
             conf_file, section=config_section, load_cli_config=True
@@ -126,8 +126,6 @@ class TimesketchCli:
         Returns:
             Sketch object.
         """
-        assert self.api is not None, "Timesketch API client is not initialized"
-
         active_sketch = None
         sketch_from_config = self.config_assistant.get_config("sketch")
 
