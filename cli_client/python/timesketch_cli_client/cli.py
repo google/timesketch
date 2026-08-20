@@ -126,7 +126,7 @@ class TimesketchCli:
         Returns:
             Sketch object.
         """
-        assert self.api is not None
+        assert self.api is not None, "Timesketch API client is not initialized"
 
         active_sketch = None
         sketch_from_config = self.config_assistant.get_config("sketch")
