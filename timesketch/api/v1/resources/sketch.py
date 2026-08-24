@@ -328,6 +328,12 @@ class SketchResource(resources.ResourceMixin, Resource):
             A limited view of a sketch in JSON (instance of
             flask.wrappers.Response)
         """
+        if not current_user.admin:
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "Admin privileges required to access this view.",
+            )
+
         if sketch.get_status.status == "archived":
             status = "archived"
         elif sketch.get_status.status == "deleted":
@@ -335,12 +341,53 @@ class SketchResource(resources.ResourceMixin, Resource):
         else:
             status = "admin_view"
 
+        has_read_permission = sketch.has_permission(current_user, "read")
+        timelines = []
+        for timeline in sketch.timelines:
+            timeline_status = (
+                timeline.get_status.status if timeline.get_status else "unknown"
+            )
+            if has_read_permission:
+                timelines.append(
+                    {
+                        "id": timeline.id,
+                        "name": timeline.name,
+                        "description": timeline.description,
+                        "color": timeline.color,
+                        "status": [{"id": 0, "status": timeline_status}],
+                        "searchindex": {
+                            "index_name": (
+                                timeline.searchindex.index_name
+                                if timeline.searchindex
+                                else ""
+                            )
+                        },
+                        "created_at": timeline.created_at,
+                        "updated_at": timeline.updated_at,
+                        "deleted": timeline_status == "deleted",
+                    }
+                )
+            else:  # for admins, only redacted information are needed
+                timelines.append(
+                    {
+                        "id": timeline.id,
+                        "name": "<Restricted>",
+                        "description": "",
+                        "color": "",
+                        "status": [{"id": 0, "status": timeline_status}],
+                        "searchindex": {"index_name": ""},
+                        "created_at": timeline.created_at,
+                        "updated_at": timeline.updated_at,
+                        "deleted": timeline_status == "deleted",
+                    }
+                )
+
         sketch_fields = {
             "id": sketch.id,
             "name": sketch.name,
             "description": sketch.description,
             "user": {"username": current_user.username},
-            "timelines": [],
+            "timelines": timelines,
             "stories": [],
             "active_timelines": [],
             "label_string": sketch.label_string,
