@@ -544,23 +544,38 @@ def export_only_with_annotations(
 
         click.echo(f"Writing {exported_count} events to file...")
 
-        # Write the final DataFrame to the file
-        if output_format == "csv":
-            final_df.to_csv(
-                filename,
-                index=False,
-                header=True,
-                lineterminator="\n",
-                encoding="utf-8",
-            )
-        elif output_format == "jsonl":
-            final_df.to_json(
-                filename,
-                orient="records",
-                lines=True,
-                date_format="iso",
-                force_ascii=False,
-            )
+        # Write the final DataFrame to a temporary file, then move atomically
+        # this is to avoid accidental data deletion in an exception case.
+        temp_filename = f"{filename}.tmp"
+        try:
+            if output_format == "csv":
+                final_df.to_csv(
+                    temp_filename,
+                    index=False,
+                    header=True,
+                    lineterminator="\n",
+                    encoding="utf-8",
+                )
+            elif output_format == "jsonl":
+                final_df.to_json(
+                    temp_filename,
+                    orient="records",
+                    lines=True,
+                    date_format="iso",
+                    force_ascii=False,
+                )
+            os.replace(temp_filename, filename)
+        except Exception:
+            if os.path.exists(temp_filename):
+                try:
+                    os.remove(temp_filename)
+                except OSError as cleanup_error:
+                    click.echo(
+                        f"Warning: Failed to clean up temp file {temp_filename}: "
+                        f"{cleanup_error}",
+                        err=True,
+                    )
+            raise
 
         end_time = time.time()
         click.echo(
@@ -570,14 +585,4 @@ def export_only_with_annotations(
 
     except Exception as e:  # pylint: disable=broad-except
         click.echo(f"\nError during export: {e}", err=True)
-        if os.path.exists(filename):
-            try:
-                os.remove(filename)
-                click.echo(f"Cleaned up partial output file: {filename}", err=True)
-            except OSError as cleanup_error:
-                click.echo(
-                    f"Warning: Failed to clean up partial file {filename}: "
-                    f"{cleanup_error}",
-                    err=True,
-                )
         ctx.exit(1)
