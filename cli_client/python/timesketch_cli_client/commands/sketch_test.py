@@ -13,6 +13,7 @@
 # limitations under the License.
 """Tests for sketch command."""
 
+import os
 import unittest
 from unittest import mock
 import pandas as pd
@@ -63,13 +64,8 @@ class SketchTest(unittest.TestCase):
             result.output, expected_output, f"Unexpected output: {result.output}"
         )
 
-    @mock.patch(
-        "timesketch_cli_client.commands.sketch.open", new_callable=mock.mock_open
-    )
     @mock.patch("timesketch_cli_client.commands.sketch.search.Search", autospec=True)
-    def test_export_only_with_annotations_csv_success(
-        self, mock_search_class, mock_file_open_func
-    ):
+    def test_export_only_with_annotations_csv_success(self, mock_search_class):
         """Test successful export of annotated events to CSV."""
         runner = CliRunner()
 
@@ -111,64 +107,63 @@ class SketchTest(unittest.TestCase):
             mock_search_inst_labels,
         ]
 
-        result = runner.invoke(
-            sketch_group,
-            ["export-only-with-annotations", "--filename", "output.csv"],
-            obj=self.ctx,
-        )
+        with runner.isolated_filesystem():
+            result = runner.invoke(
+                sketch_group,
+                ["export-only-with-annotations", "--filename", "output.csv"],
+                obj=self.ctx,
+            )
 
-        self.assertEqual(result.exit_code, 0, result.output)
-        self.assertIn(
-            "Exporting events with comments, stars, OR labels to output.csv...",
-            result.output,
-        )
-        self.assertIn("Searching for events with comments...", result.output)
-        self.assertIn("Found 2 events.", result.output)  # For comments
-        self.assertIn("Searching for events with stars...", result.output)
-        self.assertIn("Found 2 events.", result.output)  # For stars
-        self.assertIn("Searching for events with labels...", result.output)
-        self.assertIn("Found 3 events.", result.output)  # For labels
-        self.assertIn(
-            "Combining and deduplicating results (found 7 total)...", result.output
-        )
-        self.assertIn("Found 5 unique annotated events.", result.output)
-        self.assertIn("Writing 5 events to file...", result.output)
-        self.assertIn(
-            "Export finished: 5 unique annotated events written.", result.output
-        )
+            self.assertEqual(result.exit_code, 0, result.output)
+            self.assertIn(
+                "Exporting events with comments, stars, OR labels to output.csv...",
+                result.output,
+            )
+            self.assertIn("Searching for events with comments...", result.output)
+            self.assertIn("Found 2 events.", result.output)  # For comments
+            self.assertIn("Searching for events with stars...", result.output)
+            self.assertIn("Found 2 events.", result.output)  # For stars
+            self.assertIn("Searching for events with labels...", result.output)
+            self.assertIn("Found 3 events.", result.output)  # For labels
+            self.assertIn(
+                "Combining and deduplicating results (found 7 total)...", result.output
+            )
+            self.assertIn("Found 5 unique annotated events.", result.output)
+            self.assertIn("Writing 5 events to file...", result.output)
+            self.assertIn(
+                "Export finished: 5 unique annotated events written.", result.output
+            )
 
-        mock_file_open_func.assert_called_once_with("output.csv", "w", encoding="utf-8")
+            with open("output.csv", "r", encoding="utf-8") as f:
+                written_content = f.read()
 
-        # Construct expected CSV
-        # Order of concatenation: comments, stars, labels. drop_duplicates keeps first.
-        # Event4 from comments should be kept.
-        expected_df = pd.DataFrame(
-            {
-                "_id": ["event1", "event4", "event2", "event3", "event5"],
-                "message": [
-                    "comment_msg1",
-                    "shared_msg_comment",
-                    "star_msg2",
-                    "label_msg3",
-                    "label_msg5",
-                ],
-                "field_c": ["c1", "c4", pd.NA, pd.NA, pd.NA],
-                "field_s": [pd.NA, pd.NA, "s2", pd.NA, pd.NA],
-                "field_l": [pd.NA, pd.NA, pd.NA, "l3", "l5"],
-            }
-        )
-        # Pandas to_csv by default fills NA with empty strings
-        expected_csv = expected_df.to_csv(index=False, header=True, lineterminator="\n")
+            # Construct expected CSV
+            # Order of concatenation: comments, stars, labels. drop_duplicates keeps first.
+            # Event4 from comments should be kept.
+            expected_df = pd.DataFrame(
+                {
+                    "_id": ["event1", "event4", "event2", "event3", "event5"],
+                    "message": [
+                        "comment_msg1",
+                        "shared_msg_comment",
+                        "star_msg2",
+                        "label_msg3",
+                        "label_msg5",
+                    ],
+                    "field_c": ["c1", "c4", pd.NA, pd.NA, pd.NA],
+                    "field_s": [pd.NA, pd.NA, "s2", pd.NA, pd.NA],
+                    "field_l": [pd.NA, pd.NA, pd.NA, "l3", "l5"],
+                }
+            )
+            # Pandas to_csv by default fills NA with empty strings
+            expected_csv = expected_df.to_csv(
+                index=False, header=True, lineterminator="\n"
+            )
+            self.assertEqual(written_content, expected_csv)
 
-        written_content = mock_file_open_func.return_value.write.call_args[0][0]
-        self.assertEqual(written_content, expected_csv)
-
-    @mock.patch(
-        "timesketch_cli_client.commands.sketch.open", new_callable=mock.mock_open
-    )
     @mock.patch("timesketch_cli_client.commands.sketch.search.Search", autospec=True)
     def test_export_only_with_annotations_jsonl_with_limit(
-        self, mock_search_class, mock_file_open_func
+        self, mock_search_class
     ):
         """Test successful export to JSONL with a limit."""
         runner = CliRunner()
@@ -189,45 +184,39 @@ class SketchTest(unittest.TestCase):
             mock_search_inst_labels,
         ]
 
-        result = runner.invoke(
-            sketch_group,
-            [
-                "export-only-with-annotations",
-                "--filename",
-                "output.jsonl",
-                "--output-format",
-                "jsonl",
-                "--limit",
-                "2",
-            ],
-            obj=self.ctx,
-        )
-        self.assertEqual(result.exit_code, 0, result.output)
-        self.assertIn("Found 3 unique annotated events.", result.output)
-        self.assertIn("Applying limit of 2 events.", result.output)
-        self.assertIn("Writing 2 events to file...", result.output)
-        self.assertIn(
-            "Export finished: 2 unique annotated events written.", result.output
-        )
+        with runner.isolated_filesystem():
+            result = runner.invoke(
+                sketch_group,
+                [
+                    "export-only-with-annotations",
+                    "--filename",
+                    "output.jsonl",
+                    "--output-format",
+                    "jsonl",
+                    "--limit",
+                    "2",
+                ],
+                obj=self.ctx,
+            )
+            self.assertEqual(result.exit_code, 0, result.output)
+            self.assertIn("Found 3 unique annotated events.", result.output)
+            self.assertIn("Applying limit of 2 events.", result.output)
+            self.assertIn("Writing 2 events to file...", result.output)
+            self.assertIn(
+                "Export finished: 2 unique annotated events written.", result.output
+            )
 
-        mock_file_open_func.assert_called_once_with(
-            "output.jsonl", "w", encoding="utf-8"
-        )
+            with open("output.jsonl", "r", encoding="utf-8") as f:
+                written_content = f.read()
 
-        expected_jsonl = (
-            '{"_id":"event1","message":"comment_msg1"}\n'
-            '{"_id":"event2","message":"star_msg2"}\n'
-        )
-        written_content = mock_file_open_func.return_value.write.call_args[0][0]
-        self.assertEqual(written_content, expected_jsonl)
+            expected_jsonl = (
+                '{"_id":"event1","message":"comment_msg1"}\n'
+                '{"_id":"event2","message":"star_msg2"}\n'
+            )
+            self.assertEqual(written_content, expected_jsonl)
 
-    @mock.patch(
-        "timesketch_cli_client.commands.sketch.open", new_callable=mock.mock_open
-    )
     @mock.patch("timesketch_cli_client.commands.sketch.search.Search", autospec=True)
-    def test_export_only_with_annotations_no_results(
-        self, mock_search_class, mock_file_open_func
-    ):
+    def test_export_only_with_annotations_no_results(self, mock_search_class):
         """Test export when no annotated events are found."""
         runner = CliRunner()
 
@@ -239,25 +228,21 @@ class SketchTest(unittest.TestCase):
         mock_search_inst.to_pandas.return_value = empty_df
         mock_search_class.return_value = mock_search_inst  # Same mock for all 3 calls
 
-        result = runner.invoke(
-            sketch_group,
-            ["export-only-with-annotations", "--filename", "output.csv"],
-            obj=self.ctx,
-        )
+        with runner.isolated_filesystem():
+            result = runner.invoke(
+                sketch_group,
+                ["export-only-with-annotations", "--filename", "output.csv"],
+                obj=self.ctx,
+            )
 
-        self.assertEqual(result.exit_code, 0, result.output)
-        self.assertIn(
-            "No annotated events found across all search types.", result.output
-        )
-        mock_file_open_func.assert_not_called()
+            self.assertEqual(result.exit_code, 0, result.output)
+            self.assertIn(
+                "No annotated events found across all search types.", result.output
+            )
+            self.assertFalse(os.path.exists("output.csv"))
 
-    @mock.patch(
-        "timesketch_cli_client.commands.sketch.open", new_callable=mock.mock_open
-    )
     @mock.patch("timesketch_cli_client.commands.sketch.search.Search", autospec=True)
-    def test_export_only_with_annotations_search_error(
-        self, mock_search_class, mock_file_open_func
-    ):
+    def test_export_only_with_annotations_search_error(self, mock_search_class):
         """Test export when one of the searches fails."""
         runner = CliRunner()
 
@@ -279,29 +264,34 @@ class SketchTest(unittest.TestCase):
             mock_search_inst_labels,
         ]
 
-        result = runner.invoke(
-            sketch_group,
-            ["export-only-with-annotations", "--filename", "output.csv"],
-            obj=self.ctx,
-        )
-        self.assertEqual(
-            result.exit_code, 0, result.output
-        )  # Should still succeed overall
-        self.assertIn(
-            "WARNING: Error during search for stars: Star search failed!", result.output
-        )
-        self.assertIn(
-            "Found 2 unique annotated events.", result.output
-        )  # event1 and event3
-        self.assertIn("Writing 2 events to file...", result.output)
+        with runner.isolated_filesystem():
+            result = runner.invoke(
+                sketch_group,
+                ["export-only-with-annotations", "--filename", "output.csv"],
+                obj=self.ctx,
+            )
+            self.assertEqual(
+                result.exit_code, 0, result.output
+            )  # Should still succeed overall
+            self.assertIn(
+                "WARNING: Error during search for stars: Star search failed!",
+                result.output,
+            )
+            self.assertIn(
+                "Found 2 unique annotated events.", result.output
+            )  # event1 and event3
+            self.assertIn("Writing 2 events to file...", result.output)
 
-        mock_file_open_func.assert_called_once_with("output.csv", "w", encoding="utf-8")
-        expected_df = pd.DataFrame(
-            {"_id": ["event1", "event3"], "message": ["comment_msg1", "label_msg3"]}
-        )
-        expected_csv = expected_df.to_csv(index=False, header=True, lineterminator="\n")
-        written_content = mock_file_open_func.return_value.write.call_args[0][0]
-        self.assertEqual(written_content, expected_csv)
+            with open("output.csv", "r", encoding="utf-8") as f:
+                written_content = f.read()
+
+            expected_df = pd.DataFrame(
+                {"_id": ["event1", "event3"], "message": ["comment_msg1", "label_msg3"]}
+            )
+            expected_csv = expected_df.to_csv(
+                index=False, header=True, lineterminator="\n"
+            )
+            self.assertEqual(written_content, expected_csv)
 
     @mock.patch("timesketch_cli_client.commands.sketch.search.Search", autospec=True)
     def test_export_only_with_annotations_id_column_missing(self, mock_search_class):
