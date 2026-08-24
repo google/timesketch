@@ -14,6 +14,7 @@
 """Commands for sketches."""
 
 import time
+import os
 import json
 from typing import Optional
 import click
@@ -558,6 +559,7 @@ def export_only_with_annotations(
                 orient="records",
                 lines=True,
                 date_format="iso",
+                force_ascii=False,
             )
 
         end_time = time.time()
@@ -568,4 +570,14 @@ def export_only_with_annotations(
 
     except Exception as e:  # pylint: disable=broad-except
         click.echo(f"\nError during export: {e}", err=True)
+        if os.path.exists(filename):
+            try:
+                os.remove(filename)
+                click.echo(f"Cleaned up partial output file: {filename}", err=True)
+            except OSError as cleanup_error:
+                click.echo(
+                    f"Warning: Failed to clean up partial file {filename}: "
+                    f"{cleanup_error}",
+                    err=True,
+                )
         ctx.exit(1)

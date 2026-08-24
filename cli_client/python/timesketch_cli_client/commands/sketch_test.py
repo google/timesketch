@@ -311,14 +311,16 @@ class SketchTest(unittest.TestCase):
             mock_search_inst_others,
         ]
 
-        result = runner.invoke(
-            sketch_group,
-            ["export-only-with-annotations", "--filename", "output.csv"],
-            obj=self.ctx,
-        )
+        with runner.isolated_filesystem():
+            result = runner.invoke(
+                sketch_group,
+                ["export-only-with-annotations", "--filename", "output.csv"],
+                obj=self.ctx,
+            )
 
-        self.assertEqual(result.exit_code, 1, result.output)
-        self.assertIn(
-            "ERROR: '_id' column not found in results, cannot deduplicate.",
-            result.output,
-        )
+            self.assertEqual(result.exit_code, 1, result.output)
+            self.assertIn(
+                "ERROR: '_id' column not found in results, cannot deduplicate.",
+                result.output,
+            )
+            self.assertFalse(os.path.exists("output.csv"))
