@@ -13,8 +13,10 @@
 # limitations under the License.
 """Commands for sketches."""
 
-import time
 import json
+import os
+import tempfile
+import time
 from typing import Optional
 import click
 import pandas as pd
@@ -543,15 +545,44 @@ def export_only_with_annotations(
 
         click.echo(f"Writing {exported_count} events to file...")
 
-        # Write the final DataFrame to the file
-        with open(filename, "w", encoding="utf-8") as fh:
+        # Write the final DataFrame to a temporary file, then move atomically.
+        # This is to avoid accidental data deletion or partial file corruption.
+        temp_filename = None
+        try:
+            target_dir = os.path.dirname(os.path.abspath(filename))
+            with tempfile.NamedTemporaryFile(
+                dir=target_dir, prefix="timesketch_export_", delete=False
+            ) as temp_file:
+                temp_filename = temp_file.name
+
             if output_format == "csv":
-                fh.write(final_df.to_csv(index=False, header=True, lineterminator="\n"))
-            elif output_format == "jsonl":
-                fh.write(
-                    final_df.to_json(orient="records", lines=True, date_format="iso")
-                    + "\n"
+                final_df.to_csv(
+                    temp_filename,
+                    index=False,
+                    header=True,
+                    lineterminator="\n",
+                    encoding="utf-8",
                 )
+            elif output_format == "jsonl":
+                final_df.to_json(
+                    temp_filename,
+                    orient="records",
+                    lines=True,
+                    date_format="iso",
+                    force_ascii=False,
+                )
+            os.replace(temp_filename, filename)
+            temp_filename = None
+        finally:
+            if temp_filename and os.path.exists(temp_filename):
+                try:
+                    os.remove(temp_filename)
+                except OSError as cleanup_error:
+                    click.echo(
+                        f"Warning: Failed to clean up temp file {temp_filename}: "
+                        f"{cleanup_error}",
+                        err=True,
+                    )
 
         end_time = time.time()
         click.echo(
