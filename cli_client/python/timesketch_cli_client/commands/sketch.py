@@ -13,9 +13,10 @@
 # limitations under the License.
 """Commands for sketches."""
 
-import time
-import os
 import json
+import os
+import tempfile
+import time
 from typing import Optional
 import click
 import pandas as pd
@@ -545,9 +546,15 @@ def export_only_with_annotations(
         click.echo(f"Writing {exported_count} events to file...")
 
         # Write the final DataFrame to a temporary file, then move atomically.
-        # This is to avoid accidental data deletion in an exception case.
-        temp_filename = f"{filename}.tmp"
+        # This is to avoid accidental data deletion or partial file corruption.
+        temp_filename = None
         try:
+            target_dir = os.path.dirname(os.path.abspath(filename))
+            with tempfile.NamedTemporaryFile(
+                dir=target_dir, prefix="timesketch_export_", delete=False
+            ) as temp_file:
+                temp_filename = temp_file.name
+
             if output_format == "csv":
                 final_df.to_csv(
                     temp_filename,
@@ -565,9 +572,9 @@ def export_only_with_annotations(
                     force_ascii=False,
                 )
             os.replace(temp_filename, filename)
-        except Exception as e:  # pylint: disable=broad-except:
-            click.echo(f"Error writing to temporary file: {e}", err=True)
-            if os.path.exists(temp_filename):
+            temp_filename = None
+        finally:
+            if temp_filename and os.path.exists(temp_filename):
                 try:
                     os.remove(temp_filename)
                 except OSError as cleanup_error:
@@ -576,7 +583,6 @@ def export_only_with_annotations(
                         f"{cleanup_error}",
                         err=True,
                     )
-            raise
 
         end_time = time.time()
         click.echo(
