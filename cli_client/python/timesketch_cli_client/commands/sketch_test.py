@@ -162,9 +162,7 @@ class SketchTest(unittest.TestCase):
             self.assertEqual(written_content, expected_csv)
 
     @mock.patch("timesketch_cli_client.commands.sketch.search.Search", autospec=True)
-    def test_export_only_with_annotations_jsonl_with_limit(
-        self, mock_search_class
-    ):
+    def test_export_only_with_annotations_jsonl_with_limit(self, mock_search_class):
         """Test successful export to JSONL with a limit."""
         runner = CliRunner()
 
