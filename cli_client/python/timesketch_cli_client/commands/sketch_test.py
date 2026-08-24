@@ -138,7 +138,8 @@ class SketchTest(unittest.TestCase):
                 written_content = f.read()
 
             # Construct expected CSV
-            # Order of concatenation: comments, stars, labels. drop_duplicates keeps first.
+            # Order of concatenation: comments, stars, labels.
+            # drop_duplicates keeps first.
             # Event4 from comments should be kept.
             expected_df = pd.DataFrame(
                 {
