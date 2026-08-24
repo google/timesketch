@@ -546,17 +546,15 @@ def export_only_with_annotations(
         # Write the final DataFrame to the file
         with open(filename, "w", encoding="utf-8") as fh:
             if output_format == "csv":
-                csv_data = final_df.to_csv(
-                    index=False, header=True, lineterminator="\n"
+                fh.write(
+                    final_df.to_csv(index=False, header=True, lineterminator="\n")
                 )
-                if csv_data is not None:
-                    fh.write(csv_data)
             elif output_format == "jsonl":
-                json_data = final_df.to_json(
-                    orient="records", lines=True, date_format="iso"
+                fh.write(
+                    final_df.to_json(
+                        orient="records", lines=True, date_format="iso"
+                    )
                 )
-                if json_data is not None:
-                    fh.write(json_data)
 
         end_time = time.time()
         click.echo(
