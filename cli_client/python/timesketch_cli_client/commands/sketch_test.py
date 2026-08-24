@@ -217,10 +217,9 @@ class SketchTest(unittest.TestCase):
         expected_df = pd.DataFrame(
             {"_id": ["event1", "event2"], "message": ["comment_msg1", "star_msg2"]}
         )
-        expected_json = expected_df.to_json(
+        expected_jsonl = expected_df.to_json(
             orient="records", lines=True, date_format="iso"
         )
-        expected_jsonl = f"{expected_json}\n" if expected_json else ""
         written_content = mock_file_open_func.return_value.write.call_args[0][0]
         self.assertEqual(written_content, expected_jsonl)
 
