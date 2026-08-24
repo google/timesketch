@@ -544,8 +544,8 @@ def export_only_with_annotations(
 
         click.echo(f"Writing {exported_count} events to file...")
 
-        # Write the final DataFrame to a temporary file, then move atomically
-        # this is to avoid accidental data deletion in an exception case.
+        # Write the final DataFrame to a temporary file, then move atomically.
+        # This is to avoid accidental data deletion in an exception case.
         temp_filename = f"{filename}.tmp"
         try:
             if output_format == "csv":
@@ -565,7 +565,8 @@ def export_only_with_annotations(
                     force_ascii=False,
                 )
             os.replace(temp_filename, filename)
-        except Exception:
+        except Exception as e:  # pylint: disable=broad-except:
+            click.echo(f"Error writing to temporary file: {e}", err=True)
             if os.path.exists(temp_filename):
                 try:
                     os.remove(temp_filename)
