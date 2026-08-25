@@ -276,6 +276,7 @@ class OpenSearchLogStore(ls.LogStore):
         must_not_contain_any_of: Optional[Iterable[str]],
         order_by: ls.Order,
         exclude_log_type: Optional[Any] = None,
+        has_enrichment: Optional[bool] = None,
     ) -> ls.SearchResult:
         try:
             with self.app.app_context():
@@ -317,6 +318,21 @@ class OpenSearchLogStore(ls.LogStore):
 
                 must_clauses = [{"terms": {"__ts_timeline_id": timeline_ids}}]
                 must_not_clauses = []
+
+                if has_enrichment is not None:
+                    enrichment_clause = {
+                        "bool": {
+                            "should": [
+                                {"exists": {"field": "tag"}},
+                                {"exists": {"field": "yara_match"}},
+                            ],
+                            "minimum_should_match": 1,
+                        }
+                    }
+                    if has_enrichment:
+                        must_clauses.append(enrichment_clause)
+                    else:
+                        must_not_clauses.append(enrichment_clause)
 
                 if must_contain_all_of:
                     for kw in must_contain_all_of:
