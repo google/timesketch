@@ -22,7 +22,9 @@ import tempfile
 from datetime import datetime
 from typing import Any, Dict, Generator, Iterable, Optional
 
+import flask
 from flask import current_app
+import httpx
 
 from timesketch.lib.llms.providers import interface
 from timesketch.lib.llms.providers import manager
@@ -54,6 +56,7 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
     NAME = "secgemini_log_analyzer_agent"
     SUPPORTS_STREAMING = True
 
+
     def __init__(self, config: dict, **kwargs: Any):
         """Initialize the LLM provider.
 
@@ -75,54 +78,92 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
         self.upload_logs_to_secgemini = self.config.get(
             "upload_logs_to_secgemini", False
         )
-        self.byot_tunnel_name = self.config.get(
-            "byot_tunnel_name", "byot-sec-gemini-bot"
-        )
-        self.byot_username = self.config.get("byot_username")
 
-        try:
-            if self.host:
-                self.sg_client = SecGemini(api_key=self.api_key, host=self.host)
-            else:
-                self.sg_client = SecGemini(api_key=self.api_key)
-        except Exception as e:
-            raise ValueError(f"Failed to initialize SecGemini client: {e}") from e
+        self.sg_client = None
 
         self._events_sent = 0
         self._session = None
         self.session_id = None
+        self._byot = None
 
     async def _run_async_stream(self, prompt, log_path=None, sketch=None):
         """Initializes a SecGemini session and streams the analysis response.
 
         This method supports two modes:
         1. Local Mode (BYOT): If upload_logs_to_secgemini is False (default),
-           it registers a local BYOT tunnel name and instructs the agent to
-           use describe and search tools.
+           it starts a local BYOT tunnel and exposes OpenSearch search and
+           describe tools without uploading log files.
         2. Remote Mode: If upload_logs_to_secgemini is True, it uploads the
            local log file to the SecGemini session for analysis.
 
         Args:
             prompt (str): The analysis prompt to send to the agent.
-            log_path (Path, optional): The local filesystem path to the JSONL log file.
-            sketch (Sketch, optional): The active Timesketch Sketch object.
+            log_path (Path, optional): The local filesystem path to the JSONL
+                log file (used in remote/upload mode).
+            sketch (Sketch, optional): The active Timesketch Sketch object (used
+                in local/BYOT mode).
 
         Yields:
             str: The content chunks of the streamed response from the agent.
         """
-        # Start the client connection first
+        if not self.sg_client:
+            try:
+                if self.host:
+                    self.sg_client = SecGemini(api_key=self.api_key, host=self.host)
+                else:
+                    self.sg_client = SecGemini(api_key=self.api_key)
+            except Exception as e:
+                raise ValueError(f"Failed to initialize SecGemini client: {e}") from e
+
         await self.sg_client.start()
 
         try:
-            # Create session via the sessions manager
             self._session = await self.sg_client.sessions.create()
             self.session_id = self._session.id
             logger.info("Started new SecGemini session: '%s'", self.session_id)
 
+            if not self.upload_logs_to_secgemini:
+
+                timesketch_url = None
+                session_cookie = None
+                if flask.has_request_context():
+                    timesketch_url = flask.request.url_root.rstrip("/")
+                    session_cookie = flask.request.cookies.get("session")
+
+                if not timesketch_url:
+                    timesketch_url = current_app.config.get(
+                        "TIMESKETCH_EXTERNAL_URL", "http://127.0.0.1:5000"
+                    ).rstrip("/")
+
+                bot_url = current_app.config.get(
+                    "LLM_LOG_ANALYZER_BOT_URL", "http://127.0.0.1:8008"
+                )
+
+                if not session_cookie:
+                    logger.warning(
+                        "No active Flask request session cookie found. "
+                        "Fallback to dev key or mock authentication."
+                    )
+                    session_cookie = "dev-mock-session"
+
+                bot_start_url = f"{bot_url.rstrip('/')}/tunnel/start"
+                payload = {
+                    "session_id": self.session_id,
+                    "api_key": self.api_key,
+                    "timesketch_url": timesketch_url,
+                    "session_cookie": session_cookie,
+                    "sketch_id": sketch.id,
+                }
+                logger.info("Contacting bot container to start BYOT tunnel...")
+                async with httpx.AsyncClient(timeout=15.0) as client:
+                    res = await client.post(bot_start_url, json=payload)
+                    if res.status_code != 200:
+                        raise RuntimeError(
+                            f"Failed to start BYOT tunnel on bot container: {res.text}"
+                        )
+                logger.info("BYOT tunnel started successfully on bot container.")
+
             if self.upload_logs_to_secgemini:
-                if not log_path:
-                    raise ValueError("Remote log analysis requires a log_path.")
-                # Upload logs file using the new files.upload API
                 await self._session.files.upload(
                     str(log_path), content_type="text/plain"
                 )
@@ -138,10 +179,13 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                 flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
                 try:
                     debug_log_file = os.fdopen(
-                        os.open(log_file_path, flags, 0o600), "w", encoding="utf-8"
+                        os.open(log_file_path, flags, 0o600),
+                        "w",
+                        encoding="utf-8",
                     )
                     logger.info(
-                        "SecGemini raw response is being streamed to: %s", log_file_path
+                        "SecGemini raw response is being streamed to: %s",
+                        log_file_path,
                     )
                 except (IOError, FileExistsError) as e:
                     logger.error(
@@ -162,24 +206,15 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                             meta[key] = "true" if val else "false"
                         else:
                             meta[key] = str(val)
-
                 if not self.upload_logs_to_secgemini:
-                    meta["sec-gemini-enabled-byots"] = self.byot_tunnel_name
+                    meta["sec-gemini-enabled-byots"] = f"byot-{self.session_id}"
 
                 final_prompt = prompt
                 if not self.upload_logs_to_secgemini:
                     local_instructions = (
                         "You MUST query the logs by calling the "
                         "`describe_available_logs` and `search_logs` tools "
-                        f"provided to you, passing '{sketch.id}' as the "
-                        "`ticket_id` argument.\n"
-                        "CRITICAL: If the required tools are not available in "
-                        "your workspace, or if calling them returns a "
-                        "permission-denied, resource-not-found, or connection "
-                        "failure error (indicating you cannot access the "
-                        "requested sketch), you MUST immediately abort the "
-                        "analysis and output a JSON error message explaining "
-                        "the access failure."
+                        "provided to you."
                     )
                     final_prompt = local_instructions + "\n\n" + prompt
                 else:
@@ -191,14 +226,11 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                     )
                     final_prompt = remote_instructions + "\n\n" + prompt
 
-                # Trigger the prompt first
                 logger.info("Sending prompt to SecGemini: '%s'", final_prompt[:100])
                 await self._session.prompt(final_prompt, meta=meta)
-                logger.info("Prompt sent successfully!")
 
-                # Stream messages using messages.stream()
+                # Stream response messages
                 async for response in self._session.messages.stream():
-
                     if debug_log_file:
                         try:
                             debug_log_file.write(str(response) + "\n")
@@ -278,18 +310,27 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                 if debug_log_file:
                     debug_log_file.close()
                     logger.info(
-                        "Finished writing SecGemini debug log: %s", log_file_path
+                        "Finished writing SecGemini debug log: %s",
+                        log_file_path,
                     )
         finally:
-            if self._session and hasattr(self._session, "close"):
+            if not self.upload_logs_to_secgemini and self.session_id:
+                # Stop/cleanup the BYOT tunnel on the bot container
                 try:
-                    await self._session.close()
-                except Exception as e:  # pylint: disable=broad-exception-caught
-                    logger.debug(
-                        "Ignored error closing remote session %s: %s",
-                        self.session_id,
-                        e,
+
+                    bot_url = current_app.config.get(
+                        "LLM_LOG_ANALYZER_BOT_URL", "http://127.0.0.1:8008"
                     )
+                    bot_stop_url = f"{bot_url.rstrip('/')}/tunnel/stop"
+                    async with httpx.AsyncClient(timeout=10.0) as client:
+                        await client.post(
+                            bot_stop_url, json={"session_id": self.session_id}
+                        )
+                except Exception as e:  # pylint: disable=broad-except
+                    logger.warning(
+                        "Failed to notify bot container to stop tunnel: %s", e
+                    )
+
             # Ensure client is properly closed
             await self.sg_client.close()
 
@@ -302,16 +343,20 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
         """Analyzes a stream of log events using the SecGemini log analysis agent.
 
         This method orchestrates the entire analysis process:
-        1.  If BYOT is enabled (upload_logs_to_secgemini=False), it bypasses
-            file writing and initiates a local tunnel connection to execute
-            tools against Timesketch API.
-        2.  Otherwise, it serializes events into a JSONL temp file and uploads it.
+        1.  It receives a generator of Timesketch log events.
+        2.  Each event is serialized into a JSON string and written to a
+            temporary JSONL (JSON Lines) file on disk.
+        3.  It invokes the asynchronous SecGemini client, passing the path to the
+            log file.
+        4.  It manages an asyncio event loop to handle the async streaming response.
+        5.  It yields chunks of the raw JSON response from the LLM as they are
+            received.
 
         Args:
             log_events_generator: An iterable of dictionaries, where each
                                   dictionary is a Timesketch log event.
             prompt: The prompt to send to the SecGemini agent for analysis.
-            sketch: The active Sketch object.
+            sketch: The Timesketch sketch object.
 
         Yields:
             str: Chunks of the raw JSON string response from the LLM provider.
@@ -326,85 +371,31 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
             if not sketch:
                 raise ValueError("Local log analysis (BYOT) requires a sketch object.")
 
-            granted_by_automation = False
-            if self.byot_username:
-                try:
-                    success = sketch.grant_permission_by_username(
-                        "read", self.byot_username
-                    )
-                    if success:
-                        granted_by_automation = True
-                        logger.info(
-                            "Automatically granted read permission on sketch "
-                            "%d to bot user %s",
-                            sketch.id,
-                            self.byot_username,
-                        )
-                except ValueError as e:
-                    logger.error(
-                        "Configured byot_username '%s' was not found in "
-                        "the database. Aborting log analysis.",
-                        self.byot_username,
-                    )
-                    raise e
-                except Exception as e:  # pylint: disable=broad-exception-caught
-                    logger.error(
-                        "Failed to auto-grant read permission to bot user '%s': %s",
-                        self.byot_username,
-                        e,
-                        exc_info=True,
-                    )
+            async def main_local():
+                async for chunk in self._run_async_stream(prompt=prompt, sketch=sketch):
+                    yield chunk
 
             try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
 
-                async def main_local():
-                    async for chunk in self._run_async_stream(
-                        prompt=prompt, sketch=sketch
-                    ):
-                        yield chunk
-
+            gen = main_local()
+            log_trigger = 0
+            while True:
                 try:
-                    loop = asyncio.get_event_loop()
-                    if loop.is_closed():
-                        loop = asyncio.new_event_loop()
-                        asyncio.set_event_loop(loop)
-                except RuntimeError:
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-
-                gen = main_local()
-                log_trigger = 0
-                while True:
-                    try:
-                        chunk = loop.run_until_complete(gen.__anext__())
-                        if chunk is not None:
-                            log_trigger += 1
-                            if log_trigger % 50 == 0:
-                                logger.info(
-                                    "[%s] SecGemini is still processing...",
-                                    self.session_id,
-                                )
-                            yield chunk
-                    except StopAsyncIteration:
-                        break
-            finally:
-                if granted_by_automation:
-                    try:
-                        sketch.revoke_permission_by_username("read", self.byot_username)
-                        logger.info(
-                            "Automatically revoked read permission on sketch "
-                            "%d from bot user %s",
-                            sketch.id,
-                            self.byot_username,
-                        )
-                    except Exception as e:  # pylint: disable=broad-exception-caught
-                        logger.error(
-                            "Failed to auto-revoke read permission from bot user "
-                            "'%s': %s",
-                            self.byot_username,
-                            e,
-                            exc_info=True,
-                        )
+                    chunk = loop.run_until_complete(gen.__anext__())
+                    if chunk is not None:
+                        log_trigger += 1
+                        if log_trigger % 50 == 0:
+                            logger.info(
+                                "[%s] SecGemini is still processing...",
+                                self.session_id,
+                            )
+                        yield chunk
+                except StopAsyncIteration:
+                    break
             return
 
         with tempfile.NamedTemporaryFile(
