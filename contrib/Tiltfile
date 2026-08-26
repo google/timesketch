@@ -142,37 +142,7 @@ local_resource(
 
 local_resource(
     "build-api-cli",
-    cmd="""
-    # CLI client
-    docker exec -i --workdir /usr/local/src/timesketch/cli_client/python timesketch-dev python3 setup.py build
-    docker exec -i --workdir /usr/local/src/timesketch/cli_client/python timesketch-dev python3 setup.py install
-    # API client
-    docker exec -i --workdir /usr/local/src/timesketch/api_client/python timesketch-dev python3 setup.py build
-    docker exec -i --workdir /usr/local/src/timesketch/api_client/python timesketch-dev python3 setup.py install
-    """,
-    auto_init=False,
-    labels=["tools"],
-)
-
-local_resource(
-    "rebuild-dev-env",
-    cmd="""
-    echo "Resetting development environment..."
-    cd ../docker/dev && docker compose down -v && docker compose --profile telemetry up --pull always -d
-    echo "Waiting for timesketch-dev container..."
-    until docker exec timesketch-dev pip show timesketch >/dev/null 2>&1; do sleep 1; done
-    echo "Activating bash history..."
-    docker exec -i timesketch-dev mkdir -p /usr/local/src/timesketch/private
-    docker exec -i timesketch-dev bash -c 'grep -q "TIMESKETCH_BASH_HISTORY_CONFIG_START" /root/.bashrc || printf "\\n# TIMESKETCH_BASH_HISTORY_CONFIG_START\\nexport HISTFILE=\\\"/usr/local/src/timesketch/private/.bash_history\\\"\\nexport HISTSIZE=10000\\nexport HISTFILESIZE=20000\\nshopt -s histappend\\n# TIMESKETCH_BASH_HISTORY_CONFIG_END\\n" >> /root/.bashrc'
-    echo "Building API and CLI clients..."
-    # CLI client
-    docker exec -i --workdir /usr/local/src/timesketch/cli_client/python timesketch-dev python3 setup.py build
-    docker exec -i --workdir /usr/local/src/timesketch/cli_client/python timesketch-dev python3 setup.py install
-    # API client
-    docker exec -i --workdir /usr/local/src/timesketch/api_client/python timesketch-dev python3 setup.py build
-    docker exec -i --workdir /usr/local/src/timesketch/api_client/python timesketch-dev python3 setup.py install
-    echo "Rebuild complete!"
-    """,
+    cmd="docker exec -i --workdir /usr/local/src/timesketch/cli_client/python timesketch-dev pip3 install -e . && docker exec -i --workdir /usr/local/src/timesketch/api_client/python timesketch-dev pip3 install -e . && docker exec -i --workdir /usr/local/src/timesketch/importer_client/python timesketch-dev pip3 install -e .",
     auto_init=False,
     labels=["tools"],
 )
