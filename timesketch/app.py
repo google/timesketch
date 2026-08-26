@@ -20,7 +20,7 @@ import sys
 from typing import Optional, Union
 
 
-from flask import Flask
+from flask import Flask, current_app
 from celery import Celery
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -96,8 +96,10 @@ def create_app(
         legacy_path = "/etc/timesketch.conf"
         if os.path.isfile(default_path):
             config = default_path
-        else:
+        elif os.path.isfile(legacy_path):
             config = legacy_path
+        else:
+            config = None
 
     if isinstance(config, str):
         os.environ["TIMESKETCH_SETTINGS"] = config
@@ -112,7 +114,7 @@ def create_app(
         except OSError:
             sys.stderr.write(f"Config file {config} does not exist.\n")
             sys.exit()
-    else:
+    elif config:
         app.config.from_object(config)
 
     # Load config values from environment variables.
@@ -126,17 +128,20 @@ def create_app(
     )
 
     # Make sure that SECRET_KEY is configured.
-    if not app.config["SECRET_KEY"]:
-        sys.stderr.write(
-            "ERROR: Secret key not present. "
-            "Please update your configuration.\n"
-            "To generate a key you can use openssl:\n\n"
-            "$ openssl rand -base64 32\n\n"
-        )
-        sys.exit()
+    if not app.config.get("SECRET_KEY"):
+        if config is None:
+            app.config["SECRET_KEY"] = "default-testing-secret-key"
+        else:
+            sys.stderr.write(
+                "ERROR: Secret key not present. "
+                "Please update your configuration.\n"
+                "To generate a key you can use openssl:\n\n"
+                "$ openssl rand -base64 32\n\n"
+            )
+            sys.exit()
 
     # Plaso version that we support
-    if app.config["UPLOAD_ENABLED"]:
+    if app.config.get("UPLOAD_ENABLED"):
         try:
             # pylint: disable=import-outside-toplevel
             from plaso import __version__ as plaso_version
@@ -146,16 +151,17 @@ def create_app(
             pass
 
     # Setup the database.
-    configure_engine(
-        app.config["SQLALCHEMY_DATABASE_URI"],
-        app.config.get("SQLALCHEMY_ENGINE_OPTIONS", {}),
-    )
-    db = init_db()
+    if app.config.get("SQLALCHEMY_DATABASE_URI"):
+        configure_engine(
+            app.config["SQLALCHEMY_DATABASE_URI"],
+            app.config.get("SQLALCHEMY_ENGINE_OPTIONS", {}),
+        )
+        db = init_db()
 
-    # Alembic migration support:
-    # http://alembic.zzzcomputing.com/en/latest/
-    migrate = Migrate()
-    migrate.init_app(app, db)
+        # Alembic migration support:
+        # http://alembic.zzzcomputing.com/en/latest/
+        migrate = Migrate()
+        migrate.init_app(app, db)
 
     # Register blueprints. Blueprints are a way to organize your Flask
     # Flask application. See this for more information:
@@ -317,10 +323,15 @@ def configure_logger():
             handler.addFilter(logger_filter)
 
 
-def create_celery_app():
+def create_celery_app(app=None):
     """Create a Celery app instance."""
-    app = create_app()
-    celery = Celery(app.import_name, broker=app.config["CELERY_BROKER_URL"])
+    if app is None:
+        if current_app:
+            app = current_app
+        else:
+            app = create_app()
+    broker_url = app.config.get("CELERY_BROKER_URL", "redis://127.0.0.1:6379")
+    celery = Celery(app.import_name, broker=broker_url)
     celery.conf.update(app.config)
     telemetry.instrument_celery_app(celery)
     TaskBase = celery.Task
