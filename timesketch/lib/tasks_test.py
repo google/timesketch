@@ -15,10 +15,17 @@
 
 from unittest import mock
 
-from timesketch.lib import tasks
-from timesketch.lib.testlib import BaseTest
+from timesketch.app import create_app as _create_app
+from timesketch.lib.testlib import BaseTest, TestConfig
 from timesketch.models import db_session
 from timesketch.models.sketch import DataSource, SearchIndex
+
+# Provide TestConfig during tasks import to avoid missing /etc/timesketch.conf on CI
+with mock.patch(
+    "timesketch.app.create_app",
+    side_effect=lambda config=None: _create_app(config or TestConfig),
+):
+    from timesketch.lib import tasks
 
 _CREATE_STORAGE_READER = (
     "timesketch.lib.tasks.plaso_storage_factory.StorageFactory."
@@ -127,6 +134,23 @@ class TestTasks(BaseTest):
             self.assertIn("20260720", str(context.exception))
             self.assertNotIn("[Sketch ID:", str(context.exception))
 
+    def test_run_plaso_unparsable_version_raises(self):
+        """Test run_plaso raises RuntimeError for unparsable version string."""
+        mock_plaso = mock.MagicMock()
+        mock_plaso.__version__ = "invalid_version"
+
+        with mock.patch("timesketch.lib.tasks.plaso", mock_plaso):
+            with self.assertRaises(RuntimeError) as context:
+                tasks.run_plaso(
+                    file_path="/tmp/fake.plaso",
+                    events="",
+                    timeline_name="test_timeline",
+                    index_name="test_index",
+                    source_type="plaso",
+                    timeline_id=self.timeline.id,
+                )
+            self.assertIn("Plaso version could not be parsed", str(context.exception))
+
     def test_run_plaso_with_events_raises(self):
         """Test run_plaso raises RuntimeError when events string is provided."""
         mock_plaso = mock.MagicMock()
@@ -198,18 +222,21 @@ class TestTasks(BaseTest):
         self.assertEqual(self.timeline.status[0].status, "fail")
 
     def test_set_datasource_status_missing_timeline(self):
-        """Test _set_datasource_status gracefully returns when timeline is missing."""
-        # Should not raise exception
-        tasks._set_datasource_status(  # pylint: disable=protected-access
-            99999, "/tmp/missing.plaso", "fail", error_message="Error"
-        )
+        """Test _set_datasource_status raises KeyError when timeline is missing."""
+        with self.assertRaises(KeyError):
+            tasks._set_datasource_status(  # pylint: disable=protected-access
+                99999, "/tmp/missing.plaso", "fail", error_message="Error"
+            )
 
     def test_set_datasource_status_missing_datasource(self):
-        """Test _set_datasource_status updates timeline status without datasource."""
-        tasks._set_datasource_status(  # pylint: disable=protected-access
-            self.timeline.id, "/tmp/nonexistent.plaso", "fail", error_message="Error"
-        )
-        self.assertEqual(self.timeline.status[0].status, "fail")
+        """Test _set_datasource_status raises KeyError when datasource is missing."""
+        with self.assertRaises(KeyError):
+            tasks._set_datasource_status(  # pylint: disable=protected-access
+                self.timeline.id,
+                "/tmp/nonexistent.plaso",
+                "fail",
+                error_message="Error",
+            )
 
     def test_set_datasource_total_events_with_int(self):
         """Test _set_datasource_total_events with an integer value."""

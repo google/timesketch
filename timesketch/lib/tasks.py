@@ -349,30 +349,25 @@ def _set_datasource_status(timeline_id, file_path, status, error_message=None):
         file_path (str): File path on disk for the datasource.
         status (str): Status string to set (e.g. 'fail', 'ready').
         error_message (str, optional): Error message to record on failure.
+
+    Raises:
+        KeyError: If no timeline or datasource with the given file path is found.
     """
     timeline = Timeline.get_by_id(timeline_id)
     if not timeline:
-        logger.warning(
-            "Cannot set datasource status: No timeline found (ID: %s)", timeline_id
-        )
-        return
-    datasource_found = False
+        raise KeyError(f"No timeline found with ID: {timeline_id}")
+
     for datasource in timeline.datasources:
         if datasource.get_file_on_disk == file_path:
             datasource.set_status(status)
             if error_message:
                 datasource.set_error_message(error_message)
-            datasource_found = True
-            break
+            _set_timeline_status(timeline_id, status)
+            return
 
-    if not datasource_found:
-        logger.warning(
-            "No datasource found in timeline %s with file_path: %s",
-            timeline_id,
-            file_path,
-        )
-
-    _set_timeline_status(timeline_id, status)
+    raise KeyError(
+        f"No datasource found in timeline {timeline_id} with file_path: {file_path}"
+    )
 
 
 def _set_datasource_total_events(timeline_id, file_path, total_file_events):
@@ -887,7 +882,7 @@ def run_plaso(
         except (ValueError, TypeError):
             error_message = (
                 f"Plaso version could not be parsed (installed version: "
-                f"{plaso.__version__}), please ensure it is "
+                f"{getattr(plaso, '__version__', 'unknown')}), please ensure it is "
                 f"{PLASO_MINIMUM_VERSION:d} or later."
             )
 
