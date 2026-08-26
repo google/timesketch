@@ -15,6 +15,9 @@
 
 from unittest import mock
 
+mock_create_app = mock.patch("timesketch.app.create_app")
+mock_create_app.start()
+
 from timesketch.lib import tasks
 from timesketch.lib.testlib import BaseTest
 from timesketch.models import db_session
@@ -31,9 +34,19 @@ class TestTasks(BaseTest):
     @mock.patch("timesketch.lib.tasks.plaso", None)
     def test_run_plaso_not_installed_with_sketch(self):
         """Test run_plaso error contains sketch info when plaso is not installed."""
+        file_path = "/tmp/fake_not_installed.plaso"
+        datasource = DataSource(
+            timeline=self.timeline,
+            user=self.user1,
+            file_on_disk=file_path,
+            original_filename="fake_not_installed.plaso",
+        )
+        db_session.add(datasource)
+        db_session.commit()
+
         with self.assertRaises(RuntimeError) as context:
             tasks.run_plaso(
-                file_path="/tmp/fake.plaso",
+                file_path=file_path,
                 events="",
                 timeline_name="test_timeline",
                 index_name="test_index",
@@ -42,6 +55,8 @@ class TestTasks(BaseTest):
             )
         self.assertIn("Plaso isn't installed", str(context.exception))
         self.assertIn(f"[Sketch ID: {self.sketch1.id}]", str(context.exception))
+        self.assertEqual(datasource.status[0].status, "fail")
+        self.assertIn("Plaso isn't installed", datasource.error_message)
 
     @mock.patch("timesketch.lib.tasks.plaso", None)
     def test_run_plaso_not_installed_without_sketch(self):
@@ -63,10 +78,20 @@ class TestTasks(BaseTest):
         mock_plaso = mock.MagicMock()
         mock_plaso.__version__ = "20260512"
 
+        file_path = "/tmp/fake_outdated.plaso"
+        datasource = DataSource(
+            timeline=self.timeline,
+            user=self.user1,
+            file_on_disk=file_path,
+            original_filename="fake_outdated.plaso",
+        )
+        db_session.add(datasource)
+        db_session.commit()
+
         with mock.patch("timesketch.lib.tasks.plaso", mock_plaso):
             with self.assertRaises(RuntimeError) as context:
                 tasks.run_plaso(
-                    file_path="/tmp/fake.plaso",
+                    file_path=file_path,
                     events="",
                     timeline_name="test_timeline",
                     index_name="test_index",
@@ -77,6 +102,8 @@ class TestTasks(BaseTest):
             self.assertIn("installed version: 20260512", str(context.exception))
             self.assertIn("20260720", str(context.exception))
             self.assertIn(f"[Sketch ID: {self.sketch1.id}]", str(context.exception))
+            self.assertEqual(datasource.status[0].status, "fail")
+            self.assertIn("Plaso version is out of date", datasource.error_message)
 
     def test_run_plaso_outdated_version_without_sketch(self):
         """Test run_plaso error without sketch info when timeline is not found."""
@@ -116,6 +143,75 @@ class TestTasks(BaseTest):
             self.assertIn(
                 "Plaso uploads need a file, not events", str(context.exception)
             )
+
+    @mock.patch("timesketch.lib.tasks.pinfo_tool.PinfoTool")
+    def test_run_plaso_storage_reader_none_raises(self, mock_pinfo_cls):
+        """Test run_plaso raises RuntimeError when _GetStorageReader returns None."""
+        mock_plaso = mock.MagicMock()
+        mock_plaso.__version__ = "20260720"
+
+        mock_pinfo = mock.MagicMock()
+        # pylint: disable=protected-access
+        mock_pinfo._GetStorageReader.return_value = None
+        mock_pinfo_cls.return_value = mock_pinfo
+
+        file_path = "/tmp/reader_none.plaso"
+        datasource = DataSource(
+            timeline=self.timeline,
+            user=self.user1,
+            file_on_disk=file_path,
+            original_filename="reader_none.plaso",
+        )
+        db_session.add(datasource)
+        db_session.commit()
+
+        with mock.patch("timesketch.lib.tasks.plaso", mock_plaso):
+            with self.assertRaises(RuntimeError) as context:
+                tasks.run_plaso(
+                    file_path=file_path,
+                    events="",
+                    timeline_name="test_timeline",
+                    index_name="test_index",
+                    source_type="plaso",
+                    timeline_id=self.timeline.id,
+                )
+            self.assertIn("Unable to open Plaso storage reader", str(context.exception))
+            self.assertEqual(datasource.status[0].status, "fail")
+
+    def test_set_datasource_status_success(self):
+        """Test _set_datasource_status successfully updates status and error msg."""
+        datasource = DataSource(
+            timeline=self.timeline,
+            user=self.user1,
+            file_on_disk="/tmp/status_test.plaso",
+            original_filename="status_test.plaso",
+        )
+        db_session.add(datasource)
+        db_session.commit()
+
+        tasks._set_datasource_status(  # pylint: disable=protected-access
+            self.timeline.id,
+            "/tmp/status_test.plaso",
+            "fail",
+            error_message="Test error message",
+        )
+        self.assertEqual(datasource.status[0].status, "fail")
+        self.assertEqual(datasource.error_message, "Test error message")
+        self.assertEqual(self.timeline.status[0].status, "fail")
+
+    def test_set_datasource_status_missing_timeline(self):
+        """Test _set_datasource_status gracefully returns when timeline is missing."""
+        # Should not raise exception
+        tasks._set_datasource_status(  # pylint: disable=protected-access
+            99999, "/tmp/missing.plaso", "fail", error_message="Error"
+        )
+
+    def test_set_datasource_status_missing_datasource(self):
+        """Test _set_datasource_status gracefully returns when datasource is missing."""
+        # Should not raise exception
+        tasks._set_datasource_status(  # pylint: disable=protected-access
+            self.timeline.id, "/tmp/nonexistent.plaso", "fail", error_message="Error"
+        )
 
     def test_set_datasource_total_events_with_int(self):
         """Test _set_datasource_total_events with an integer value."""
