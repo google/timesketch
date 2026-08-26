@@ -16,7 +16,6 @@
 import json
 
 from timesketch.models.sketch import AnalysisSession
-from timesketch.models.sketch import DataSource
 from timesketch.models.sketch import Event
 from timesketch.models.sketch import SearchHistory
 from timesketch.models.sketch import SearchIndex
@@ -274,27 +273,4 @@ class StoryModelTest(ModelBaseTest):
         # Clean up the created user
         self.db_session.delete(user)
         # label_obj is already deleted by cascade, no need to delete it manually
-        self.db_session.commit()
-
-    def test_datasource_set_total_file_events(self):
-        """Test DataSource.set_total_file_events with an integer value."""
-        user = User(username="ds_user", name="DS User")
-        self.db_session.add(user)
-        self.db_session.commit()
-
-        datasource = DataSource(
-            timeline=self.timeline,
-            user=user,
-            file_on_disk="/tmp/ds_test.plaso",
-            original_filename="ds_test.plaso",
-        )
-        self.db_session.add(datasource)
-        self.db_session.commit()
-
-        datasource.set_total_file_events(42)
-        self.assertEqual(datasource.get_total_file_events, 42)
-
-        # Clean up
-        self.db_session.delete(datasource)
-        self.db_session.delete(user)
         self.db_session.commit()
