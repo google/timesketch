@@ -17,6 +17,8 @@ from unittest import mock
 
 from timesketch.lib import tasks
 from timesketch.lib.testlib import BaseTest
+from timesketch.models import db_session
+from timesketch.models.sketch import DataSource, SearchIndex
 
 
 class TestTasks(BaseTest):
@@ -114,3 +116,115 @@ class TestTasks(BaseTest):
             self.assertIn(
                 "Plaso uploads need a file, not events", str(context.exception)
             )
+
+    def test_set_datasource_total_events_with_int(self):
+        """Test _set_datasource_total_events with an integer value."""
+        datasource = DataSource(
+            timeline=self.timeline,
+            user=self.user1,
+            file_on_disk="/tmp/test1.plaso",
+            original_filename="test1.plaso",
+        )
+        db_session.add(datasource)
+        db_session.commit()
+
+        file_path = datasource.get_file_on_disk
+        tasks._set_datasource_total_events(  # pylint: disable=protected-access
+            self.timeline.id, file_path, 42
+        )
+        self.assertEqual(datasource.get_total_file_events, 42)
+
+    def test_set_datasource_total_events_with_parser_count_object(self):
+        """Test _set_datasource_total_events with a ParserCount-like object."""
+        datasource = DataSource(
+            timeline=self.timeline,
+            user=self.user1,
+            file_on_disk="/tmp/test2.plaso",
+            original_filename="test2.plaso",
+        )
+        db_session.add(datasource)
+        db_session.commit()
+
+        class MockParserCount:
+            """Mock plaso ParserCount object."""
+
+            def __init__(self, count):
+                self.name = "total"
+                self.number_of_events = count
+
+        mock_count = MockParserCount(3205)
+        file_path = datasource.get_file_on_disk
+        tasks._set_datasource_total_events(  # pylint: disable=protected-access
+            self.timeline.id, file_path, mock_count
+        )
+        self.assertEqual(datasource.get_total_file_events, 3205)
+
+    def test_set_datasource_total_events_not_found(self):
+        """Test _set_datasource_total_events raises KeyError for missing file."""
+        with self.assertRaises(KeyError):
+            tasks._set_datasource_total_events(  # pylint: disable=protected-access
+                self.timeline.id, "/nonexistent/path.plaso", 100
+            )
+
+    @mock.patch("timesketch.lib.tasks.subprocess.check_output")
+    @mock.patch("timesketch.lib.tasks.pinfo_tool.PinfoTool")
+    @mock.patch("timesketch.lib.tasks.OpenSearchDataStore")
+    def test_run_plaso_success_with_parser_count(
+        self, mock_opensearch_cls, mock_pinfo_cls, mock_check_output
+    ):
+        """Test run_plaso successfully processes total_file_events as ParserCount."""
+        mock_plaso = mock.MagicMock()
+        mock_plaso.__version__ = "20260720"
+
+        class MockParserCount:
+            """Mock plaso ParserCount object."""
+
+            def __init__(self, count):
+                self.name = "total"
+                self.number_of_events = count
+
+        mock_pinfo = mock.MagicMock()
+        # pylint: disable=protected-access
+        mock_pinfo._CalculateStorageCounters.return_value = {
+            "parsers": {"total": MockParserCount(3205)}
+        }
+        mock_pinfo_cls.return_value = mock_pinfo
+
+        mock_opensearch = mock.MagicMock()
+        mock_connection = mock.MagicMock()
+        mock_connection.host = "http://127.0.0.1"
+        mock_connection.port = 9200
+        mock_opensearch.client.transport.get_connection.return_value = mock_connection
+        mock_opensearch.client.indices.exists.return_value = True
+        mock_opensearch.create_index.return_value = "test_index"
+        mock_opensearch_cls.return_value = mock_opensearch
+        mock_check_output.return_value = "Done"
+
+        file_path = "/tmp/test_success.plaso"
+        datasource = DataSource(
+            timeline=self.timeline,
+            user=self.user1,
+            file_on_disk=file_path,
+            original_filename="test_success.plaso",
+        )
+        db_session.add(datasource)
+        searchindex = SearchIndex(
+            name="test_index",
+            user=self.user1,
+            index_name="test_index",
+        )
+        db_session.add(searchindex)
+        db_session.commit()
+
+        with mock.patch("timesketch.lib.tasks.plaso", mock_plaso):
+            result = tasks.run_plaso(
+                file_path=file_path,
+                events="",
+                timeline_name="test_timeline",
+                index_name="test_index",
+                source_type="plaso",
+                timeline_id=self.timeline.id,
+            )
+
+        self.assertEqual(result, "test_index")
+        self.assertEqual(datasource.get_total_file_events, 3205)

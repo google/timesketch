@@ -15,16 +15,18 @@
 
 import json
 
-from timesketch.models.sketch import Sketch
-from timesketch.models.sketch import Timeline
+from timesketch.models.sketch import AnalysisSession
+from timesketch.models.sketch import DataSource
+from timesketch.models.sketch import Event
+from timesketch.models.sketch import normalize_event_count
+from timesketch.models.sketch import SearchHistory
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import SearchTemplate
-from timesketch.models.sketch import View
+from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Story
-from timesketch.models.sketch import SearchHistory
-from timesketch.models.sketch import AnalysisSession
+from timesketch.models.sketch import Timeline
+from timesketch.models.sketch import View
 from timesketch.models.user import User
-from timesketch.models.sketch import Event
 from timesketch.lib.testlib import ModelBaseTest
 
 
@@ -273,4 +275,64 @@ class StoryModelTest(ModelBaseTest):
         # Clean up the created user
         self.db_session.delete(user)
         # label_obj is already deleted by cascade, no need to delete it manually
+        self.db_session.commit()
+
+    def test_normalize_event_count(self):
+        """Test normalize_event_count with various types."""
+        # Primitives
+        self.assertEqual(normalize_event_count(3205), 3205)
+        self.assertEqual(normalize_event_count("3205"), 3205)
+        self.assertEqual(normalize_event_count(0), 0)
+        self.assertIsNone(normalize_event_count(None))
+
+        # Invalid values should raise ValueError
+        with self.assertRaises(ValueError) as context:
+            normalize_event_count("invalid")
+        self.assertIn("Unable to convert event count 'invalid'", str(context.exception))
+
+        # Object with number_of_events (e.g. Plaso ParserCount)
+        class MockParserCount:
+            def __init__(self, count):
+                self.name = "total"
+                self.number_of_events = count
+
+        self.assertEqual(normalize_event_count(MockParserCount(3205)), 3205)
+
+        # Object with non-callable count attribute
+        class MockCountContainer:
+            def __init__(self, count):
+                self.count = count
+
+        self.assertEqual(normalize_event_count(MockCountContainer(42)), 42)
+
+    def test_datasource_set_total_file_events(self):
+        """Test DataSource.set_total_file_events with various input types."""
+        user = User(username="ds_user", name="DS User")
+        self.db_session.add(user)
+        self.db_session.commit()
+
+        datasource = DataSource(
+            timeline=self.timeline,
+            user=user,
+            file_on_disk="/tmp/ds_test.plaso",
+            original_filename="ds_test.plaso",
+        )
+        self.db_session.add(datasource)
+        self.db_session.commit()
+
+        # Test with string (must not bind str.count method)
+        datasource.set_total_file_events("3205")
+        self.assertEqual(datasource.get_total_file_events, 3205)
+
+        # Test with int
+        datasource.set_total_file_events(42)
+        self.assertEqual(datasource.get_total_file_events, 42)
+
+        # Test with invalid string raises ValueError
+        with self.assertRaises(ValueError):
+            datasource.set_total_file_events("not_a_number")
+
+        # Clean up
+        self.db_session.delete(datasource)
+        self.db_session.delete(user)
         self.db_session.commit()
