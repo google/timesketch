@@ -342,7 +342,20 @@ def _set_timeline_status(timeline_id: int, status: Optional[str] = None):
 
 
 def _set_datasource_status(timeline_id, file_path, status, error_message=None):
+    """Set the status and optional error message on the datasource for a timeline.
+
+    Args:
+        timeline_id (int): Primary key ID of the timeline.
+        file_path (str): File path on disk for the datasource.
+        status (str): Status string to set (e.g. 'fail', 'ready').
+        error_message (str, optional): Error message to record on failure.
+    """
     timeline = Timeline.get_by_id(timeline_id)
+    if not timeline:
+        logger.warning(
+            "Cannot set datasource status: No timeline found (ID: %s)", timeline_id
+        )
+        return
     for datasource in timeline.datasources:
         if datasource.get_file_on_disk == file_path:
             datasource.set_status(status)
@@ -353,7 +366,11 @@ def _set_datasource_status(timeline_id, file_path, status, error_message=None):
             _set_timeline_status(timeline_id, status)
             return
 
-    raise KeyError(f"No datasource found in the timeline with file_path: {file_path}")
+    logger.warning(
+        "No datasource found in timeline %s with file_path: %s",
+        timeline_id,
+        file_path,
+    )
 
 
 def _set_datasource_total_events(timeline_id, file_path, total_file_events):
@@ -902,6 +919,8 @@ def run_plaso(
         storage_reader = pinfo._GetStorageReader(  # pylint: disable=protected-access
             file_path
         )
+        if not storage_reader:
+            raise RuntimeError(f"Unable to open Plaso storage reader for {file_path}")
         total_file_events = storage_reader.GetNumberOfAttributeContainers("event")
         if not total_file_events:
             raise RuntimeError("Not able to get total event count from Plaso file.")
