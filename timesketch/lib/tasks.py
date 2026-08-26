@@ -386,6 +386,8 @@ def _set_datasource_total_events(timeline_id, file_path, total_file_events):
             timeline.
     """
     timeline = Timeline.get_by_id(timeline_id)
+    if not timeline:
+        raise KeyError(f"No timeline found with ID: {timeline_id}")
     for datasource in timeline.datasources:
         if datasource.get_file_on_disk == file_path:
             datasource.set_total_file_events(total_file_events)
