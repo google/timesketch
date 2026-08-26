@@ -31,7 +31,7 @@ jobs:
       - name: Run e2e tests
         run: |
           docker compose -f docker/e2e/docker-compose.yml exec -T timesketch git config --global --add safe.directory /usr/local/src/timesketch
-          docker compose -f docker/e2e/docker-compose.yml exec -T -e TEST_PLASO_FILE=evtx_20260512.plaso timesketch python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py
+          docker compose -f docker/e2e/docker-compose.yml exec -T -e TEST_PLASO_FILE=evtx_20260720.plaso timesketch python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py
       - name: Dump docker logs on failure
         if: failure()
         uses: jwalton/gh-docker-logs@v2
@@ -73,7 +73,7 @@ jobs:
       - name: Run e2e tests
         run: |
           docker compose -f docker/e2e/docker-compose.yml exec -T timesketch git config --global --add safe.directory /usr/local/src/timesketch
-          docker compose -f docker/e2e/docker-compose.yml exec -T -e TEST_PLASO_FILE=evtx_20260512.plaso timesketch python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py telemetry_test
+          docker compose -f docker/e2e/docker-compose.yml exec -T -e TEST_PLASO_FILE=evtx_20260720.plaso timesketch python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py telemetry_test
       - name: Dump docker logs on failure
         if: failure()
         uses: jwalton/gh-docker-logs@v2

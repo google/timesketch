@@ -120,7 +120,7 @@ logger = logging.getLogger("timesketch.tasks")
 celery = create_celery_app()
 
 
-PLASO_MINIMUM_VERSION = 20201228
+PLASO_MINIMUM_VERSION = 20260720
 
 
 # pylint: disable=unused-argument
@@ -353,7 +353,7 @@ def _set_datasource_status(timeline_id, file_path, status, error_message=None):
             _set_timeline_status(timeline_id, status)
             return
 
-    raise KeyError(f"No datasource find in the timeline with file_path: {file_path}")
+    raise KeyError(f"No datasource found in the timeline with file_path: {file_path}")
 
 
 def _set_datasource_total_events(timeline_id, file_path, total_file_events):
@@ -362,7 +362,7 @@ def _set_datasource_total_events(timeline_id, file_path, total_file_events):
         if datasource.get_file_on_disk == file_path:
             datasource.set_total_file_events(total_file_events)
             return
-    raise KeyError(f"No datasource find in the timeline with file_path: {file_path}")
+    raise KeyError(f"No datasource found in the timeline with file_path: {file_path}")
 
 
 def _get_index_task_class(file_extension):
@@ -834,22 +834,38 @@ def run_plaso(
         Name (str) of the index or None in case of an error
     """
     time_start = time.time()
+    timeline = Timeline.get_by_id(timeline_id)
+    sketch_id = timeline.sketch_id if timeline else None
+
+    # Pre-validation checks for Plaso availability and version.
+    error_message = None
     if not plaso:
-        raise RuntimeError(
-            "Plaso isn't installed, unable to continue processing plaso files."
+        error_message = (
+            "Plaso isn't installed, unable to continue processing plaso files"
+        )
+    elif int(plaso.__version__) < PLASO_MINIMUM_VERSION:
+        error_message = (
+            f"Plaso version is out of date (installed version: "
+            f"{int(plaso.__version__):d}, please upgrade to a version that is "
+            f"{PLASO_MINIMUM_VERSION:d} or later)"
         )
 
-    plaso_version = int(plaso.__version__)
-    if plaso_version <= PLASO_MINIMUM_VERSION:
-        raise RuntimeError(
-            "Plaso version is out of date (version {:d}, please upgrade to a "
-            "version that is later than {:d}".format(
-                plaso_version, PLASO_MINIMUM_VERSION
+    if error_message:
+        if sketch_id:
+            error_message = f"[Sketch ID: {sketch_id:d}] {error_message}."
+        else:
+            error_message = f"{error_message}."
+
+        try:
+            _set_datasource_status(
+                timeline_id, file_path, "fail", error_message=error_message
             )
-        )
+        except Exception as e:  # pylint: disable=broad-except
+            logger.error("Failed to set datasource status: %s", e)
+        raise RuntimeError(error_message)
 
     if events:
-        raise RuntimeError("Plaso uploads needs a file, not events.")
+        raise RuntimeError("Plaso uploads need a file, not events.")
 
     # Run pinfo on storage file
     try:
