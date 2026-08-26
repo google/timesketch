@@ -857,12 +857,21 @@ def run_plaso(
         error_message = (
             "Plaso isn't installed, unable to continue processing plaso files"
         )
-    elif int(plaso.__version__) < PLASO_MINIMUM_VERSION:
-        error_message = (
-            f"Plaso version is out of date (installed version: "
-            f"{int(plaso.__version__):d}, please upgrade to a version that is "
-            f"{PLASO_MINIMUM_VERSION:d} or later)"
-        )
+    else:
+        try:
+            plaso_version = int(plaso.__version__)
+            if plaso_version < PLASO_MINIMUM_VERSION:
+                error_message = (
+                    f"Plaso version is out of date (installed version: "
+                    f"{plaso_version:d}, please upgrade to a version that is "
+                    f"{PLASO_MINIMUM_VERSION:d} or later)"
+                )
+        except (ValueError, TypeError):
+            error_message = (
+                f"Plaso version could not be parsed (installed version: "
+                f"{plaso.__version__}), please ensure it is "
+                f"{PLASO_MINIMUM_VERSION:d} or later."
+            )
 
     if error_message:
         if sketch_id:
