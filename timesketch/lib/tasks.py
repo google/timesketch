@@ -55,7 +55,6 @@ from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import InvestigativeQuestionApproach
 from timesketch.models.sketch import InvestigativeQuestionConclusion
-from timesketch.models.sketch import normalize_event_count
 from timesketch.models.user import User
 
 # Metrics definitions
@@ -363,13 +362,11 @@ def _set_datasource_total_events(timeline_id, file_path, total_file_events):
     Args:
         timeline_id (int): Primary key ID of the timeline.
         file_path (str): File path on disk for the datasource.
-        total_file_events (int, str, or object): Total event count to record,
-            can be an integer, string, or Plaso count container.
+        total_file_events (int): Total event count to record.
 
     Raises:
         KeyError: If no datasource with the given file path is found in the
             timeline.
-        ValueError: If total_file_events cannot be converted to an integer.
     """
     timeline = Timeline.get_by_id(timeline_id)
     for datasource in timeline.datasources:
@@ -905,14 +902,7 @@ def run_plaso(
         storage_reader = pinfo._GetStorageReader(  # pylint: disable=protected-access
             file_path
         )
-        storage_counters = (
-            pinfo._CalculateStorageCounters(  # pylint: disable=protected-access
-                storage_reader
-            )
-        )
-        total_file_events = normalize_event_count(
-            storage_counters.get("parsers", {}).get("total")
-        )
+        total_file_events = storage_reader.GetNumberOfAttributeContainers("event")
         if not total_file_events:
             raise RuntimeError("Not able to get total event count from Plaso file.")
         logger.info("Finished running pinfo on %s", file_path)

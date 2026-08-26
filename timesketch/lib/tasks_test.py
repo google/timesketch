@@ -134,31 +134,6 @@ class TestTasks(BaseTest):
         )
         self.assertEqual(datasource.get_total_file_events, 42)
 
-    def test_set_datasource_total_events_with_parser_count_object(self):
-        """Test _set_datasource_total_events with a ParserCount-like object."""
-        datasource = DataSource(
-            timeline=self.timeline,
-            user=self.user1,
-            file_on_disk="/tmp/test2.plaso",
-            original_filename="test2.plaso",
-        )
-        db_session.add(datasource)
-        db_session.commit()
-
-        class MockParserCount:
-            """Mock plaso ParserCount object."""
-
-            def __init__(self, count):
-                self.name = "total"
-                self.number_of_events = count
-
-        mock_count = MockParserCount(3205)
-        file_path = datasource.get_file_on_disk
-        tasks._set_datasource_total_events(  # pylint: disable=protected-access
-            self.timeline.id, file_path, mock_count
-        )
-        self.assertEqual(datasource.get_total_file_events, 3205)
-
     def test_set_datasource_total_events_not_found(self):
         """Test _set_datasource_total_events raises KeyError for missing file."""
         with self.assertRaises(KeyError):
@@ -169,25 +144,19 @@ class TestTasks(BaseTest):
     @mock.patch("timesketch.lib.tasks.subprocess.check_output")
     @mock.patch("timesketch.lib.tasks.pinfo_tool.PinfoTool")
     @mock.patch("timesketch.lib.tasks.OpenSearchDataStore")
-    def test_run_plaso_success_with_parser_count(
+    def test_run_plaso_success(
         self, mock_opensearch_cls, mock_pinfo_cls, mock_check_output
     ):
-        """Test run_plaso successfully processes total_file_events as ParserCount."""
+        """Test run_plaso successfully processes and indexes plaso file."""
         mock_plaso = mock.MagicMock()
         mock_plaso.__version__ = "20260720"
 
-        class MockParserCount:
-            """Mock plaso ParserCount object."""
-
-            def __init__(self, count):
-                self.name = "total"
-                self.number_of_events = count
+        mock_storage_reader = mock.MagicMock()
+        mock_storage_reader.GetNumberOfAttributeContainers.return_value = 3205
 
         mock_pinfo = mock.MagicMock()
         # pylint: disable=protected-access
-        mock_pinfo._CalculateStorageCounters.return_value = {
-            "parsers": {"total": MockParserCount(3205)}
-        }
+        mock_pinfo._GetStorageReader.return_value = mock_storage_reader
         mock_pinfo_cls.return_value = mock_pinfo
 
         mock_opensearch = mock.MagicMock()

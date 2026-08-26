@@ -528,41 +528,6 @@ class GraphCache(BaseModel):
     num_edges = Column(Integer)
 
 
-def normalize_event_count(total_file_events):
-    """Normalizes event count objects or primitives to an integer.
-
-    Starting with Plaso 20260720, pinfo storage counters return
-    AttributeContainer objects (such as plaso.containers.counts.ParserCount
-    with a number_of_events attribute) rather than raw integers. This helper
-    extracts the underlying count and converts it to an integer for database
-    storage.
-
-    Args:
-        total_file_events (int, str, or object): Integer, string, or Plaso count
-            container.
-
-    Returns:
-        int or None: An integer event count, or None if total_file_events is None.
-
-    Raises:
-        ValueError: If total_file_events cannot be converted to an integer.
-    """
-    if total_file_events is None:
-        return None
-    if hasattr(total_file_events, "number_of_events"):
-        total_file_events = total_file_events.number_of_events
-    elif hasattr(total_file_events, "count") and not callable(total_file_events.count):
-        total_file_events = total_file_events.count
-
-    try:
-        return int(total_file_events)
-    except (TypeError, ValueError) as e:
-        raise ValueError(
-            f"Unable to convert event count {total_file_events!r} "
-            f"(type: {type(total_file_events).__name__}) to an integer."
-        ) from e
-
-
 class DataSource(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     """Implements the datasource model."""
 
@@ -581,10 +546,9 @@ class DataSource(LabelMixin, StatusMixin, CommentMixin, BaseModel):
         """Set the total file events on the datasource.
 
         Args:
-            total_file_events (int, str, or object): Integer, string, or Plaso count
-                container.
+            total_file_events (int): Total event count to record.
         """
-        self.total_file_events = normalize_event_count(total_file_events)
+        self.total_file_events = total_file_events
         db_session.add(self)
         db_session.commit()
 
