@@ -543,6 +543,15 @@ class DataSource(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     total_file_events = Column(BigInteger(), default=0)
 
     def set_total_file_events(self, total_file_events):
+        if hasattr(total_file_events, "number_of_events"):
+            total_file_events = total_file_events.number_of_events
+        elif hasattr(total_file_events, "count"):
+            total_file_events = total_file_events.count
+        elif total_file_events is not None:
+            try:
+                total_file_events = int(total_file_events)
+            except (TypeError, ValueError):
+                pass
         self.total_file_events = total_file_events
         db_session.add(self)
         db_session.commit()

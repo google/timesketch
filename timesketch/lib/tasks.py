@@ -357,6 +357,16 @@ def _set_datasource_status(timeline_id, file_path, status, error_message=None):
 
 
 def _set_datasource_total_events(timeline_id, file_path, total_file_events):
+    if hasattr(total_file_events, "number_of_events"):
+        total_file_events = total_file_events.number_of_events
+    elif hasattr(total_file_events, "count"):
+        total_file_events = total_file_events.count
+    elif total_file_events is not None:
+        try:
+            total_file_events = int(total_file_events)
+        except (TypeError, ValueError):
+            pass
+
     timeline = Timeline.get_by_id(timeline_id)
     for datasource in timeline.datasources:
         if datasource.get_file_on_disk == file_path:
@@ -869,7 +879,15 @@ def run_plaso(
 
     # Run pinfo on storage file
     try:
-        logger.info("Running pinfo on %s for index %s", file_path, index_name)
+        if sketch_id:
+            logger.info(
+                "[Sketch ID: %s] Running pinfo on %s for index %s",
+                sketch_id,
+                file_path,
+                index_name,
+            )
+        else:
+            logger.info("Running pinfo on %s for index %s", file_path, index_name)
         pinfo = pinfo_tool.PinfoTool()
         storage_reader = pinfo._GetStorageReader(  # pylint: disable=protected-access
             file_path
@@ -880,6 +898,16 @@ def run_plaso(
             )
         )
         total_file_events = storage_counters.get("parsers", {}).get("total")
+        if hasattr(total_file_events, "number_of_events"):
+            total_file_events = total_file_events.number_of_events
+        elif hasattr(total_file_events, "count"):
+            total_file_events = total_file_events.count
+        elif total_file_events is not None:
+            try:
+                total_file_events = int(total_file_events)
+            except (TypeError, ValueError):
+                pass
+
         if not total_file_events:
             raise RuntimeError("Not able to get total event count from Plaso file.")
         logger.info("Finished running pinfo on %s", file_path)
