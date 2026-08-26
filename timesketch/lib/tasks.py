@@ -111,7 +111,7 @@ METRICS = {
 # To be able to determine plaso's version.
 try:
     import plaso
-    from plaso.cli import pinfo_tool
+    from plaso.storage import factory as plaso_storage_factory
 except ImportError:
     plaso = None
 
@@ -356,21 +356,23 @@ def _set_datasource_status(timeline_id, file_path, status, error_message=None):
             "Cannot set datasource status: No timeline found (ID: %s)", timeline_id
         )
         return
+    datasource_found = False
     for datasource in timeline.datasources:
         if datasource.get_file_on_disk == file_path:
             datasource.set_status(status)
             if error_message:
                 datasource.set_error_message(error_message)
-            db_session.add(timeline)
-            db_session.commit()
-            _set_timeline_status(timeline_id, status)
-            return
+            datasource_found = True
+            break
 
-    logger.warning(
-        "No datasource found in timeline %s with file_path: %s",
-        timeline_id,
-        file_path,
-    )
+    if not datasource_found:
+        logger.warning(
+            "No datasource found in timeline %s with file_path: %s",
+            timeline_id,
+            file_path,
+        )
+
+    _set_timeline_status(timeline_id, status)
 
 
 def _set_datasource_total_events(timeline_id, file_path, total_file_events):
@@ -906,27 +908,37 @@ def run_plaso(
     if events:
         raise RuntimeError("Plaso uploads need a file, not events.")
 
-    # Run pinfo on storage file
+    # Read event count from Plaso storage file
     try:
         if sketch_id:
             logger.info(
-                "[Sketch ID: %s] Running pinfo on %s for index %s",
+                "[Sketch ID: %s] Reading event count from %s for index %s",
                 sketch_id,
                 file_path,
                 index_name,
             )
         else:
-            logger.info("Running pinfo on %s for index %s", file_path, index_name)
-        pinfo = pinfo_tool.PinfoTool()
-        storage_reader = pinfo._GetStorageReader(  # pylint: disable=protected-access
-            file_path
+            logger.info(
+                "Reading event count from %s for index %s", file_path, index_name
+            )
+        storage_reader = (
+            plaso_storage_factory.StorageFactory.CreateStorageReaderForFile(file_path)
         )
         if not storage_reader:
             raise RuntimeError(f"Unable to open Plaso storage reader for {file_path}")
-        total_file_events = storage_reader.GetNumberOfAttributeContainers("event")
+
+        try:
+            total_file_events = storage_reader.GetNumberOfAttributeContainers(
+                "event"
+            ) or storage_reader.GetNumberOfAttributeContainers("event_data")
+        finally:
+            storage_reader.Close()
+
         if not total_file_events:
             raise RuntimeError("Not able to get total event count from Plaso file.")
-        logger.info("Finished running pinfo on %s", file_path)
+        logger.info(
+            "Finished reading event count (%d) from %s", total_file_events, file_path
+        )
     except Exception as e:  # pylint: disable=broad-except
         # Mark the searchindex and timelines as failed and exit the task
         error_msg = traceback.format_exc()
