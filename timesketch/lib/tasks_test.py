@@ -27,11 +27,6 @@ with mock.patch(
 ):
     from timesketch.lib import tasks
 
-_CREATE_STORAGE_READER = (
-    "timesketch.lib.tasks.plaso_storage_factory.StorageFactory."
-    "CreateStorageReaderForFile"
-)
-
 
 class TestTasks(BaseTest):
     """Tests for the tasks module."""
@@ -170,12 +165,14 @@ class TestTasks(BaseTest):
                 "Plaso uploads need a file, not events", str(context.exception)
             )
 
-    @mock.patch(_CREATE_STORAGE_READER)
-    def test_run_plaso_storage_reader_none_raises(self, mock_create_reader):
+    def test_run_plaso_storage_reader_none_raises(self):
         """Test run_plaso raises RuntimeError when storage reader is None."""
         mock_plaso = mock.MagicMock()
         mock_plaso.__version__ = "20260720"
-        mock_create_reader.return_value = None
+        mock_storage_factory = mock.MagicMock()
+        mock_storage_factory.StorageFactory.CreateStorageReaderForFile.return_value = (
+            None
+        )
 
         file_path = "/tmp/reader_none.plaso"
         datasource = DataSource(
@@ -187,7 +184,9 @@ class TestTasks(BaseTest):
         db_session.add(datasource)
         db_session.commit()
 
-        with mock.patch("timesketch.lib.tasks.plaso", mock_plaso):
+        with mock.patch("timesketch.lib.tasks.plaso", mock_plaso), mock.patch(
+            "timesketch.lib.tasks.plaso_storage_factory", mock_storage_factory
+        ):
             with self.assertRaises(RuntimeError) as context:
                 tasks.run_plaso(
                     file_path=file_path,
@@ -263,18 +262,18 @@ class TestTasks(BaseTest):
             )
 
     @mock.patch("timesketch.lib.tasks.subprocess.check_output")
-    @mock.patch(_CREATE_STORAGE_READER)
     @mock.patch("timesketch.lib.tasks.OpenSearchDataStore")
-    def test_run_plaso_success(
-        self, mock_opensearch_cls, mock_create_reader, mock_check_output
-    ):
+    def test_run_plaso_success(self, mock_opensearch_cls, mock_check_output):
         """Test run_plaso successfully processes and indexes plaso file."""
         mock_plaso = mock.MagicMock()
         mock_plaso.__version__ = "20260720"
 
         mock_storage_reader = mock.MagicMock()
         mock_storage_reader.GetNumberOfAttributeContainers.return_value = 3205
-        mock_create_reader.return_value = mock_storage_reader
+        mock_storage_factory = mock.MagicMock()
+        mock_storage_factory.StorageFactory.CreateStorageReaderForFile.return_value = (
+            mock_storage_reader
+        )
 
         mock_opensearch = mock.MagicMock()
         mock_connection = mock.MagicMock()
@@ -302,7 +301,9 @@ class TestTasks(BaseTest):
         db_session.add(searchindex)
         db_session.commit()
 
-        with mock.patch("timesketch.lib.tasks.plaso", mock_plaso):
+        with mock.patch("timesketch.lib.tasks.plaso", mock_plaso), mock.patch(
+            "timesketch.lib.tasks.plaso_storage_factory", mock_storage_factory
+        ):
             result = tasks.run_plaso(
                 file_path=file_path,
                 events="",
@@ -317,10 +318,9 @@ class TestTasks(BaseTest):
         mock_storage_reader.Close.assert_called_once()
 
     @mock.patch("timesketch.lib.tasks.subprocess.check_output")
-    @mock.patch(_CREATE_STORAGE_READER)
     @mock.patch("timesketch.lib.tasks.OpenSearchDataStore")
     def test_run_plaso_success_event_data_fallback(
-        self, mock_opensearch_cls, mock_create_reader, mock_check_output
+        self, mock_opensearch_cls, mock_check_output
     ):
         """Test run_plaso falls back to event_data count when event count is 0."""
         mock_plaso = mock.MagicMock()
@@ -331,7 +331,10 @@ class TestTasks(BaseTest):
         mock_storage_reader.GetNumberOfAttributeContainers.side_effect = (
             lambda container_type: (1602 if container_type == "event_data" else 0)
         )
-        mock_create_reader.return_value = mock_storage_reader
+        mock_storage_factory = mock.MagicMock()
+        mock_storage_factory.StorageFactory.CreateStorageReaderForFile.return_value = (
+            mock_storage_reader
+        )
 
         mock_opensearch = mock.MagicMock()
         mock_connection = mock.MagicMock()
@@ -359,7 +362,9 @@ class TestTasks(BaseTest):
         db_session.add(searchindex)
         db_session.commit()
 
-        with mock.patch("timesketch.lib.tasks.plaso", mock_plaso):
+        with mock.patch("timesketch.lib.tasks.plaso", mock_plaso), mock.patch(
+            "timesketch.lib.tasks.plaso_storage_factory", mock_storage_factory
+        ):
             result = tasks.run_plaso(
                 file_path=file_path,
                 events="",

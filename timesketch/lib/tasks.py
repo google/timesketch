@@ -114,6 +114,7 @@ try:
     from plaso.storage import factory as plaso_storage_factory
 except ImportError:
     plaso = None
+    plaso_storage_factory = None
 
 
 logger = logging.getLogger("timesketch.tasks")
