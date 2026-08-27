@@ -136,7 +136,7 @@ def create_app(
         sys.exit()
 
     # Plaso version that we support
-    if app.config.get("UPLOAD_ENABLED"):
+    if app.config["UPLOAD_ENABLED"]:
         try:
             # pylint: disable=import-outside-toplevel
             from plaso import __version__ as plaso_version
