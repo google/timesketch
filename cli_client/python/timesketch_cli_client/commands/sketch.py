@@ -13,8 +13,10 @@
 # limitations under the License.
 """Commands for sketches."""
 
-import time
 import json
+import os
+import tempfile
+import time
 from typing import Optional
 import click
 import pandas as pd
@@ -459,9 +461,9 @@ def export_only_with_annotations(
         )
 
     start_time = time.time()
-    all_events_df = (
-        pd.DataFrame()
-    )  # Initialize an empty DataFrame to hold combined results
+    events_dfs: list[pd.DataFrame] = (
+        []
+    )  # Initialize an empty list to hold combined results
 
     search_max_entries = 10000  # Use a large number for 'unlimited' search
 
@@ -499,10 +501,8 @@ def export_only_with_annotations(
                 events_df = search_obj.to_pandas()
                 if not events_df.empty:
                     click.echo(f"    Found {len(events_df)} events.")
-                    # Concatenate results, ignore index to avoid conflicts
-                    all_events_df = pd.concat(
-                        [all_events_df, events_df], ignore_index=True
-                    )
+                    # Append to list to avoid slow repeated concats
+                    events_dfs.append(events_df)
                 else:
                     click.echo("    Found 0 events.")
             except Exception as search_err:  # pylint: disable=broad-except
@@ -512,9 +512,11 @@ def export_only_with_annotations(
                 )
                 # Continue to next search type
 
-        if all_events_df.empty:
+        if not events_dfs:
             click.echo("\nNo annotated events found across all search types.")
             return
+
+        all_events_df = pd.concat(events_dfs, ignore_index=True)
 
         # Deduplicate based on event ID ('_id' column)
         # Keep the first occurrence if duplicates exist
@@ -543,15 +545,44 @@ def export_only_with_annotations(
 
         click.echo(f"Writing {exported_count} events to file...")
 
-        # Write the final DataFrame to the file
-        with open(filename, "w", encoding="utf-8") as fh:
+        # Write the final DataFrame to a temporary file, then move atomically.
+        # This is to avoid accidental data deletion or partial file corruption.
+        temp_filename = None
+        try:
+            target_dir = os.path.dirname(os.path.abspath(filename))
+            with tempfile.NamedTemporaryFile(
+                dir=target_dir, prefix="timesketch_export_", delete=False
+            ) as temp_file:
+                temp_filename = temp_file.name
+
             if output_format == "csv":
-                fh.write(final_df.to_csv(index=False, header=True, lineterminator="\n"))
-            elif output_format == "jsonl":
-                fh.write(
-                    final_df.to_json(orient="records", lines=True, date_format="iso")
-                    + "\n"
+                final_df.to_csv(
+                    temp_filename,
+                    index=False,
+                    header=True,
+                    lineterminator="\n",
+                    encoding="utf-8",
                 )
+            elif output_format == "jsonl":
+                final_df.to_json(
+                    temp_filename,
+                    orient="records",
+                    lines=True,
+                    date_format="iso",
+                    force_ascii=False,
+                )
+            os.replace(temp_filename, filename)
+            temp_filename = None
+        finally:
+            if temp_filename and os.path.exists(temp_filename):
+                try:
+                    os.remove(temp_filename)
+                except OSError as cleanup_error:
+                    click.echo(
+                        f"Warning: Failed to clean up temp file {temp_filename}: "
+                        f"{cleanup_error}",
+                        err=True,
+                    )
 
         end_time = time.time()
         click.echo(
