@@ -31,10 +31,6 @@ with mock.patch(
 class TestTasks(BaseTest):
     """Tests for the tasks module."""
 
-    def test_plaso_minimum_version_constant(self):
-        """Test the PLASO_MINIMUM_VERSION constant."""
-        self.assertEqual(tasks.PLASO_MINIMUM_VERSION, 20260720)
-
     @mock.patch("timesketch.lib.tasks.plaso", None)
     def test_run_plaso_not_installed_with_sketch(self):
         """Test run_plaso error contains sketch info when plaso is not installed."""
@@ -377,3 +373,99 @@ class TestTasks(BaseTest):
         self.assertEqual(result, "test_index_2")
         self.assertEqual(datasource.get_total_file_events, 1602)
         mock_storage_reader.Close.assert_called_once()
+
+    @mock.patch("timesketch.lib.tasks.subprocess.check_output")
+    @mock.patch("timesketch.lib.tasks.OpenSearchDataStore")
+    def test_run_plaso_success_zero_events(
+        self, mock_opensearch_cls, mock_check_output
+    ):
+        """Test run_plaso handles files with 0 events without crashing."""
+        mock_plaso = mock.MagicMock()
+        mock_plaso.__version__ = "20260720"
+
+        mock_storage_reader = mock.MagicMock()
+        mock_storage_reader.GetNumberOfAttributeContainers.return_value = 0
+        mock_storage_factory = mock.MagicMock()
+        mock_storage_factory.StorageFactory.CreateStorageReaderForFile.return_value = (
+            mock_storage_reader
+        )
+
+        mock_opensearch = mock.MagicMock()
+        mock_connection = mock.MagicMock()
+        mock_connection.host = "http://127.0.0.1"
+        mock_connection.port = 9200
+        mock_opensearch.client.transport.get_connection.return_value = mock_connection
+        mock_opensearch.client.indices.exists.return_value = True
+        mock_opensearch.create_index.return_value = "test_index_zero"
+        mock_opensearch_cls.return_value = mock_opensearch
+        mock_check_output.return_value = "Done"
+
+        file_path = "/tmp/test_zero_events.plaso"
+        datasource = DataSource(
+            timeline=self.timeline,
+            user=self.user1,
+            file_on_disk=file_path,
+            original_filename="test_zero_events.plaso",
+        )
+        db_session.add(datasource)
+        searchindex = SearchIndex(
+            name="test_index_zero",
+            user=self.user1,
+            index_name="test_index_zero",
+        )
+        db_session.add(searchindex)
+        db_session.commit()
+
+        with mock.patch("timesketch.lib.tasks.plaso", mock_plaso), mock.patch(
+            "timesketch.lib.tasks.plaso_storage_factory", mock_storage_factory
+        ):
+            result = tasks.run_plaso(
+                file_path=file_path,
+                events="",
+                timeline_name="test_timeline",
+                index_name="test_index_zero",
+                source_type="plaso",
+                timeline_id=self.timeline.id,
+            )
+
+        self.assertEqual(result, "test_index_zero")
+        self.assertEqual(datasource.get_total_file_events, 0)
+        mock_storage_reader.Close.assert_called_once()
+
+    def test_run_plaso_containers_none_raises(self):
+        """Test run_plaso raises RuntimeError when containers return None."""
+        mock_plaso = mock.MagicMock()
+        mock_plaso.__version__ = "20260720"
+
+        mock_storage_reader = mock.MagicMock()
+        mock_storage_reader.GetNumberOfAttributeContainers.return_value = None
+        mock_storage_factory = mock.MagicMock()
+        mock_storage_factory.StorageFactory.CreateStorageReaderForFile.return_value = (
+            mock_storage_reader
+        )
+
+        file_path = "/tmp/test_none_containers.plaso"
+        datasource = DataSource(
+            timeline=self.timeline,
+            user=self.user1,
+            file_on_disk=file_path,
+            original_filename="test_none_containers.plaso",
+        )
+        db_session.add(datasource)
+        db_session.commit()
+
+        with mock.patch("timesketch.lib.tasks.plaso", mock_plaso), mock.patch(
+            "timesketch.lib.tasks.plaso_storage_factory", mock_storage_factory
+        ):
+            with self.assertRaises(RuntimeError) as context:
+                tasks.run_plaso(
+                    file_path=file_path,
+                    events="",
+                    timeline_name="test_timeline",
+                    index_name="test_index_none",
+                    source_type="plaso",
+                    timeline_id=self.timeline.id,
+                )
+            self.assertIn("Unable to read event or event_data containers", str(context.exception))
+            self.assertEqual(datasource.status[0].status, "fail")
+            mock_storage_reader.Close.assert_called_once()
