@@ -362,6 +362,7 @@ def main(args=None):
         "--sketch-strategy",
         action="store",
         type=str,
+        choices=["ask", "newest", "oldest"],
         dest="sketch_strategy",
         default="ask",
         help=(
@@ -662,39 +663,27 @@ def main(args=None):
                 elif options.sketch_strategy == "oldest":
                     my_sketch = sorted(sketches, key=lambda s: s.created_at)[0]
                 else:
-                    # ask user for clarification using cli_input
-                    print(
-                        "Multiple sketches found with the name '{0:s}':".format(
-                            sketch_name
-                        )
-                    )
-                    for s in sketches:
-                        print(
-                            " - [{0:d}] created_at: {1:s}, by {2:s}".format(
-                                s.id, s.created_at, s.creator
-                            )
-                        )
+                    # ask user for clarification using cli_input  
+                    print(f"Multiple sketches found with the name '{sketch_name}':")  
+                    for s in sketches:  
+                        print(f" - [{s.id:d}] created_at: {s.created_at}, by {s.creator}")  
 
-                    selected_option = None
-                    while selected_option is None:
-                        try:
-                            selected_option = cli_input.ask_question(
-                                "Select the sketch to use by entering the"
-                                " corresponding number",
-                                input_type=int,
-                                default=sketches[0].id,
-                            )
-                        except ValueError:
-                            print(
-                                "Invalid input. Please enter a valid"
-                                " integer (e.g. {0:d}).".format(sketches[0].id)
-                            )
-                    try:
-                        # select sketch by ID from the sketches list
-                        my_sketch = next(s for s in sketches if s.id == selected_option)
-                    except StopIteration:
-                        logger.error("Selected sketch ID not found, exiting.")
-                        sys.exit(1)
+                    valid_ids = {s.id for s in sketches}  
+                    selected_option = None  
+                    while selected_option is None:  
+                        try:  
+                            ans = cli_input.ask_question(  
+                                "Select the sketch to use by entering the corresponding number",  
+                                input_type=int,  
+                                default=sketches[0].id,  
+                            )  
+                            if ans in valid_ids:  
+                                selected_option = ans  
+                            else:  
+                                print(f"Invalid ID. Please choose from the listed IDs: {sorted(valid_ids)}")  
+                        except ValueError:  
+                            print(f"Invalid input. Please enter a valid integer (e.g. {sketches[0].id:d}).")  
+                    my_sketch = next(s for s in sketches if s.id == selected_option)
             else:
                 my_sketch = sketches[0]
 
