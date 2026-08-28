@@ -11,7 +11,7 @@
     "@mdi/font": "7.4.47",
     "@popperjs/core": "^2.11.8",
     "apexcharts": "^5.10.1",
-    "axios": "^1.16.0",
+    "axios": "^1.18.0",
     "core-js": "^3.37.1",
     "cytoscape": "^3.32.0",
     "cytoscape-dagre": "^3.0.0",

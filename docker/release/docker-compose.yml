@@ -14,6 +14,8 @@ services:
     image: us-docker.pkg.dev/osdfir-registry/timesketch/timesketch:${TIMESKETCH_VERSION}
     environment:
       - NUM_WSGI_WORKERS=${NUM_WSGI_WORKERS}
+      - WSGI_WORKER_CLASS=${WSGI_WORKER_CLASS}
+      - NUM_WSGI_THREADS=${NUM_WSGI_THREADS}
       # To enable telemetry, set TIMESKETCH_OTEL_MODE=otlp-grpc when running with '--profile telemetry'
       # (Note: The default is intentionally empty to prevent connection errors when the profile is not active)
       - TIMESKETCH_OTEL_MODE=${TIMESKETCH_OTEL_MODE:-}
@@ -34,6 +36,8 @@ services:
     image: us-docker.pkg.dev/osdfir-registry/timesketch/timesketch:${TIMESKETCH_VERSION}
     environment:
       - NUM_WSGI_WORKERS=${NUM_WSGI_WORKERS}
+      - WSGI_WORKER_CLASS=${WSGI_WORKER_CLASS}
+      - NUM_WSGI_THREADS=${NUM_WSGI_THREADS}
       # To enable telemetry, set TIMESKETCH_OTEL_MODE=otlp-grpc when running with '--profile telemetry'
       # (Note: The default is intentionally empty to prevent connection errors when the profile is not active)
       - TIMESKETCH_OTEL_MODE=${TIMESKETCH_OTEL_MODE:-}
@@ -56,6 +60,8 @@ services:
     image: us-docker.pkg.dev/osdfir-registry/timesketch/timesketch:${TIMESKETCH_VERSION}
     environment:
       - NUM_WSGI_WORKERS=${NUM_WSGI_WORKERS}
+      - WSGI_WORKER_CLASS=${WSGI_WORKER_CLASS}
+      - NUM_WSGI_THREADS=${NUM_WSGI_THREADS}
       # To enable telemetry, set TIMESKETCH_OTEL_MODE=otlp-grpc when running with '--profile telemetry'
       # (Note: The default is intentionally empty to prevent connection errors when the profile is not active)
       - TIMESKETCH_OTEL_MODE=${TIMESKETCH_OTEL_MODE:-}
