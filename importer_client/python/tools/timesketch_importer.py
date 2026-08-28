@@ -65,10 +65,10 @@ def upload_file(
     """Uploads a file to Timesketch.
 
     Args:
-        my_sketch (sketch.Sketch): a sketch object to point to the sketch the
+        my_sketch: a sketch object to point to the sketch the
             data will be imported to.
-        config_dict (dict): dict with settings for the importer.
-        file_path (str): the path to the file to upload.
+        config_dict: dict with settings for the importer.
+        file_path: the path to the file to upload.
 
     Returns:
         A tuple with the timeline object (timeline.Timeline) or None if not

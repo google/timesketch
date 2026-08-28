@@ -49,7 +49,11 @@ class Graph(resource.SketchResource):
     }
 
     def __init__(self, sketch):
-        """Initialize the graph object."""
+        """Initialize the graph object.
+
+        Args:
+            sketch (Sketch): The sketch that the graph belongs to.
+        """
         resource_uri = f"sketches/{sketch.id}/graphs/"
         super().__init__(sketch=sketch, resource_uri=resource_uri)
 
@@ -140,7 +144,11 @@ class Graph(resource.SketchResource):
 
     @description.setter
     def description(self, description):
-        """Make changes to the saved search description field."""
+        """Make changes to the saved search description field.
+
+        Args:
+            description (str): The description of the graph.
+        """
         self._description = description
         self.commit()
 
@@ -208,7 +216,11 @@ class Graph(resource.SketchResource):
 
     @graph_config.setter
     def graph_config(self, graph_config):
-        """Change the graph config."""
+        """Change the graph config.
+
+        Args:
+            graph_config (dict): The configuration for the graph.
+        """
         if not isinstance(graph_config, dict):
             raise ValueError("Graph config needs to be a dict.")
 
@@ -348,7 +360,11 @@ class Graph(resource.SketchResource):
 
     @layout.setter
     def layout(self, layout):
-        """Change the layout manually."""
+        """Change the layout manually.
+
+        Args:
+            layout (dict): The layout for the graph.
+        """
         if not isinstance(layout, dict):
             raise ValueError("Layout needs to be a dict.")
         self._layout = layout
@@ -365,7 +381,11 @@ class Graph(resource.SketchResource):
 
     @name.setter
     def name(self, name):
-        """Make changes to the saved search name."""
+        """Make changes to the saved search name.
+
+        Args:
+            name (str): The name of the graph.
+        """
         self._name = name
         self.commit()
 
@@ -427,7 +447,11 @@ class Graph(resource.SketchResource):
         return f"Saved graph to ID: {self._resource_id}"
 
     def set_layout_type(self, layout_string):
-        """Use a layout from the layout strings."""
+        """Use a layout from the layout strings.
+
+        Args:
+            layout_string (str): The layout to use.
+        """
         layout = self._GRAPH_LAYOUTS.get(layout_string)
         if layout:
             self.layout = layout(self.graph)
@@ -439,7 +463,11 @@ class Graph(resource.SketchResource):
 
     @timelines.setter
     def timelines(self, timelines):
-        """Sets the timelines."""
+        """Sets the timelines.
+
+        Args:
+            timelines (list): A list of timelines to use.
+        """
         if not isinstance(timelines, (list, tuple)):
             logger.error("Unable to add timelines, this needs to be a list")
 

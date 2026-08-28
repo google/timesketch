@@ -13,8 +13,6 @@
 # limitations under the License.
 """Tests for the Timesketch API client"""
 
-from __future__ import unicode_literals
-
 import unittest
 from unittest import mock
 

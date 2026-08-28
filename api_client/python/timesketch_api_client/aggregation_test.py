@@ -14,7 +14,7 @@
 """Tests for the Timesketch API aggregation object."""
 
 import unittest
-import mock
+from unittest import mock
 
 import altair as alt
 

@@ -1036,7 +1036,7 @@ class ImportStreamer(object):
         """Set the maximum payload size allowed by the server.
 
         Args:
-            size_in_bytes (int): The server limit (e.g. MAX_FORM_MEMORY_SIZE).
+            size_in_bytes: The server limit (e.g. MAX_FORM_MEMORY_SIZE).
         """
         if size_in_bytes <= 0:
             raise ValueError(f"Payload size must be positive, got {size_in_bytes}")
