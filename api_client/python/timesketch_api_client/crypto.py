@@ -72,7 +72,7 @@ class CredentialStorage:
             iterations=100000,
             backend=backends.default_backend(),
         )
-        return bytes(base64.urlsafe_b64encode(kdf.derive(password)))
+        return base64.urlsafe_b64encode(kdf.derive(password))
 
     def set_filepath(self, file_path: str) -> None:
         """Set the filepath to the credential file.
