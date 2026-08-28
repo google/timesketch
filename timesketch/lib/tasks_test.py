@@ -20,7 +20,11 @@ from timesketch.lib.testlib import BaseTest, TestConfig
 from timesketch.models import db_session
 from timesketch.models.sketch import DataSource, SearchIndex
 
-# Provide TestConfig during tasks import to avoid missing /etc/timesketch.conf on CI
+# When tasks.py is imported, it executes celery = create_celery_app(), which calls
+# create_app() with no arguments. Without a config argument, create_app() loads
+# /etc/timesketch/timesketch.conf (PostgreSQL) and clobbers the in-memory SQLite
+# engine used by BaseTest. We temporarily provide TestConfig during the import of
+# tasks to ensure Celery and tasks initialize against SQLite for the test suite.
 with mock.patch(
     "timesketch.app.create_app",
     side_effect=lambda config=None: _create_app(config or TestConfig),
