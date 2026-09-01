@@ -33,7 +33,7 @@ class TestLLMStarredEventsReportFeature(BaseTest):
         super().setUp()
         self.llm_feature = LLMStarredEventsReportFeature()
         current_app.config["PROMPT_LLM_STARRED_EVENTS_REPORT"] = (
-            "./data/llm_starred_events_report/prompt.txt"
+            "./data/llm_prompts/llm_starred_events_report_prompt.txt"
         )
         self.datastore = MockDataStore("noserver", 4711)
 

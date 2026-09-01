@@ -9,9 +9,7 @@ setup_config() {
   # Use -f to ignore error if link already exists
   ln -sf /usr/local/src/timesketch/data/sigma /etc/timesketch/
   ln -sf /usr/local/src/timesketch/data/dfiq /etc/timesketch/
-  ln -sf /usr/local/src/timesketch/data/nl2q /etc/timesketch/
-  ln -sf /usr/local/src/timesketch/data/llm_summarize /etc/timesketch/
-  ln -s /usr/local/src/timesketch/data/llm_starred_events_report /etc/timesketch/
+  ln -sf /usr/local/src/timesketch/data/llm_prompts /etc/timesketch/
   CONFIG_FILES=(
     "regex_features.yaml"
     "winevt_features.yaml"
