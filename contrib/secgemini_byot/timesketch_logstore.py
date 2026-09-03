@@ -132,9 +132,8 @@ class TimesketchLogStore(ls.LogStore):
             return ls.LogDescriptions(
                 status=ls.ResultStatus.ERROR,
                 descriptions=[],
-                error_messages=error_msgs + [
-                    f"Failed to get sketch {self.sketch_id}: {str(e)}"
-                ],
+                error_messages=error_msgs
+                + [f"Failed to get sketch {self.sketch_id}: {str(e)}"],
             )
 
         # Discover unique data types using run_aggregator
@@ -154,9 +153,8 @@ class TimesketchLogStore(ls.LogStore):
             return ls.LogDescriptions(
                 status=ls.ResultStatus.ERROR,
                 descriptions=[],
-                error_messages=error_msgs + [
-                    f"Failed to discover unique log types: {str(e)}"
-                ],
+                error_messages=error_msgs
+                + [f"Failed to discover unique log types: {str(e)}"],
             )
 
         descriptions = []
