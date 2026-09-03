@@ -18,7 +18,7 @@ from unittest import mock
 
 import pandas as pd
 
-from contrib.secgemini_byot import timesketch_logstore
+import timesketch_logstore
 
 
 # pylint: disable=protected-access
