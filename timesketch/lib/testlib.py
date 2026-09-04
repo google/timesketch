@@ -67,6 +67,7 @@ class TestConfig:
     SECRET_KEY = "testing"
     SQLALCHEMY_DATABASE_URI = "sqlite://"
     WTF_CSRF_ENABLED = False
+    CELERY_BROKER_URL = "redis://127.0.0.1:6379"
     OPENSEARCH_HOST = "noserver"
     OPENSEARCH_PORT = 4711
     OPENSEARCH_USER = None

@@ -1,6 +1,6 @@
 # We use the official Plaso image as our base cache.
 # This corresponds to Plaso Stable.
-ARG PLASO_VERSION=20260512
+ARG PLASO_VERSION=20260720
 FROM log2timeline/plaso:${PLASO_VERSION}
 
 ARG PLASO_PPA_TRACK=stable

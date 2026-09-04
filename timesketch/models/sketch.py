@@ -543,6 +543,11 @@ class DataSource(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     total_file_events = Column(BigInteger(), default=0)
 
     def set_total_file_events(self, total_file_events):
+        """Set the total file events on the datasource.
+
+        Args:
+            total_file_events (int): Total event count to record.
+        """
         self.total_file_events = total_file_events
         db_session.add(self)
         db_session.commit()
