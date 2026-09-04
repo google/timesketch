@@ -34,6 +34,7 @@ from sqlalchemy import inspect
 
 from timesketch.api.v1 import resources
 from timesketch.api.v1 import utils
+from timesketch.api.v1.resources.direct_query.capability import direct_query_support
 from timesketch.lib import forms
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
@@ -500,6 +501,12 @@ class SketchResource(resources.ResourceMixin, Resource):
             except ValueError:
                 pass
 
+        # PPL and SQL come from the OpenSearch SQL plugin rather than the search
+        # API, so their availability is a cluster property. The frontend drops
+        # them from the search-mode menu when this is false, the same way it
+        # drops wildcard on a sketch without wildcard mappings.
+        supports_direct_query = bool(direct_query_support())
+
         views = []
         for view in sketch.get_named_views:
             if not view.user:
@@ -565,6 +572,7 @@ class SketchResource(resources.ResourceMixin, Resource):
                 else []
             ),
             "supports_wildcard": supports_wildcard,
+            "supports_direct_query": supports_direct_query,
         }
         return self.to_json(sketch, meta=meta)
 

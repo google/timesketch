@@ -107,6 +107,116 @@ if (!removedLabel) {
 _DEFAULT_PIT_SORT_CRITERIA = [{"_id": "asc"}]
 
 
+def build_opensearch_client(host=None, port=None, **kwargs):
+    """Return a client for the configured OpenSearch cluster.
+
+    Nothing is sent to the cluster here. The client is inert until something
+    asks it for something, so a cluster that is still starting up does not stop
+    a caller from being built.
+
+    Args:
+        host (str): optional host, overriding the configured cluster.
+        port (int): optional port, used together with `host`.
+        kwargs: additional client parameters, which override the ones derived
+            from configuration.
+
+    Returns:
+        An OpenSearch client covering every configured node.
+
+    Raises:
+        ValueError: If the configuration is present but malformed.
+    """
+    # Use explicit host/port arguments (for testing/overrides).
+    if host and port:
+        opensearch_connection_config = [{"host": host, "port": port}]
+        os_logger.info(
+            "Connecting to OpenSearch using explicit host/port arguments: %s:%s",
+            host,
+            port,
+        )
+    else:
+        # Use the new cluster-aware configuration.
+        opensearch_hosts = current_app.config.get("OPENSEARCH_HOSTS")
+
+        # If the config is a string (from env var), parse it as JSON.
+        if opensearch_hosts and isinstance(opensearch_hosts, str):
+            try:
+                opensearch_hosts = json.loads(opensearch_hosts)
+            except json.JSONDecodeError as e:
+                raise ValueError(
+                    "Config error: OPENSEARCH_HOSTS is defined as a string but is "
+                    f"not valid JSON. Error: {e}"
+                ) from e
+
+        if opensearch_hosts:
+            # Configuration Validation
+            if not isinstance(opensearch_hosts, list) or not opensearch_hosts:
+                raise ValueError(
+                    "Config error: OPENSEARCH_HOSTS is defined but is not a "
+                    "non-empty list."
+                )
+            for node_config in opensearch_hosts:
+                if (
+                    not isinstance(node_config, dict)
+                    or "host" not in node_config
+                    or "port" not in node_config
+                ):
+                    raise ValueError(
+                        "Config error: An item in OPENSEARCH_HOSTS is not a "
+                        "valid dictionary with 'host' and 'port' keys. "
+                        f"Problematic item: {node_config}"
+                    )
+            opensearch_connection_config = opensearch_hosts
+        else:
+            # Fallback to the legacy single-node configuration.
+            single_host = current_app.config.get("OPENSEARCH_HOST", "opensearch")
+            single_port = current_app.config.get("OPENSEARCH_PORT", 9200)
+
+            # Defend against misconfiguration where the new list format is
+            # incorrectly loaded into the old OPENSEARCH_HOST variable.
+            if isinstance(single_host, list):
+                os_logger.warning(
+                    "OPENSEARCH_HOST was unexpectedly a list. Using it as a "
+                    "cluster configuration and ignoring OPENSEARCH_PORT."
+                )
+                opensearch_connection_config = single_host
+            else:
+                # This is the expected legacy behavior.
+                opensearch_connection_config = [
+                    {"host": single_host, "port": single_port}
+                ]
+
+    user = current_app.config.get("OPENSEARCH_USER", "user")
+    password = current_app.config.get("OPENSEARCH_PASSWORD", "pass")
+    ssl = current_app.config.get("OPENSEARCH_SSL", False)
+    verify_certs = current_app.config.get("OPENSEARCH_VERIFY_CERTS", True)
+    timeout = current_app.config.get("OPENSEARCH_TIMEOUT", 10)
+    ca_certs = current_app.config.get("OPENSEARCH_CA_CERTS")
+    # Left unset, urllib3 keeps a single connection per node alive and opens a
+    # throwaway one for every request beyond that, which a threaded web worker
+    # reaches as soon as two requests overlap on the same node.
+    pool_maxsize = current_app.config.get("OPENSEARCH_POOL_MAXSIZE", 20)
+
+    parameters = {}
+    if ssl:
+        parameters["use_ssl"] = ssl
+        parameters["verify_certs"] = verify_certs
+        if ca_certs:
+            parameters["ca_certs"] = ca_certs
+
+    if user and password:
+        parameters["http_auth"] = (user, password)
+    if timeout:
+        parameters["timeout"] = timeout
+    if pool_maxsize:
+        parameters["pool_maxsize"] = pool_maxsize
+
+    # Add and overwrite parameters provided by the initialization caller.
+    parameters.update(kwargs)
+
+    return OpenSearch(opensearch_connection_config, **parameters)
+
+
 class OpenSearchDataStore:
     """Implements the datastore."""
 
@@ -191,89 +301,8 @@ class OpenSearchDataStore:
         super().__init__()
         self._error_container = {}
 
-        # Use explicit host/port arguments (for testing/overrides).
-        if host and port:
-            opensearch_connection_config = [{"host": host, "port": port}]
-            os_logger.info(
-                "Connecting to OpenSearch using explicit host/port arguments: %s:%s",
-                host,
-                port,
-            )
-        else:
-            # Use the new cluster-aware configuration.
-            opensearch_hosts = current_app.config.get("OPENSEARCH_HOSTS")
-
-            # If the config is a string (from env var), parse it as JSON.
-            if opensearch_hosts and isinstance(opensearch_hosts, str):
-                try:
-                    opensearch_hosts = json.loads(opensearch_hosts)
-                except json.JSONDecodeError as e:
-                    raise ValueError(
-                        "Config error: OPENSEARCH_HOSTS is defined as a string but is "
-                        f"not valid JSON. Error: {e}"
-                    ) from e
-
-            if opensearch_hosts:
-                # Configuration Validation
-                if not isinstance(opensearch_hosts, list) or not opensearch_hosts:
-                    raise ValueError(
-                        "Config error: OPENSEARCH_HOSTS is defined but is not a "
-                        "non-empty list."
-                    )
-                for node_config in opensearch_hosts:
-                    if (
-                        not isinstance(node_config, dict)
-                        or "host" not in node_config
-                        or "port" not in node_config
-                    ):
-                        raise ValueError(
-                            "Config error: An item in OPENSEARCH_HOSTS is not a "
-                            "valid dictionary with 'host' and 'port' keys. "
-                            f"Problematic item: {node_config}"
-                        )
-                opensearch_connection_config = opensearch_hosts
-            else:
-                # Fallback to the legacy single-node configuration.
-                single_host = current_app.config.get("OPENSEARCH_HOST", "opensearch")
-                single_port = current_app.config.get("OPENSEARCH_PORT", 9200)
-
-                # Defend against misconfiguration where the new list format is
-                # incorrectly loaded into the old OPENSEARCH_HOST variable.
-                if isinstance(single_host, list):
-                    os_logger.warning(
-                        "OPENSEARCH_HOST was unexpectedly a list. Using it as a "
-                        "cluster configuration and ignoring OPENSEARCH_PORT."
-                    )
-                    opensearch_connection_config = single_host
-                else:
-                    # This is the expected legacy behavior.
-                    opensearch_connection_config = [
-                        {"host": single_host, "port": single_port}
-                    ]
-
-        user = current_app.config.get("OPENSEARCH_USER", "user")
-        password = current_app.config.get("OPENSEARCH_PASSWORD", "pass")
-        ssl = current_app.config.get("OPENSEARCH_SSL", False)
-        verify_certs = current_app.config.get("OPENSEARCH_VERIFY_CERTS", True)
         self.timeout = current_app.config.get("OPENSEARCH_TIMEOUT", 10)
-        ca_certs = current_app.config.get("OPENSEARCH_CA_CERTS")
-
-        parameters = {}
-        if ssl:
-            parameters["use_ssl"] = ssl
-            parameters["verify_certs"] = verify_certs
-            if ca_certs:
-                parameters["ca_certs"] = ca_certs
-
-        if user and password:
-            parameters["http_auth"] = (user, password)
-        if self.timeout:
-            parameters["timeout"] = self.timeout
-
-        # Add and overwrite parameters provided by the initialization caller.
-        parameters.update(kwargs)
-
-        self.client = OpenSearch(opensearch_connection_config, **parameters)
+        self.client = build_opensearch_client(host=host, port=port, **kwargs)
         os_logger.info(
             "Connected to OpenSearch node: %s", self.client.transport.get_connection()
         )

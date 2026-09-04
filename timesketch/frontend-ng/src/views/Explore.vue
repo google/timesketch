@@ -21,12 +21,25 @@ limitations under the License.
     <!-- Search and Filters -->
     <v-card flat class="pa-3 pt-0 mt-n3" color="transparent">
       <v-card class="d-flex align-start mb-1" outlined>
-        <ts-search-mode-toggle v-model="searchMode"></ts-search-mode-toggle>
-        <v-sheet class="mt-2">
+        <!-- The search-mode selector doubles as the query-language selector:
+             PPL and SQL appear alongside Query String and Wildcard on a
+             cluster that can serve them. -->
+        <ts-search-mode-toggle
+          v-model="selectedSearchType"
+          :direct-query-enabled="directQueryEnabled"
+        ></ts-search-mode-toggle>
+        <v-sheet v-if="isLucene" class="mt-2">
           <ts-search-history-buttons @toggleSearchHistory="toggleSearchHistory()"></ts-search-history-buttons>
         </v-sheet>
 
-        <v-menu v-model="showSearchDropdown" offset-y attach :close-on-content-click="false" :close-on-click="true">
+        <v-menu
+          v-if="isLucene"
+          v-model="showSearchDropdown"
+          offset-y
+          attach
+          :close-on-content-click="false"
+          :close-on-click="true"
+        >
           <template v-slot:activator="{ on, attrs }">
             <v-text-field
               v-model="currentQueryString"
@@ -67,11 +80,29 @@ limitations under the License.
           >
           </ts-search-dropdown>
         </v-menu>
+
+        <!-- PPL and SQL are written as multi-line pipelines and statements, so
+             they get a monospace auto-growing editor rather than the Lucene
+             one-liner. Enter inserts a newline; the run shortcut submits. -->
+        <ts-direct-query-editor
+          v-else
+          v-model="currentQueryString"
+          :language="queryLanguage"
+          :running="directQueryLoading"
+          :timeline-count="enabledTimelines.length"
+          :start-time="directQueryTimeRange.start"
+          :end-time="directQueryTimeRange.end"
+          @update:timeRange="directQueryTimeRange = $event"
+          @run="search()"
+          @cancel="cancelDirectQuery()"
+          @explain="explainDirectQuery()"
+          @help="showSearchHelp = true"
+        ></ts-direct-query-editor>
       </v-card>
 
       <!-- Search History -->
       <div class="mt-4">
-        <v-card v-show="showSearchHistory" outlined>
+        <v-card v-show="showSearchHistory && isLucene" outlined>
           <v-toolbar dense flat>
             <v-toolbar-title>Search history</v-toolbar-title>
             <v-spacer></v-spacer>
@@ -113,7 +144,7 @@ limitations under the License.
 
       <!-- Search Help Dialog -->
       <v-dialog v-model="showSearchHelp" max-width="1800" scrollable>
-        <ts-search-help-card :flat="true" @close-dialog="showSearchHelp = false"></ts-search-help-card>
+        <ts-search-help-card :flat="true" :query-language="queryLanguage" @close-dialog="showSearchHelp = false"></ts-search-help-card>
       </v-dialog>
 
 
@@ -161,7 +192,7 @@ limitations under the License.
       </div>
 
       <!-- Time filter chips -->
-      <div>
+      <div v-if="isLucene">
         <span v-for="(chip, index) in timeFilterChips" :key="index + chip.value">
           <v-menu offset-y content-class="menu-with-gap">
             <template v-slot:activator="{ on }">
@@ -247,7 +278,7 @@ limitations under the License.
       </div>
 
       <!-- Term filters -->
-      <div v-if="filterChips.length" class="mt-1">
+      <div v-if="filterChips.length && isLucene" class="mt-1">
         <v-chip-group column>
           <span v-for="(chip, index) in filterChips" :key="index + chip.value">
             <v-tooltip top :disabled="chip.value.length < 33" open-delay="300">
@@ -286,11 +317,23 @@ limitations under the License.
     <!-- Eventlist -->
     <v-card flat class="mt-5 mx-3" color="transparent">
       <ts-event-list
+        v-if="queryLanguage === 'lucene'"
         :query-request="activeQueryRequest"
         :search-mode="searchMode"
         @countPerIndex="updateCountPerIndex($event)"
         @countPerTimeline="updateCountPerTimeline($event)"
       ></ts-event-list>
+
+      <!-- Owns its own fetch and result state, the same way ts-event-list does
+           for Lucene searches. -->
+      <ts-direct-query-panel
+        v-else
+        :query-request="activeDirectQueryRequest"
+        :language="queryLanguage"
+        :cancel-token="directQueryCancelToken"
+        :explain-request="activeDirectQueryExplainRequest"
+        @loading="directQueryLoading = $event"
+      ></ts-direct-query-panel>
     </v-card>
   </v-container>
 </template>
@@ -310,6 +353,8 @@ import TsUploadTimelineFormButton from '../components/UploadFormButton.vue'
 import TsAddManualEvent from '../components/Explore/AddManualEvent.vue'
 import TsEventList from '../components/Explore/EventList.vue'
 import TsSearchHelpCard from '../components/Explore/SearchHelpCard.vue'
+import TsDirectQueryPanel from '../components/Explore/DirectQueryPanel.vue'
+import TsDirectQueryEditor from '../components/Explore/DirectQueryEditor.vue'
 import TsSearchModeToggle from '../components/Explore/SearchModeToggle.vue'
 
 const defaultQueryFilter = () => {
@@ -337,6 +382,8 @@ export default {
     TsAddManualEvent,
     TsEventList,
     TsSearchHelpCard,
+    TsDirectQueryPanel,
+    TsDirectQueryEditor,
     TsSearchModeToggle,
   },
   props: ['sketchId'],
@@ -372,6 +419,16 @@ export default {
         { tag: 'good', color: 'green', textColor: 'white', label: 'mdi-check-circle-outline' },
       ],
       showTimelines: true,
+      queryLanguage: 'lucene',
+      activeDirectQueryRequest: {},
+      // Mirrored up from the panel so the editor can offer Run or Cancel.
+      directQueryLoading: false,
+      // Incremented to ask the panel to abort the request in flight.
+      directQueryCancelToken: 0,
+      // ISO strings from the editor's datetime-local fields, or empty for an
+      // open end. Applied by the backend as a bound on the event timestamp.
+      directQueryTimeRange: { start: '', end: '' },
+      activeDirectQueryExplainRequest: {},
       localSearchMode: null,
     }
   },
@@ -384,6 +441,41 @@ export default {
     },
     meta() {
       return this.$store.state.meta
+    },
+    directQueryEnabled() {
+      // PPL and SQL are served by the OpenSearch SQL plugin rather than the
+      // search API, so the backend reports whether this cluster can run them
+      // at all. Absent metadata means the sketch has not loaded yet, which is
+      // treated as unavailable so the languages do not flicker into the menu.
+      return !!(this.meta && this.meta.supports_direct_query)
+    },
+    // Gates the Lucene-only chrome. A direct query is sent as a query string
+    // plus the enabled timeline ids and nothing else, so filter chips, the
+    // timefilter menu and the saved-search dropdown have no effect on it and
+    // would otherwise imply a narrowing that never reaches OpenSearch.
+    isLucene() {
+      return this.queryLanguage === 'lucene'
+    },
+    // Unified selector value backing the merged search-mode/query-language
+    // toggle. PPL/SQL map to queryLanguage; query_string/wildcard map to the
+    // Lucene searchMode (queryLanguage forced back to 'lucene').
+    selectedSearchType: {
+      get() {
+        if (this.queryLanguage === 'ppl' || this.queryLanguage === 'sql') {
+          return this.queryLanguage
+        }
+        return this.searchMode
+      },
+      set(value) {
+        if (value === 'ppl' || value === 'sql') {
+          this.queryLanguage = value
+        } else {
+          if (this.queryLanguage !== 'lucene') {
+            this.queryLanguage = 'lucene'
+          }
+          this.searchMode = value
+        }
+      }
     },
     filterChips: function () {
       return this.currentQueryFilter.chips.filter((chip) => chip.type === 'label' || chip.type === 'term')
@@ -440,6 +532,19 @@ export default {
     enabledTimelines: function () {
       this.updateEnabledTimelines(this.enabledTimelines)
     },
+    queryLanguage: function () {
+      // The panel clears its own results; drop the stale request so switching
+      // languages doesn't re-run the previous one.
+      this.activeDirectQueryRequest = {}
+    },
+    directQueryEnabled: function (enabled) {
+      // The sketch metadata arrives after this view mounts, and a cluster can
+      // lose the plugin between two loads. Either way a language the cluster
+      // cannot serve must not stay selected.
+      if (!enabled && !this.isLucene) {
+        this.queryLanguage = 'lucene'
+      }
+    },
   },
   methods: {
     getQuickTag(tag) {
@@ -451,6 +556,48 @@ export default {
     updateCountPerTimeline: function (count) {
       this.countPerTimeline = count
     },
+    directQueryRequest: function () {
+      return {
+        queryString: this.currentQueryString,
+        timelineIds: this.enabledTimelines,
+        startTime: this.directQueryTimeRange.start,
+        endTime: this.directQueryTimeRange.end,
+      }
+    },
+    carryOverDirectQueryTimeRange: function () {
+      const start = this.directQueryTimeRange.start
+      const end = this.directQueryTimeRange.end
+      // A datetime_range chip needs both ends. Filling an open end with the
+      // other bound would collapse the range to an instant, and inventing one
+      // would filter on something the analyst never asked for, so a half-open
+      // range is left behind instead.
+      if (!start || !end) return
+      // The editor's fields are UTC wall-clock without a zone; the chip is read
+      // elsewhere as a full ISO instant.
+      const value = new Date(start + 'Z').toISOString() + ',' + new Date(end + 'Z').toISOString()
+      if (!this.currentQueryFilter.chips) {
+        this.currentQueryFilter.chips = []
+      }
+      const exists = this.currentQueryFilter.chips.find(
+        (chip) => chip.type === 'datetime_range' && chip.value === value
+      )
+      if (exists) return
+      this.currentQueryFilter.chips.push({
+        field: '',
+        type: 'datetime_range',
+        value,
+        operator: 'must',
+        active: true,
+      })
+    },
+    cancelDirectQuery: function () {
+      this.directQueryCancelToken += 1
+    },
+    explainDirectQuery: function () {
+      // A fresh object each time so re-explaining an unchanged query still
+      // triggers the panel's watcher.
+      this.activeDirectQueryExplainRequest = this.directQueryRequest()
+    },
     toggleSearchHistory: function () {
       this.showSearchHistory = !this.showSearchHistory
       if (this.showSearchHistory) {
@@ -460,6 +607,16 @@ export default {
     setQueryAndFilter: async function (searchEvent) {
       if (this.$route.name !== 'Explore') {
         this.$router.push({ name: 'Explore', params: { sketchId: this.sketch.id } })
+      }
+      // A chip raised while a PPL or SQL result is on screen is a pivot from an
+      // aggregate row into the evidence behind it. The event list is Lucene
+      // only, and the pipeline sitting in the search box is not a Lucene query,
+      // so both the language and the query string are handed over before the
+      // chip is applied.
+      const pivotedFromDirectQuery = !this.isLucene
+      if (pivotedFromDirectQuery) {
+        this.queryLanguage = 'lucene'
+        this.currentQueryString = ''
       }
       if (searchEvent.queryString) {
         this.currentQueryString = searchEvent.queryString
@@ -478,10 +635,25 @@ export default {
       // Add any chips from the search event and make sure they are not in the
       // current filter already. E.g. don't add a star filter twice.
       if (searchEvent.chip) {
-        const chipExist = this.currentQueryFilter.chips.find((chip) => chip.value === searchEvent.chip.value)
+        // Matching on the value alone drops a second chip that carries the same
+        // value on a different field, which a pivot hits whenever an identifier
+        // reaches the results under more than one column name.
+        const chipExist = this.currentQueryFilter.chips.find(
+          (chip) =>
+            chip.value === searchEvent.chip.value &&
+            chip.field === searchEvent.chip.field &&
+            chip.operator === searchEvent.chip.operator
+        )
         if (!chipExist) {
           this.currentQueryFilter.chips.push(searchEvent.chip)
         }
+      }
+
+      // The bound the analyst set on the direct query is not part of the chip,
+      // so without this the pivot would widen the investigation back out to the
+      // whole timeline.
+      if (pivotedFromDirectQuery) {
+        this.carryOverDirectQueryTimeRange()
       }
 
       // Preserve user defined item count instead of resetting.
@@ -505,6 +677,15 @@ export default {
     },
 
     search: function (resetPagination = true, incognito = false, parent = false) {
+      this.showSearchDropdown = false
+
+      // PPL/SQL results are tabular rather than an event list, so the request
+      // is handed to the direct query panel instead of ts-event-list.
+      if (this.queryLanguage !== 'lucene') {
+        this.activeDirectQueryRequest = this.directQueryRequest()
+        return
+      }
+
       let queryRequest = {}
       queryRequest.queryString = this.currentQueryString
       this.currentQueryFilter.use_wildcard_fields = (this.searchMode === 'wildcard')
@@ -514,7 +695,6 @@ export default {
       queryRequest.incognito = incognito
       queryRequest.parent = parent
       this.activeQueryRequest = queryRequest
-      this.showSearchDropdown = false
     },
     searchView: function (viewId) {
       this.showSearchDropdown = false
@@ -787,7 +967,12 @@ export default {
     },
   },
   mounted() {
-    this.$refs.searchInput.focus()
+    // The Lucene input is not rendered in PPL/SQL mode. The language always
+    // starts as Lucene so it is there on first mount, but the ref is
+    // conditional, and setQueryAndFilter() guards it the same way.
+    if (this.$refs.searchInput) {
+      this.$refs.searchInput.focus()
+    }
     EventBus.$on('setQueryAndFilter', this.setQueryAndFilter)
     EventBus.$on('setActiveView', this.searchView)
   },

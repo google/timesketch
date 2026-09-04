@@ -265,3 +265,218 @@ Here are some common searches:
 ## Common questions
 
 There is a frequent question around Windows Event logs and how they are represented in Timesketch when imported from Plaso. For that we recommend reading up on [Common misconception about Windows EventLogs](https://osdfir.blogspot.com/2021/10/common-misconceptions-about-windows.html)
+
+## PPL and SQL
+
+Query String and Wildcard search return events.
+[PPL](https://docs.opensearch.org/latest/sql-and-ppl/ppl/index/) and
+[SQL](https://docs.opensearch.org/latest/sql-and-ppl/sql/index/) are sent to
+OpenSearch directly, so they can also aggregate: count events per host, group
+events by `data_type`, or rank field values by how often they occur. Use them
+for questions about totals and distributions, and use Query String when you
+want to read the events themselves.
+
+Both languages need OpenSearch 3.7.0 or later with the SQL plugin installed. If
+`PPL` and `SQL` are missing from the search mode menu, the cluster does not
+provide them. Timesketch re-checks the cluster periodically, so the modes appear
+on their own after an upgrade.
+
+### Selecting a search mode
+
+The button on the left of the query bar selects the language:
+
+| Mode  | Language                              |
+| ----- | ------------------------------------- |
+| `QS`  | Query String (Lucene), the default    |
+| `WC`  | [Wildcard](#wildcard-search-mode)     |
+| `PPL` | OpenSearch Piped Processing Language  |
+| `SQL` | OpenSearch SQL                        |
+
+### Indexes and query scope
+
+PPL and SQL run their searches directly against the OpenSearch indexes that hold
+a sketch's events. In both languages an index takes the place of a table, and
+Timesketch's own structure does not exist at that level: one index can hold
+several timelines, and some of them may belong to other sketches.
+
+Timesketch closes that gap for you. It names the sketch's indexes in the query
+and adds a filter for the timelines the sketch contains, so results never reach
+events from outside it. Leave both out of what you type:
+
+* In PPL, begin with the first command, for example `stats count() by data_type`.
+  Do not write `source=` and do not begin with a pipe.
+* In SQL, begin with `SELECT` and write no `FROM` clause.
+
+A query naming any other index is rejected. SQL is limited to `SELECT`, `SHOW`
+and `DESCRIBE`, so nothing can be modified through this interface.
+
+### PPL
+
+| Description                     | Example query                                             |
+| ------------------------------- | --------------------------------------------------------- |
+| First 100 events                | `head 100`                                                |
+| Filter on message text          | `where message like 'Failed%' \| head 100`                |
+| Count events per data type      | `stats count() as cnt by data_type \| sort - cnt`         |
+| Ten most common hostnames       | `stats count() as cnt by hostname \| sort - cnt \| head 10` |
+| One event per value of a field  | `dedup source_short \| head 50`                           |
+| Newest events first             | `sort - datetime \| head 100`                             |
+
+`sort` takes field names and aliases, never function calls. Name the
+aggregation with `as` and sort on that name:
+
+```
+stats count() by hostname | sort - count()           <- rejected
+stats count() as cnt by hostname | sort - cnt        <- works
+```
+
+Inside `stats`, the aggregation comes before `by`, as in
+`stats count() as cnt by hostname`. Row limits use `head N`; PPL has no `LIMIT`.
+
+OpenSearch documents every command and its options in
+[PPL commands](https://docs.opensearch.org/latest/sql-and-ppl/ppl/commands/index/).
+
+### SQL
+
+| Description                | Example query                                                                          |
+| -------------------------- | -------------------------------------------------------------------------------------- |
+| First 100 events           | `SELECT datetime, message, timestamp_desc LIMIT 100`                                   |
+| Filter on message text     | `SELECT datetime, message WHERE message LIKE 'Failed%' LIMIT 100`                       |
+| Count events per data type | `SELECT data_type, COUNT(*) AS cnt GROUP BY data_type ORDER BY cnt DESC LIMIT 20`      |
+
+Always give `ORDER BY` a `LIMIT`. Without one, OpenSearch sorts the whole result
+set in memory and may return nothing.
+
+The supported clauses and their order of execution are documented in
+[Basic SQL queries](https://docs.opensearch.org/latest/sql-and-ppl/sql/basic/).
+
+### Field types
+
+`datetime` is the only date field, and date detection is switched off, so a
+field holding a formatted timestamp is text rather than a date.
+
+Every string value is indexed as `text`, with a `keyword` sub-field for exact
+matches and a `wildcard` sub-field for substring matches. The `keyword`
+sub-field is skipped for values longer than 256 characters, so very long values
+cannot be matched exactly or aggregated on.
+
+Numeric-looking fields are often not numeric. `plaso.mappings` maps several of
+them as text on purpose, among them `file_size`, `offset`, `sequence_number`,
+`source_port`, `exit_status`, `severity`, `version` and `http_response_bytes`.
+Comparing one of these against a bare number matches nothing, because a text
+field holds the digits as characters:
+
+```
+file_size = 4096        <- no rows, file_size is text
+file_size = '4096'      <- works
+```
+
+Fields absent from `plaso.mappings` and `generic.mappings` are typed from the
+first value indexed, so their type follows the data rather than a fixed schema.
+If a comparison against a number returns no rows, quote the value and run it
+again. [Index Mappings](../admin/index-mappings.md) describes the mapping files
+in full.
+
+### Filtering by time
+
+Use the time-range picker above the query bar rather than comparing `datetime`
+inside the query. The picker builds the range filter itself, and it applies to
+PPL and SQL exactly as it does to Query String.
+
+A range written in the query is easy to get wrong: an unquoted timestamp is
+parsed as arithmetic, and a quoted one is compared against whatever type the
+field turned out to be. When a range does belong in the query text, Query String
+mode handles it predictably with `datetime:[2024-01-01 TO 2024-01-31]`.
+
+### Matching text with LIKE
+
+`LIKE 'Failed%'` matches values starting with `Failed`. OpenSearch can use the
+index to find them, because the pattern begins with a literal.
+
+A pattern beginning with `%` gives OpenSearch nothing to start from, so it reads
+every value in the field instead. On a large timeline that is slow.
+
+| Pattern           | Matches                            | Uses the index |
+| ----------------- | ---------------------------------- | -------------- |
+| `'Failed%'`       | values starting with `Failed`      | yes            |
+| `'%@example.com'` | values ending with `@example.com`  | no             |
+| `'%failed%'`      | values containing `failed`         | no             |
+
+Anchor the beginning of the pattern whenever the data allows it. If you cannot,
+anchor the end instead: `'%@example.com'` still scans the field, but far fewer
+values match it than `'%@example%'`.
+
+### Grouping on a field that not every event has
+
+A sketch usually holds timelines from several sources, and a field one source
+populates is missing from the others. Grouping on that field collects every
+event lacking it into a single bucket. That bucket is frequently the largest, so
+it sorts to the top and pushes the values you wanted out of view.
+
+No event actually holds that bucket's label as a value, so searching for it in
+Query String mode returns nothing. Its count says only how many events had no
+value for the field.
+
+Narrow the query to the source that populates the field, then group:
+
+```
+where data_type = 'windows:evtx:record' | stats count() as cnt by event_identifier | sort - cnt
+```
+
+If a count looks wrong, search for the same value in Query String mode. That
+confirms the number and shows whether the value is one you can search for at
+all.
+
+### Warnings shown next to the query
+
+The query bar flags the mistakes above before the query runs, and explains what
+to change. A warning does not block anything, so a query with an unaliased sort
+or an unlimited `ORDER BY` can still be submitted.
+
+A query OpenSearch rejects is reported in the results panel as a query error.
+Failing to reach the cluster is reported as a separate kind of error, so a typo
+in the query is distinguishable from OpenSearch being unavailable.
+
+### Reading the results
+
+Results appear as a table of the columns the query selected, rather than the
+event list used by Query String search.
+
+Select a cell to search for that value in Query String mode. This is how you get
+from a count back to the events behind it. Values too long for the `keyword`
+sub-field cannot be searched this way.
+
+The panel can also show the execution plan, which is the query as OpenSearch
+resolved it and therefore includes the index and timeline filters Timesketch
+added. Compare it with what you typed when a result is not what you expected.
+[Explain API](https://docs.opensearch.org/latest/sql-and-ppl/sql-and-ppl-api/index/#explain-api)
+describes the plan formats.
+
+### Exporting results
+
+Export writes rows to a file as they arrive instead of holding them in memory,
+so an export can be far larger than the table on screen.
+
+Use SQL for large exports. The SQL plugin pages with a
+[cursor](https://docs.opensearch.org/latest/sql-and-ppl/sql-and-ppl-api/index/#paginating-results),
+and every page costs roughly the same. Cursors are a SQL-only feature, so a PPL
+export pages by re-running the query with a larger offset each time; the pages
+grow slower as the export continues, and on a large timeline the later ones can
+time out and end the export early.
+
+An export that stopped early ends with a JSON object containing
+`"incomplete": true`, the number of rows written and the offset reached. Check
+the last line before treating a file as complete.
+
+### Limits
+
+| Limit                        | Value                                      |
+| ---------------------------- | ------------------------------------------ |
+| Rows returned by a SQL query | 1000 by default, 10000 at most             |
+| Rows returned by a PPL query | the SQL plugin's own row limit             |
+| Query and explain timeout    | 30 seconds                                 |
+| Export page size             | 10000 rows                                 |
+| Export page timeout          | 60 seconds for SQL, 120 seconds for PPL    |
+
+An aggregation reaching the row limit is truncated rather than wrong, but the
+tail of the distribution is missing. Add a `where` stage or a `WHERE` clause to
+bring the number of groups down.
