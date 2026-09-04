@@ -215,65 +215,117 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                     content = response.get("content", "")
 
                     if msg_type == "MESSAGE_TYPE_RESPONSE":
-                        start_marker = "\n## Investigation Findings\n\n"
-                        if start_marker in content:
-                            parts = content.rsplit(start_marker, 1)
-                            report_summary_text = parts[0].strip()
-                            json_str = parts[1].strip()
+                        findings_list = None
+                        report_summary_text = content.strip()
+
+                        lines = content.rstrip().splitlines()
+                        findings_lines = []
+                        cutoff_idx = None
+
+                        # Walk backwards from the end of response until reaching
+                        # the report header (#)
+                        for idx in range(len(lines) - 1, -1, -1):
+                            line = lines[idx]
+                            stripped = line.strip()
+                            if not stripped:
+                                continue
+                            if stripped.startswith("#"):
+                                cutoff_idx = idx
+                                break
+                            if stripped.startswith("```"):
+                                continue
+                            findings_lines.append(stripped)
+
+                        if findings_lines:
+                            findings_lines.reverse()
+                            parsed_findings = []
+                            for f_line in findings_lines:
+                                try:
+                                    item = json.loads(f_line)
+                                    if isinstance(item, dict):
+                                        parsed_findings.append(item)
+                                    elif isinstance(item, list):
+                                        parsed_findings.extend(item)
+                                except json.JSONDecodeError:
+                                    continue
+                            if parsed_findings:
+                                findings_list = parsed_findings
+                                if cutoff_idx is not None:
+                                    summary_lines = lines[:cutoff_idx]
+                                    report_summary_text = "\n".join(
+                                        summary_lines
+                                    ).strip()
+
+                        # Fallback for legacy format
+                        # (e.g. "## Investigation Findings\n\n[...]")
+                        if findings_list is None:
+                            start_marker = "\n## Investigation Findings\n\n"
+                            if start_marker in content:
+                                parts = content.rsplit(start_marker, 1)
+                                report_summary_text = parts[0].strip()
+                                json_str = parts[1].strip()
+                                try:
+                                    parsed = json.loads(json_str)
+                                    if isinstance(parsed, list):
+                                        findings_list = parsed
+                                # pylint: disable=broad-exception-caught
+                                except Exception as e:
+                                    logger.error(
+                                        "Failed to parse legacy SecGemini"
+                                        " findings JSON: %s",
+                                        e,
+                                        exc_info=True,
+                                    )
+
+                        translated_findings = []
+                        if findings_list:
                             try:
-                                findings_list = json.loads(json_str)
-                                if isinstance(findings_list, list):
-                                    translated_findings = []
-                                    for f in findings_list:
-                                        log_records = [
-                                            {"record_id": rid}
-                                            for rid in f.get("record_ids", [])
-                                            if rid
-                                        ]
-                                        desc = f.get("description", "")
-                                        relevance = f.get("relevance", "")
-                                        combined_conclusion = (
-                                            f"{CONCLUSION_LOG_RECORDS_HEADER}"
-                                            f"{desc}\n\n<br>\n\n"
-                                            f"{CONCLUSION_RELEVANCE_HEADER}"
-                                            f"{relevance}"
-                                        )
-                                        annotations = [
-                                            {
-                                                "investigative_question": f.get(
-                                                    "finding", ""
-                                                ),
-                                                "conclusions": [combined_conclusion],
-                                                "priority": f.get("severity", "notice"),
-                                            }
-                                        ]
-                                        translated_findings.append(
-                                            {
-                                                "log_records": log_records,
-                                                "annotations": annotations,
-                                            }
-                                        )
-                                    json_str = json.dumps(
+                                for f in findings_list:
+                                    log_records = [
+                                        {"record_id": rid}
+                                        for rid in f.get("record_ids", [])
+                                        if rid
+                                    ]
+                                    desc = f.get("description", "")
+                                    relevance = f.get("relevance", "")
+                                    combined_conclusion = (
+                                        f"{CONCLUSION_LOG_RECORDS_HEADER}"
+                                        f"{desc}\n\n<br>\n\n"
+                                        f"{CONCLUSION_RELEVANCE_HEADER}"
+                                        f"{relevance}"
+                                    )
+                                    annotations = [
                                         {
-                                            "findings": translated_findings,
-                                            "report_summary": report_summary_text,
+                                            "investigative_question": f.get(
+                                                "finding", ""
+                                            ),
+                                            "conclusions": [combined_conclusion],
+                                            "priority": f.get("severity", "notice"),
+                                        }
+                                    ]
+                                    translated_findings.append(
+                                        {
+                                            "log_records": log_records,
+                                            "annotations": annotations,
                                         }
                                     )
-                            except Exception as e:  # pylint: disable=broad-except
+                            # pylint: disable=broad-exception-caught
+                            except Exception as e:
                                 logger.error(
                                     "Failed to translate SecGemini findings JSON: %s",
                                     e,
                                     exc_info=True,
                                 )
-                                json_str = json.dumps(
-                                    {
-                                        "findings": [],
-                                        "report_summary": report_summary_text,
-                                    }
-                                )
-                            yield json_str
-                            # force termination to avoid back2back runs
-                            break
+
+                        json_str = json.dumps(
+                            {
+                                "findings": translated_findings,
+                                "report_summary": report_summary_text,
+                            }
+                        )
+                        yield json_str
+                        # force termination to avoid back2back runs
+                        break
             finally:
                 if debug_log_file:
                     debug_log_file.close()
