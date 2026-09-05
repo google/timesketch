@@ -358,6 +358,23 @@ def main(args=None):
     )
 
     config_group.add_argument(
+        "--sketch_strategy",
+        "--sketch-strategy",
+        action="store",
+        type=str,
+        choices=["ask", "newest", "oldest"],
+        dest="sketch_strategy",
+        default="ask",
+        help=(
+            "Strategy to use when a sketch name is provided and a sketch "
+            "with the same name already exists. Supported strategies are: "
+            "'ask' (default) which will ask the user for input, 'newest' "
+            "which will use the most recently created sketch, and 'oldest' "
+            "which will use the earliest created sketch."
+        ),
+    )
+
+    config_group.add_argument(
         "--data_label",
         "--data-label",
         action="store",
@@ -636,10 +653,53 @@ def main(args=None):
         my_sketch = ts_client.get_sketch(sketch_id)
     else:
         sketch_name = options.sketch_name or "New Sketch From Importer CLI"
-        my_sketch = ts_client.create_sketch(sketch_name)
-        logger.info(
-            "New sketch created: [{0:d}] {1:s}".format(my_sketch.id, my_sketch.name)
-        )
+        try:
+            sketches = ts_client.get_sketches_by_name(sketch_name)
+            if len(sketches) > 1:
+                if options.sketch_strategy == "newest":
+                    my_sketch = sorted(
+                        sketches, key=lambda s: s.created_at, reverse=True
+                    )[0]
+                elif options.sketch_strategy == "oldest":
+                    my_sketch = sorted(sketches, key=lambda s: s.created_at)[0]
+                else:
+                    # ask user for clarification using cli_input  
+                    print(f"Multiple sketches found with the name '{sketch_name}':")  
+                    for s in sketches:  
+                        print(f" - [{s.id:d}] created_at: {s.created_at}, by {s.creator}")  
+
+                    valid_ids = {s.id for s in sketches}  
+                    selected_option = None  
+                    while selected_option is None:  
+                        try:  
+                            ans = cli_input.ask_question(  
+                                "Select the sketch to use by entering the corresponding number",  
+                                input_type=int,  
+                                default=sketches[0].id,  
+                            )  
+                            if ans in valid_ids:  
+                                selected_option = ans  
+                            else:  
+                                print(f"Invalid ID. Please choose from the listed IDs: {sorted(valid_ids)}")  
+                        except ValueError:  
+                            print(f"Invalid input. Please enter a valid integer (e.g. {sketches[0].id:d}).")  
+                    my_sketch = next(s for s in sketches if s.id == selected_option)
+            else:
+                my_sketch = sketches[0]
+
+            logger.info(
+                "Using existing sketch: [%d] %s",
+                my_sketch.id,
+                my_sketch.name,
+            )
+        except KeyError:
+            # no existing sketch found, create a new one
+            my_sketch = ts_client.create_sketch(sketch_name)
+            logger.info(
+                "New sketch created: [%d] %s",
+                my_sketch.id,
+                my_sketch.name,
+            )
 
     if not my_sketch:
         logger.error("Unable to get sketch ID: {0:d}".format(sketch_id))

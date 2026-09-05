@@ -61,6 +61,21 @@ Other parameters suggested to be set are `sketch_id` (if it isn't provided a
 new sketch will be created) and `timeline_name` (otherwise a default name
 will be chosen).
 
+Alternatively, you can use `--sketch-name` to target a sketch by name. If a
+sketch with that name already exists, the importer will reuse it instead of
+creating a new one. Since sketch names are not unique in Timesketch, you can
+control how duplicates are handled with the `--sketch-strategy` flag:
+
+- `ask` (default): prompts the user to select the correct sketch interactively.
+- `newest`: automatically picks the most recently created sketch.
+- `oldest`: automatically picks the earliest created sketch.
+
+Example:
+
+```shell
+$ timesketch_importer.py --sketch-name "My Investigation" --sketch-strategy newest path_to_my_file.csv
+```
+
 Additionally, for Plaso files, you can filter events during import using the
 `--plaso-event-filter` option, providing a standard Plaso filter string
 (e.g., `'data_type is "fs:stat"'`).
