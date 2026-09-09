@@ -542,12 +542,22 @@ class DataSource(LabelMixin, StatusMixin, CommentMixin, BaseModel):
     error_message = Column(UnicodeText(), default="")
     total_file_events = Column(BigInteger(), default=0)
 
-    def set_total_file_events(self, total_file_events):
+    def set_total_file_events(self, total_file_events: int) -> None:
+        """Set the total file events on the datasource.
+
+        Args:
+            total_file_events (int): Total event count to record.
+        """
         self.total_file_events = total_file_events
         db_session.add(self)
         db_session.commit()
 
-    def set_error_message(self, error_message):
+    def set_error_message(self, error_message: str) -> None:
+        """Set the error message on the datasource.
+
+        Args:
+            error_message (str): Error message string to record.
+        """
         self.error_message = error_message
         db_session.add(self)
         db_session.commit()

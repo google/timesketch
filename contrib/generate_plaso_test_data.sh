@@ -5,7 +5,7 @@ set -e
 
 if [ -z "$1" ]; then
     echo "Usage: $0 <plaso_version>"
-    echo "Example: $0 20260512"
+    echo "Example: $0 20260720"
     exit 1
 fi
 
