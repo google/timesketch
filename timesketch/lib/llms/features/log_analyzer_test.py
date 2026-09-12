@@ -17,6 +17,7 @@ import json
 from unittest import mock
 
 from timesketch.lib.llms.features import log_analyzer
+from timesketch.lib.llms.providers import interface
 from timesketch.lib.testlib import BaseTest
 
 
@@ -211,3 +212,18 @@ class TestLogAnalyzerFeature(BaseTest):
         self.assertIn(
             "Unknown priority value: defcon-1", feature._errors_encountered
         )
+
+    def test_execute_rejects_provider_without_streaming_support(self):
+        """A provider that cannot stream gets the readable error, not AttributeError."""
+
+        class NoStreamingProvider(interface.LLMProvider):
+            NAME = "no_streaming_provider"
+
+        feature = log_analyzer.LogAnalyzer()
+        with self.assertRaises(ValueError) as error:
+            feature.execute(
+                sketch=mock.Mock(id=1),
+                form={},
+                llm_provider=NoStreamingProvider({}),
+            )
+        self.assertIn("does not support streaming", str(error.exception))
