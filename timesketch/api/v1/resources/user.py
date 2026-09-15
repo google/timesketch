@@ -247,13 +247,13 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
         """
         for permission in permissions:
             if not sketch.has_permission(user=current_user, permission=permission):
-                abort(HTTP_STATUS_CODE_FORBIDDEN, error_message.format(permission=permission))
+                abort(
+                    HTTP_STATUS_CODE_FORBIDDEN,
+                    error_message.format(permission=permission),
+                )
 
     def _prepare_add_users(
-        self, 
-        sketch: Sketch, 
-        users: list[str], 
-        permissions: list[str]
+        self, sketch: Sketch, users: list[str], permissions: list[str]
     ) -> typing.Iterator[typing.Callable[[], None]]:
         """Validates and yields user permission grants without committing to the database.
 
@@ -277,13 +277,12 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
             if user:
                 user_permissions = permissions or ["read", "write"]
                 for permission in user_permissions:
-                    yield functools.partial(sketch.grant_permission, permission=permission, user=user)
+                    yield functools.partial(
+                        sketch.grant_permission, permission=permission, user=user
+                    )
 
     def _prepare_add_groups(
-        self, 
-        sketch: Sketch, 
-        groups: list[str], 
-        permissions: list[str]
+        self, sketch: Sketch, groups: list[str], permissions: list[str]
     ) -> typing.Iterator[typing.Callable[[], None]]:
         """Validates and yields group permission grants without committing to the database.
 
@@ -306,13 +305,12 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
             if not group.user or group.user == current_user:
                 group_permissions = permissions or ["read", "write"]
                 for permission in group_permissions:
-                    yield functools.partial(sketch.grant_permission, permission=permission, group=group)
+                    yield functools.partial(
+                        sketch.grant_permission, permission=permission, group=group
+                    )
 
     def _prepare_remove_users(
-        self, 
-        sketch: Sketch, 
-        users: list[str], 
-        permissions: list[str]
+        self, sketch: Sketch, users: list[str], permissions: list[str]
     ) -> typing.Iterator[typing.Callable[[], None]]:
         """Validates and yields user permission revocations without committing to the database.
 
@@ -328,7 +326,7 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
         for username in users:
             if not username:
                 continue
-            
+
             # Try the username with any potential @domain preserved.
             user = User.query.filter_by(username=username).first()
 
@@ -336,7 +334,7 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
             if not user and "@" in username:
                 base_username = username.split("@")[0].strip()
                 user = User.query.filter_by(username=base_username).first()
-                
+
             if not user:
                 continue
             if user == sketch.user:
@@ -356,13 +354,12 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
                 "The user does not have {permission:s} permission on the sketch and therefore can't revoke it from others",
             )
             for permission in permission_list:
-                yield functools.partial(sketch.revoke_permission, permission=permission, user=user)
+                yield functools.partial(
+                    sketch.revoke_permission, permission=permission, user=user
+                )
 
     def _prepare_remove_groups(
-        self, 
-        sketch: Sketch, 
-        groups: list[str], 
-        permissions: list[str]
+        self, sketch: Sketch, groups: list[str], permissions: list[str]
     ) -> typing.Iterator[typing.Callable[[], None]]:
         """Validates and yields group permission revocations without committing to the database.
 
@@ -381,7 +378,7 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
             group = Group.query.filter_by(name=group_name).first()
             if not group:
                 continue
-            
+
             # Asymmetric Group Ownership Boundary (groups vs. remove_groups):
             # As a feature, we intentionally allow any collaborator to remove any group
             # from the sketch.
@@ -394,7 +391,9 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
                 "The user does not have {permission:s} permission on the sketch and therefore can't revoke it from others",
             )
             for permission in permission_list:
-                yield functools.partial(sketch.revoke_permission, permission=permission, group=group)
+                yield functools.partial(
+                    sketch.revoke_permission, permission=permission, group=group
+                )
 
     @login_required
     def post(self, sketch_id: int):
@@ -422,7 +421,7 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
         sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
             abort(HTTP_STATUS_CODE_NOT_FOUND, "No sketch found with this ID.")
-        
+
         form = request.json
         if not isinstance(form, dict):
             form = {}
@@ -444,12 +443,16 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
                 pass
         elif isinstance(raw_permissions, list):
             permissions = raw_permissions
-            
+
         # Ensure permissions is strictly a list of strings
         permissions = [p for p in permissions if isinstance(p, str)]
 
         # If we are adding users/groups, we must verify authority for the granted permissions
-        if isinstance(form.get("users"), list) or isinstance(form.get("groups"), list) or form.get("public") in (True, "true"):
+        if (
+            isinstance(form.get("users"), list)
+            or isinstance(form.get("groups"), list)
+            or form.get("public") in (True, "true")
+        ):
             grant_permissions = permissions or ["read", "write"]
             self._verify_caller_authority(
                 sketch,
@@ -476,24 +479,34 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
 
         groups = form.get("groups")
         if isinstance(groups, list):
-            pending_actions.extend(self._prepare_add_groups(sketch, groups, permissions))
+            pending_actions.extend(
+                self._prepare_add_groups(sketch, groups, permissions)
+            )
 
         remove_users = form.get("remove_users")
         if isinstance(remove_users, list):
-            pending_actions.extend(self._prepare_remove_users(sketch, remove_users, permissions))
+            pending_actions.extend(
+                self._prepare_remove_users(sketch, remove_users, permissions)
+            )
 
         remove_groups = form.get("remove_groups")
         if isinstance(remove_groups, list):
-            pending_actions.extend(self._prepare_remove_groups(sketch, remove_groups, permissions))
+            pending_actions.extend(
+                self._prepare_remove_groups(sketch, remove_groups, permissions)
+            )
 
         if "public" in form:
             public = form.get("public")
             # TODO: Remove string check. Non-pythonic check is needed because the old UI
             # returns a string of true or false and not a boolean.
             if public is True or public == "true":
-                pending_actions.append(functools.partial(sketch.grant_permission, permission="read"))
+                pending_actions.append(
+                    functools.partial(sketch.grant_permission, permission="read")
+                )
             else:
-                pending_actions.append(functools.partial(sketch.revoke_permission, permission="read"))
+                pending_actions.append(
+                    functools.partial(sketch.revoke_permission, permission="read")
+                )
 
         # PASS 2: Execution
         # If we reached this point, no abort() was called. All checks passed.

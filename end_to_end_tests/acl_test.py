@@ -132,8 +132,6 @@ class AclTest(interface.BaseEndToEndTest):
 
         # (Deleted: The teardown will clean up the sketch)
 
-
-
     def test_json_parsing_and_types(self):
         """Tests the input validation for payload fields."""
         sketch_id = self.sketch.id
@@ -142,20 +140,14 @@ class AclTest(interface.BaseEndToEndTest):
         # 1. Native JSON Array for permissions
         res_native = self.api.session.post(
             collaborator_url,
-            json={
-                "users": [USER2_USERNAME],
-                "permissions": ["read", "write"]
-            },
+            json={"users": [USER2_USERNAME], "permissions": ["read", "write"]},
         )
         self.assertions.assertEqual(res_native.status_code, 200)
 
         # 2. String-encoded JSON for permissions (legacy format)
         res_legacy = self.api.session.post(
             collaborator_url,
-            json={
-                "users": [USER2_USERNAME],
-                "permissions": '["read", "write"]'
-            },
+            json={"users": [USER2_USERNAME], "permissions": '["read", "write"]'},
         )
         self.assertions.assertEqual(res_legacy.status_code, 200)
 
@@ -167,7 +159,7 @@ class AclTest(interface.BaseEndToEndTest):
                 "groups": 123,
                 "remove_users": True,
                 "remove_groups": "string",
-                "permissions": 123
+                "permissions": 123,
             },
         )
         # Should gracefully ignore invalid fields and return 200 (since owner has write)
@@ -185,7 +177,7 @@ class AclTest(interface.BaseEndToEndTest):
         # User2 attempts to remove themselves AND the sketch owner (which will 403)
         res_attack = self.user2_api.session.post(
             collaborator_url,
-            json={"remove_users": [USER2_USERNAME, interface.USERNAME]}
+            json={"remove_users": [USER2_USERNAME, interface.USERNAME]},
         )
         self.assertions.assertEqual(res_attack.status_code, 403)
 
@@ -193,9 +185,9 @@ class AclTest(interface.BaseEndToEndTest):
         # should have been rolled back because the owner removal triggered an abort.
         res_verify = self.user2_api.session.get(sketch_url)
         self.assertions.assertEqual(
-            res_verify.status_code, 
-            200, 
-            "Atomicity bug! User2 was successfully removed despite the 403."
+            res_verify.status_code,
+            200,
+            "Atomicity bug! User2 was successfully removed despite the 403.",
         )
 
     def test_public_flag_preservation(self):
@@ -204,30 +196,28 @@ class AclTest(interface.BaseEndToEndTest):
         collaborator_url = f"{self.api.api_root}/sketches/{sketch_id}/collaborators/"
 
         # 1. Explicitly make sketch public
-        res_public = self.api.session.post(
-            collaborator_url,
-            json={"public": True}
-        )
+        res_public = self.api.session.post(collaborator_url, json={"public": True})
         self.assertions.assertEqual(res_public.status_code, 200)
-        
+
         sketch_url = f"{self.api.api_root}/sketches/{sketch_id}/"
         # Verify it's public
         res_get_public = self.api.session.get(sketch_url)
         self.assertions.assertEqual(res_get_public.status_code, 200)
-        self.assertions.assertTrue(res_get_public.json()["meta"]["permissions"]["public"])
+        self.assertions.assertTrue(
+            res_get_public.json()["meta"]["permissions"]["public"]
+        )
 
         # 2. Add a user but OMIT the public flag
         res_update = self.api.session.post(
-            collaborator_url,
-            json={"users": [USER2_USERNAME]}
+            collaborator_url, json={"users": [USER2_USERNAME]}
         )
         self.assertions.assertEqual(res_update.status_code, 200)
 
         # Verify it is STILL public (the bug would have made it private)
         res_get_after = self.api.session.get(sketch_url)
         self.assertions.assertTrue(
-            res_get_after.json()["meta"]["permissions"]["public"], 
-            "Silent public revocation bug! Sketch was made private."
+            res_get_after.json()["meta"]["permissions"]["public"],
+            "Silent public revocation bug! Sketch was made private.",
         )
 
 
