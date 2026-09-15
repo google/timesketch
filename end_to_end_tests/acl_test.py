@@ -52,9 +52,7 @@ class AclTest(interface.BaseEndToEndTest):
         5. Owner retains full read/write/delete access throughout.
         6. Owner can successfully remove collaborator -> returns 200 OK.
         """
-        sketch = self.api.create_sketch(
-            name="GHSA-vvf4-j4w4-xvgx Reproduction Sketch"
-        )
+        sketch = self.sketch
         sketch_id = sketch.id
         collaborator_url = f"{self.api.api_root}/sketches/{sketch_id}/collaborators/"
         sketch_url = f"{self.api.api_root}/sketches/{sketch_id}/"
