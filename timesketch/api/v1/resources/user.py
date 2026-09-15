@@ -266,6 +266,10 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
             Callable actions to execute the grants.
         """
         for username in users:
+            username = username.strip()
+            if not username:
+                continue
+
             # Try the username with any potential @domain preserved.
             user = User.query.filter_by(username=username).first()
 
@@ -324,6 +328,7 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
         """
         all_permissions = sketch.get_all_permissions()
         for username in users:
+            username = username.strip()
             if not username:
                 continue
 
@@ -475,22 +480,26 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
 
         users = form.get("users")
         if isinstance(users, list):
+            users = [u for u in users if isinstance(u, str)]
             pending_actions.extend(self._prepare_add_users(sketch, users, permissions))
 
         groups = form.get("groups")
         if isinstance(groups, list):
+            groups = [g for g in groups if isinstance(g, str)]
             pending_actions.extend(
                 self._prepare_add_groups(sketch, groups, permissions)
             )
 
         remove_users = form.get("remove_users")
         if isinstance(remove_users, list):
+            remove_users = [u for u in remove_users if isinstance(u, str)]
             pending_actions.extend(
                 self._prepare_remove_users(sketch, remove_users, permissions)
             )
 
         remove_groups = form.get("remove_groups")
         if isinstance(remove_groups, list):
+            remove_groups = [g for g in remove_groups if isinstance(g, str)]
             pending_actions.extend(
                 self._prepare_remove_groups(sketch, remove_groups, permissions)
             )

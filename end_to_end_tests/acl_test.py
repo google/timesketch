@@ -40,7 +40,6 @@ class AclTest(interface.BaseEndToEndTest):
     def test_collaborator_cannot_revoke_owner_permissions(self):
         """Test that a write-level collaborator cannot revoke owner permissions.
 
-        Verifies fix for GHSA-vvf4-j4w4-xvgx:
         1. Owner (test) creates a sketch and adds collaborator (test2) with
            default write access (read=True, write=True, delete=False).
         2. Collaborator attempts to remove owner permissions with omitted
@@ -58,9 +57,10 @@ class AclTest(interface.BaseEndToEndTest):
         sketch_url = f"{self.api.api_root}/sketches/{sketch_id}/"
 
         # 1. Owner adds test2 as an ordinary collaborator (read + write)
+        # Using a username with whitespace to test robust whitespace stripping
         res = self.api.session.post(
             collaborator_url,
-            json={"users": [USER2_USERNAME]},
+            json={"users": [f"   {USER2_USERNAME}   "]},
         )
         self.assertions.assertEqual(res.status_code, 200)
 

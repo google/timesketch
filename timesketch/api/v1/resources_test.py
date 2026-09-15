@@ -3046,7 +3046,7 @@ class UserSettingsResourceTest(BaseTest):
 
 
 class CollaboratorResourceTest(BaseTest):
-    """Test CollaboratorResource ACL authorization checks (GHSA-vvf4-j4w4-xvgx)."""
+    """Test CollaboratorResource ACL authorization checks."""
 
     def test_collaborator_revoke_owner_and_parity(self):
         """Test that a collaborator cannot revoke owner permissions or permissions they lack."""
