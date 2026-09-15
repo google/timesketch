@@ -235,7 +235,7 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
     """Resource to update sketch collaborators."""
 
     def _verify_caller_authority(
-        self, sketch: Sketch, permissions: list[str] | set[str], error_message: str
+        self, sketch: Sketch, permissions: typing.Iterable[str], error_message: str
     ) -> None:
         """Verifies if the current user has the given permissions on the sketch.
 
@@ -326,7 +326,6 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
         Yields:
             Callable actions to execute the revocations.
         """
-        all_permissions = sketch.get_all_permissions()
         for username in users:
             username = username.strip()
             if not username:
@@ -356,7 +355,8 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
             self._verify_caller_authority(
                 sketch,
                 set(permission_list) | set(target_permissions),
-                "The user does not have {permission:s} permission on the sketch and therefore can't revoke it from others",
+                "The user does not have {permission:s} permission on the sketch "
+                "and therefore can't revoke it from others",
             )
             for permission in permission_list:
                 yield functools.partial(
@@ -393,7 +393,8 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
             self._verify_caller_authority(
                 sketch,
                 set(permission_list) | set(target_permissions),
-                "The user does not have {permission:s} permission on the sketch and therefore can't revoke it from others",
+                "The user does not have {permission:s} permission on the sketch "
+                "and therefore can't revoke it from others",
             )
             for permission in permission_list:
                 yield functools.partial(
@@ -462,7 +463,8 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
             self._verify_caller_authority(
                 sketch,
                 grant_permissions,
-                "The user does not have {permission:s} permission on the sketch and therefore can't grant it to others",
+                "The user does not have {permission:s} permission on the sketch "
+                "and therefore can't grant it to others",
             )
         elif permissions:
             # For pure revokes, verify the explicit permissions array here.
@@ -470,7 +472,8 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
             self._verify_caller_authority(
                 sketch,
                 permissions,
-                "The user does not have {permission:s} permission on the sketch and therefore can't grant/revoke it",
+                "The user does not have {permission:s} permission on the sketch "
+                "and therefore can't grant/revoke it",
             )
 
         # PASS 1: Validation and Preparation

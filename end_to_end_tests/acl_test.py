@@ -221,4 +221,28 @@ class AclTest(interface.BaseEndToEndTest):
         )
 
 
+
+    def test_collaborator_cannot_grant_unheld_permissions(self):
+        """Tests that a collaborator cannot grant permissions they do not possess."""
+        sketch_id = self.sketch.id
+        collaborator_url = f"{self.api.api_root}/sketches/{sketch_id}/collaborators/"
+
+        # Ensure user2 is added with default read/write
+        self.api.session.post(collaborator_url, json={"users": [USER2_USERNAME]})
+
+        # User2 attempts to grant "delete" to another user (or even themselves)
+        res_attack = self.user2_api.session.post(
+            collaborator_url,
+            json={
+                "users": ["some_other_user"],
+                "permissions": ["delete"]
+            }
+        )
+        self.assertions.assertEqual(
+            res_attack.status_code, 
+            403,
+            "Privilege escalation! Collaborator granted a permission they don't have."
+        )
+
+
 manager.EndToEndTestManager.register_test(AclTest)

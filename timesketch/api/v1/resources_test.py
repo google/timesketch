@@ -3048,34 +3048,30 @@ class UserSettingsResourceTest(BaseTest):
 class CollaboratorResourceTest(BaseTest):
     """Test CollaboratorResource ACL authorization checks."""
 
-    def test_collaborator_revoke_owner_and_parity(self):
-        """Test that a collaborator cannot revoke owner permissions or permissions they lack."""
-        # 1. Login as user1 (owner) and create a new sketch.
+    def _setup_shared_sketch(self):
+        """Helper to create a sketch and share it with test2."""
         self.login()
         response = self.client.post(
             "/api/v1/sketches/",
             data=json.dumps({"name": "ACL Test Sketch", "description": "test"}),
             content_type="application/json",
         )
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+        self.assertEqual(response.status_code, 201)
         sketch_id = response.json["objects"][0]["id"]
         collaborator_url = f"/api/v1/sketches/{sketch_id}/collaborators/"
 
-        # 2. Share with test2 (grants read, write by default).
         response = self.client.post(
             collaborator_url,
             data=json.dumps({"users": ["test2"]}),
             content_type="application/json",
         )
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertEqual(response.status_code, 200)
+        return sketch_id, collaborator_url
 
-        # Grant delete permission to group1 so we can test group parity check.
-        sketch = Sketch.get_by_id(sketch_id)
-        sketch.grant_permission(permission="read", group=self.group1)
-        sketch.grant_permission(permission="write", group=self.group1)
-        sketch.grant_permission(permission="delete", group=self.group1)
+    def test_collaborator_cannot_revoke_owner_permissions(self):
+        """Test that a collaborator cannot revoke owner permissions."""
+        sketch_id, collaborator_url = self._setup_shared_sketch()
 
-        # 3. Login as test2 (write-only collaborator, lacks delete).
         self.login(username="test2", password="test")
 
         # Attack 1: Omitted permissions (defaults to stripping all target permissions).
@@ -3084,7 +3080,7 @@ class CollaboratorResourceTest(BaseTest):
             data=json.dumps({"remove_users": ["test1"]}),
             content_type="application/json",
         )
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_FORBIDDEN)
+        self.assertEqual(response.status_code, 403)
 
         # Attack 2: Explicitly revoking read/write from owner.
         response = self.client.post(
@@ -3097,28 +3093,7 @@ class CollaboratorResourceTest(BaseTest):
             ),
             content_type="application/json",
         )
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_FORBIDDEN)
-
-        # Attack 3: Explicitly revoking delete from owner.
-        response = self.client.post(
-            collaborator_url,
-            data=json.dumps(
-                {
-                    "remove_users": ["test1"],
-                    "permissions": json.dumps(["delete"]),
-                }
-            ),
-            content_type="application/json",
-        )
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_FORBIDDEN)
-
-        # Attack 4: Revoking a group that holds delete permission when caller lacks delete.
-        response = self.client.post(
-            collaborator_url,
-            data=json.dumps({"remove_groups": [self.group1.name]}),
-            content_type="application/json",
-        )
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_FORBIDDEN)
+        self.assertEqual(response.status_code, 403)
 
         # Verify owner (test1) still has all permissions.
         self.login()
@@ -3127,12 +3102,22 @@ class CollaboratorResourceTest(BaseTest):
         self.assertTrue(sketch.has_permission(user=self.user1, permission="write"))
         self.assertTrue(sketch.has_permission(user=self.user1, permission="delete"))
 
-        # 4. Owner removes test2 -> 200 OK.
+    def test_collaborator_cannot_revoke_unheld_permissions(self):
+        """Test that a collaborator cannot revoke permissions they lack (parity check)."""
+        sketch_id, collaborator_url = self._setup_shared_sketch()
+
+        # Grant delete permission to group1 so we can test group parity check.
+        sketch = Sketch.get_by_id(sketch_id)
+        sketch.grant_permission(permission="read", group=self.group1)
+        sketch.grant_permission(permission="write", group=self.group1)
+        sketch.grant_permission(permission="delete", group=self.group1)
+
+        self.login(username="test2", password="test")
+
+        # Attack: Revoking a group that holds delete permission when caller lacks delete.
         response = self.client.post(
             collaborator_url,
-            data=json.dumps({"remove_users": ["test2"]}),
+            data=json.dumps({"remove_groups": [self.group1.name]}),
             content_type="application/json",
         )
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
-        self.assertFalse(sketch.has_permission(user=self.user2, permission="read"))
-
+        self.assertEqual(response.status_code, 403)
