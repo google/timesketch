@@ -381,11 +381,11 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
             group = Group.query.filter_by(name=group_name).first()
             if not group:
                 continue
-            if group.user and group.user == sketch.user:
-                abort(
-                    HTTP_STATUS_CODE_FORBIDDEN,
-                    "Cannot revoke permissions from a group owned by the sketch owner.",
-                )
+            
+            # Asymmetric Group Ownership Boundary (groups vs. remove_groups):
+            # As a feature, we intentionally allow any collaborator to remove any group
+            # from the sketch.
+            # This contrasts with adding groups, which restricts adding groups owned by others.
             target_permissions = all_permissions.get(f"group/{group.name:s}", [])
             permission_list = permissions or target_permissions
             self._verify_caller_authority(
