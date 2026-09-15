@@ -234,10 +234,26 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
 
     @login_required
     def post(self, sketch_id: int):
-        """Handles POST request to the resource.
+        """Handles POST request to manage sketch collaborators and permissions.
+
+        The request JSON payload can contain the following fields:
+        - users: List of usernames to grant permissions to.
+        - groups: List of group names to grant permissions to.
+        - remove_users: List of usernames to revoke permissions from.
+        - remove_groups: List of group names to revoke permissions from.
+        - permissions: A JSON-serialized list of permission strings to grant or
+            revoke (e.g., '["read", "write"]'). If empty or not provided, defaults
+            to ["read", "write"] for grants, and to all existing permissions for
+            revocations.
+        - public: Boolean (or string "true"/"false") to toggle public read access.
 
         Args:
-            sketch_id: Integer primary key for a sketch database model
+            sketch_id: Integer primary key for a sketch database model.
+
+        Returns:
+            HTTP status code 200 (OK) on success, or HTTP_STATUS_CODE_FORBIDDEN if the
+            user lacks permission to modify the sketch or grant/revoke the requested
+            permissions.
         """
         sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
@@ -281,6 +297,16 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
             if user:
                 user_permissions = permissions or ["read", "write"]
                 for permission in user_permissions:
+                    if not sketch.has_permission(
+                        user=current_user, permission=permission
+                    ):
+                        abort(
+                            HTTP_STATUS_CODE_FORBIDDEN,
+                            f"The user does not have {permission:s} permission "
+                            "on the sketch and therefore can't grant it to "
+                            "others",
+                        )
+                for permission in user_permissions:
                     sketch.grant_permission(permission=permission, user=user)
 
         for group_name in form.get("groups", []):
@@ -294,22 +320,61 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
             if not group.user or group.user == current_user:
                 group_permissions = permissions or ["read", "write"]
                 for permission in group_permissions:
+                    if not sketch.has_permission(
+                        user=current_user, permission=permission
+                    ):
+                        abort(
+                            HTTP_STATUS_CODE_FORBIDDEN,
+                            f"The user does not have {permission:s} permission "
+                            "on the sketch and therefore can't grant it to "
+                            "others",
+                        )
+                for permission in group_permissions:
                     sketch.grant_permission(permission=permission, group=group)
 
         all_permissions = sketch.get_all_permissions()
         for username in form.get("remove_users", []):
+            if not username:
+                continue
             user = User.query.filter_by(username=username).first()
-            permission_list = permissions or all_permissions.get(
-                f"user/{username:s}", []
-            )
+            if not user:
+                continue
+            if user == sketch.user:
+                abort(
+                    HTTP_STATUS_CODE_FORBIDDEN,
+                    "Cannot revoke permissions from the sketch owner.",
+                )
+            target_permissions = all_permissions.get(f"user/{user.username:s}", [])
+            permission_list = permissions or target_permissions
+            for permission in set(permission_list) | set(target_permissions):
+                if not sketch.has_permission(
+                    user=current_user, permission=permission
+                ):
+                    abort(
+                        HTTP_STATUS_CODE_FORBIDDEN,
+                        f"The user does not have {permission:s} permission on the "
+                        "sketch and therefore can't revoke it from others",
+                    )
             for permission in permission_list:
                 sketch.revoke_permission(permission=permission, user=user)
 
         for group_name in form.get("remove_groups", []):
+            if not group_name:
+                continue
             group = Group.query.filter_by(name=group_name).first()
-            permission_list = permissions or all_permissions.get(
-                f"group/{group_name:s}", []
-            )
+            if not group:
+                continue
+            target_permissions = all_permissions.get(f"group/{group.name:s}", [])
+            permission_list = permissions or target_permissions
+            for permission in set(permission_list) | set(target_permissions):
+                if not sketch.has_permission(
+                    user=current_user, permission=permission
+                ):
+                    abort(
+                        HTTP_STATUS_CODE_FORBIDDEN,
+                        f"The user does not have {permission:s} permission on the "
+                        "sketch and therefore can't revoke it from others",
+                    )
             for permission in permission_list:
                 sketch.revoke_permission(permission=permission, group=group)
 

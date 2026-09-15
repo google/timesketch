@@ -3043,3 +3043,96 @@ class UserSettingsResourceTest(BaseTest):
             response.json["objects"][0]["defaultSearchMethod"], "query_string"
         )
         self.assertEqual(response.json["objects"][0]["customSetting"], "test")
+
+
+class CollaboratorResourceTest(BaseTest):
+    """Test CollaboratorResource ACL authorization checks (GHSA-vvf4-j4w4-xvgx)."""
+
+    def test_collaborator_revoke_owner_and_parity(self):
+        """Test that a collaborator cannot revoke owner permissions or permissions they lack."""
+        # 1. Login as user1 (owner) and create a new sketch.
+        self.login()
+        response = self.client.post(
+            "/api/v1/sketches/",
+            data=json.dumps({"name": "ACL Test Sketch", "description": "test"}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+        sketch_id = response.json["objects"][0]["id"]
+        collaborator_url = f"/api/v1/sketches/{sketch_id}/collaborators/"
+
+        # 2. Share with test2 (grants read, write by default).
+        response = self.client.post(
+            collaborator_url,
+            data=json.dumps({"users": ["test2"]}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+
+        # Grant delete permission to group1 so we can test group parity check.
+        sketch = Sketch.get_by_id(sketch_id)
+        sketch.grant_permission(permission="read", group=self.group1)
+        sketch.grant_permission(permission="write", group=self.group1)
+        sketch.grant_permission(permission="delete", group=self.group1)
+
+        # 3. Login as test2 (write-only collaborator, lacks delete).
+        self.login(username="test2", password="test")
+
+        # Attack 1: Omitted permissions (defaults to stripping all target permissions).
+        response = self.client.post(
+            collaborator_url,
+            data=json.dumps({"remove_users": ["test1"]}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_FORBIDDEN)
+
+        # Attack 2: Explicitly revoking read/write from owner.
+        response = self.client.post(
+            collaborator_url,
+            data=json.dumps(
+                {
+                    "remove_users": ["test1"],
+                    "permissions": json.dumps(["read", "write"]),
+                }
+            ),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_FORBIDDEN)
+
+        # Attack 3: Explicitly revoking delete from owner.
+        response = self.client.post(
+            collaborator_url,
+            data=json.dumps(
+                {
+                    "remove_users": ["test1"],
+                    "permissions": json.dumps(["delete"]),
+                }
+            ),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_FORBIDDEN)
+
+        # Attack 4: Revoking a group that holds delete permission when caller lacks delete.
+        response = self.client.post(
+            collaborator_url,
+            data=json.dumps({"remove_groups": [self.group1.name]}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_FORBIDDEN)
+
+        # Verify owner (test1) still has all permissions.
+        self.login()
+        sketch = Sketch.get_by_id(sketch_id)
+        self.assertTrue(sketch.has_permission(user=self.user1, permission="read"))
+        self.assertTrue(sketch.has_permission(user=self.user1, permission="write"))
+        self.assertTrue(sketch.has_permission(user=self.user1, permission="delete"))
+
+        # 4. Owner removes test2 -> 200 OK.
+        response = self.client.post(
+            collaborator_url,
+            data=json.dumps({"remove_users": ["test2"]}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertFalse(sketch.has_permission(user=self.user2, permission="read"))
+
