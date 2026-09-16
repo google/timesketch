@@ -332,7 +332,7 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
             group = Group.query.filter_by(name=group_name).first()
             if not group:
                 continue
-            target_permissions = all_permissions.get(f"group/{group.name:s}", [])
+            target_permissions = all_permissions.get(f"group/{group.name}", [])
             permission_list = permissions or target_permissions
             for permission in set(permission_list) | set(target_permissions):
                 if not sketch.has_permission(user=current_user, permission=permission):
