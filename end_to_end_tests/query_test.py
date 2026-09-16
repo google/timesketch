@@ -41,12 +41,12 @@ class QueryTest(interface.BaseEndToEndTest):
         """Test few specific queries."""
         search_obj = search.Search(self.sketch)
         search_obj.query_string = 'message_identifier: "1073748864"'
-        search_obj.return_fields = "computer_name,data_type,strings,user_sid"
+        search_obj.return_fields = "hostname,data_type,strings,user_sid"
 
         data_frame = search_obj.table
         self.assertions.assertEqual(len(data_frame), 204)
 
-        computers = list(data_frame.computer_name.unique())
+        computers = list(data_frame.hostname.unique())
         self.assertions.assertEqual(len(computers), 1)
         self.assertions.assertEqual(computers[0], "WKS-WIN764BITB.shieldbase.local")
 
@@ -85,7 +85,7 @@ class QueryTest(interface.BaseEndToEndTest):
             raise RuntimeError("Unable to find the saved search.")
         self.assertions.assertEqual(
             saved_search.return_fields,
-            "computer_name,data_type,strings,user_sid,datetime",
+            "hostname,data_type,strings,user_sid,datetime",
         )
 
         self.assertions.assertEqual(

@@ -15,6 +15,7 @@
 
 import codecs
 import json
+import os
 
 from typing import Optional, Dict
 from flask_testing import TestCase
@@ -35,6 +36,9 @@ from timesketch.models.sketch import View
 from timesketch.models.sketch import Event
 from timesketch.models.sketch import Story
 from timesketch.models.sigma import SigmaRule
+
+# Set default test configuration for test environments.
+os.environ.setdefault("TIMESKETCH_SETTINGS", "timesketch.lib.testlib.TestConfig")
 
 SIGMA_RULE = """
 title: Suspicious Installation of Zenmap
@@ -67,6 +71,7 @@ class TestConfig:
     SECRET_KEY = "testing"
     SQLALCHEMY_DATABASE_URI = "sqlite://"
     WTF_CSRF_ENABLED = False
+    CELERY_BROKER_URL = "memory://"
     OPENSEARCH_HOST = "noserver"
     OPENSEARCH_PORT = 4711
     OPENSEARCH_USER = None
