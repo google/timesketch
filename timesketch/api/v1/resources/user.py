@@ -338,7 +338,7 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
                 if not sketch.has_permission(user=current_user, permission=permission):
                     abort(
                         HTTP_STATUS_CODE_FORBIDDEN,
-                        f"The user does not have {permission:s} permission on "
+                        f"The user does not have {permission} permission on "
                         "the sketch and therefore can't revoke it from others",
                     )
             for permission in permission_list:
