@@ -14,6 +14,7 @@
 """End to end tests for ACL security and authorization checks."""
 
 import json
+
 from timesketch_api_client import client as api_client
 
 from . import interface
