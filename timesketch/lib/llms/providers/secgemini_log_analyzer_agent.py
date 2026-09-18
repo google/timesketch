@@ -279,12 +279,18 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
 
                         translated_findings = []
                         if findings_list:
-                            try:
-                                for f in findings_list:
+                            for f in findings_list:
+                                if not isinstance(f, dict):
+                                    logger.warning(
+                                        "Skipping malformed SecGemini finding: %r", f
+                                    )
+                                    continue
+                                try:
+                                    record_ids = f.get("record_ids")
+                                    if not isinstance(record_ids, list):
+                                        record_ids = []
                                     log_records = [
-                                        {"record_id": rid}
-                                        for rid in f.get("record_ids", [])
-                                        if rid
+                                        {"record_id": rid} for rid in record_ids if rid
                                     ]
                                     desc = f.get("description", "")
                                     relevance = f.get("relevance", "")
@@ -309,13 +315,13 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                                             "annotations": annotations,
                                         }
                                     )
-                            # pylint: disable=broad-exception-caught
-                            except Exception as e:
-                                logger.error(
-                                    "Failed to translate SecGemini findings JSON: %s",
-                                    e,
-                                    exc_info=True,
-                                )
+                                # pylint: disable=broad-exception-caught
+                                except Exception as e:
+                                    logger.error(
+                                        "Failed to translate SecGemini finding: %s",
+                                        e,
+                                        exc_info=True,
+                                    )
 
                         json_str = json.dumps(
                             {
