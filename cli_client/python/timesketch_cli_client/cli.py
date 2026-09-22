@@ -70,11 +70,12 @@ class TimesketchCli:
             output_format_from_flag: Output format to use.
             config_section: The config section to use.
         """
-        self.api = api_client
         self.sketch_from_flag = sketch_from_flag
         self.output_format_from_flag = output_format_from_flag
 
-        if not api_client:
+        if api_client:
+            self.api = api_client
+        else:
             # Check if the config file exists and contains the requested section.
             actual_conf_file = conf_file
             if not actual_conf_file:

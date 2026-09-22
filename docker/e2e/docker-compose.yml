@@ -29,6 +29,7 @@ services:
       args:
           UBUNTU_VERSION: ${UBUNTU_VERSION:-26.04}
           PLASO_PPA_TRACK: ${PLASO_PPA_TRACK:-stable}
+          PLASO_VERSION: ${PLASO_VERSION:-20260720}
     ports:
       - "127.0.0.1:80:80"
     links:
