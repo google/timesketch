@@ -702,8 +702,9 @@ level: high
             name=f"test_delete_timeline {rand}", description="test_delete_timeline"
         )
         self.sketch = sketch
+        test_filename = interface.get_plaso_filename()
         file_path = (
-            "/usr/local/src/timesketch/end_to_end_tests/test_data/evtx_20250918.plaso"
+            f"/usr/local/src/timesketch/end_to_end_tests/test_data/{test_filename}"
         )
 
         self.import_timeline(file_path, sketch=sketch)

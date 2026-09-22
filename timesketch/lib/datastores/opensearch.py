@@ -45,6 +45,7 @@ import prometheus_client
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import METRICS_NAMESPACE
 from timesketch.lib import errors
+from timesketch.lib import telemetry
 
 # Setup logging
 os_logger = logging.getLogger("timesketch.opensearch")
@@ -918,17 +919,32 @@ class OpenSearchDataStore:
                         }
                     }
                 }
+            elif field == "_id":
+                is_field_search = True
+                clean_value = value.strip('"').strip("'")
+                dsl_node = {"term": {"_id": clean_value}}
             else:
                 raise ValueError(f"Field '{field}' does not support wildcard search.")
 
         # 2. Global search across *.wildcard fields
         if not is_field_search:
             clean_value = token.strip('"').strip("'")
+            should_clauses = []
+            for field in sorted(wildcard_fields):
+                should_clauses.append(
+                    {
+                        "wildcard": {
+                            f"{field}.wildcard": {
+                                "value": clean_value,
+                                "case_insensitive": True,
+                            }
+                        }
+                    }
+                )
             dsl_node = {
-                "multi_match": {
-                    "query": clean_value,
-                    "fields": ["*.wildcard"],
-                    "type": "most_fields",
+                "bool": {
+                    "should": should_clauses,
+                    "minimum_should_match": 1,
                 }
             }
         return dsl_node
@@ -1105,6 +1121,7 @@ class OpenSearchDataStore:
         return {"must": [final_node], "must_not": [], "filter": []}
 
     # pylint: disable=too-many-arguments
+    @telemetry.instrument_search
     def search(
         self,
         sketch_id: int,
@@ -1277,7 +1294,11 @@ class OpenSearchDataStore:
                 )
         except ConnectionTimeout as e:
             wildcard_warning = ""
-            if query_string.startswith("*"):
+            if (
+                query_string
+                and query_string.startswith("*")
+                and not use_wildcard_fields
+            ):
                 wildcard_warning = (
                     " IMPORTANT: Avoid leading wildcards (e.g. *searchterm) in "
                     "your search query as these are very resource expensive."

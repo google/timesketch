@@ -34,9 +34,10 @@ limitations under the License.
           </p>
           <p>Suggestions:</p>
           <ul v-if="searchMode === 'wildcard'">
-            <li>Encase terms containing colons (like URLs, paths, or MACs) in double-quotes, e.g. <code>"*count: 1*"</code>.</li>
+            <li>Ensure search terms contain wildcard characters (e.g. <code>*searchterm*</code>).</li>
+            <li>Do not escape special characters with backslashes. Matches are literal.</li>
+            <li>Encase terms containing <code>:</code> (like URLs, paths, or MACs) in double-quotes, e.g. <code>"*count: 1*"</code>.</li>
             <li>Check for field typos: Ensure that target fields (e.g. <code>message:</code>) are spelled correctly and support wildcard searches.</li>
-            <li>Verify that all parentheses <code>()</code> are balanced.</li>
             <li>Ensure boolean operators (<code>AND</code>, <code>OR</code>, <code>NOT</code>) are capitalized and correctly positioned.</li>
             <li>Try some of the wildcard search examples below.</li>
           </ul>

@@ -14,7 +14,7 @@
 """Interface for LLM providers."""
 
 import string
-from typing import Optional
+from typing import Any, Optional
 
 DEFAULT_TEMPERATURE = 0.1
 DEFAULT_TOP_P = 0.1
@@ -76,6 +76,20 @@ class LLMProvider:
         """Format a prompt from a template."""
         formatter = string.Formatter()
         return formatter.format(template, **kwargs)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Returns a dictionary representation of the provider's configuration.
+
+        This representation is safe for multiprocessing and contains only
+        picklable primitives and class references.
+
+        Returns:
+            A dictionary containing 'provider_class' and 'config'.
+        """
+        return {
+            "provider_class": self.__class__,
+            "config": self.config,
+        }
 
     def generate(self, prompt: str, response_schema: Optional[dict] = None) -> str:
         """Generate a response from the LLM provider.

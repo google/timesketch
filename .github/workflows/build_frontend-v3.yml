@@ -9,6 +9,9 @@ on:
       - '!timesketch/frontend-v3/dist/**' # Exclude changes in the dist folder
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build-frontend-v3:
     timeout-minutes: 30
@@ -21,7 +24,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Install frontend-v3 dependencies
         working-directory: timesketch/frontend-v3

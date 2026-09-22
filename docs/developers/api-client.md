@@ -318,6 +318,16 @@ search_obj.*?
 
 To find a list of all the possible configuration options.
 
+#### Wildcard Search Mode
+
+To use the optimized wildcard search mode, enable `use_wildcard_fields` on the
+`Search` object:
+
+```python
+search_obj.query_string = 'message:*Eventlog*'
+search_obj.use_wildcard_fields = True
+```
+
 #### Chips
 
 Chips are the "+ Time filter" or "+ Add label filter", etc elements you can

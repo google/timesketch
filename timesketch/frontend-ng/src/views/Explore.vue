@@ -20,7 +20,7 @@ limitations under the License.
 
     <!-- Search and Filters -->
     <v-card flat class="pa-3 pt-0 mt-n3" color="transparent">
-      <v-card class="d-flex align-start mb-1 overflow-hidden" outlined>
+      <v-card class="d-flex align-start mb-1" outlined>
         <ts-search-mode-toggle v-model="searchMode"></ts-search-mode-toggle>
         <v-sheet class="mt-2">
           <ts-search-history-buttons @toggleSearchHistory="toggleSearchHistory()"></ts-search-history-buttons>
@@ -39,6 +39,7 @@ limitations under the License.
               solo
               class="pa-2"
               id="tsSearchInput"
+              autocomplete="off"
               @keyup.enter="search()"
               @click="showSearchDropdown = true"
               ref="searchInput"
@@ -56,6 +57,7 @@ limitations under the License.
             v-click-outside="onClickOutside"
             :selected-labels="selectedLabels"
             :query-string="currentQueryString"
+            :search-mode="searchMode"
             @setActiveView="searchView"
             @addChip="addChip"
             @updateLabelChips="updateLabelChips()"
@@ -455,12 +457,16 @@ export default {
         this.triggerScrollTo()
       }
     },
-    setQueryAndFilter: function (searchEvent) {
+    setQueryAndFilter: async function (searchEvent) {
       if (this.$route.name !== 'Explore') {
         this.$router.push({ name: 'Explore', params: { sketchId: this.sketch.id } })
       }
       if (searchEvent.queryString) {
         this.currentQueryString = searchEvent.queryString
+      }
+
+      if (!this.currentQueryString && searchEvent.chip) {
+        this.currentQueryString = '*'
       }
 
       // Preserve user defined filter instead of resetting, if it exist.
@@ -489,6 +495,12 @@ export default {
         } else {
           this.search()
         }
+      } else {
+        // Refocus the search input so the user can continue typing
+        await this.$nextTick()
+        if (this.$refs.searchInput) {
+          this.$refs.searchInput.focus()
+        }
       }
     },
 
@@ -496,6 +508,7 @@ export default {
       let queryRequest = {}
       queryRequest.queryString = this.currentQueryString
       this.currentQueryFilter.use_wildcard_fields = (this.searchMode === 'wildcard')
+
       queryRequest.queryFilter = this.currentQueryFilter
       queryRequest.resetPagination = resetPagination
       queryRequest.incognito = incognito
@@ -519,6 +532,11 @@ export default {
           let view = response.data.objects[0]
           this.currentQueryString = view.query_string
           this.currentQueryFilter = JSON.parse(view.query_filter)
+          if (this.currentQueryFilter && this.currentQueryFilter.use_wildcard_fields) {
+            this.localSearchMode = 'wildcard'
+          } else {
+            this.localSearchMode = 'query_string'
+          }
           if (!this.currentQueryFilter.fields || !this.currentQueryFilter.fields.length) {
             this.currentQueryFilter.fields = [{ field: 'message', type: 'text' }]
           }
@@ -702,6 +720,11 @@ export default {
     jumpInHistory: function (node) {
       this.currentQueryString = node.query_string
       this.currentQueryFilter = JSON.parse(node.query_filter)
+      if (this.currentQueryFilter && this.currentQueryFilter.use_wildcard_fields) {
+        this.localSearchMode = 'wildcard'
+      } else {
+        this.localSearchMode = 'query_string'
+      }
       if (!this.currentQueryFilter.fields || !this.currentQueryFilter.fields.length) {
         this.currentQueryFilter.fields = [{ field: 'message', type: 'text' }]
       }

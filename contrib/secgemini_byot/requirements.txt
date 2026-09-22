@@ -1,0 +1,5 @@
+# Standard python requirements for BYOT client
+timesketch-api-client
+pandas
+fastmcp
+sec-gemini

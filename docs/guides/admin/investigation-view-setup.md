@@ -161,16 +161,16 @@ the data and sends back structured findings and questions.
         'log_analyzer':
         {
             # This feature requires a dedicated log analyzer agent service.
-            '<PROVIDER>_log_analyzer_agent': {
-                'server_url': '<YOUR_AGENT_API_ENDPOINT>',
+            'secgemini_log_analyzer_agent': {
+                'host': '<YOUR_SEC_GEMINI_ENDPOINT_HOST>',
                 'api_key': '<YOUR_AGENT_API_KEY>',
             }
         },
     }
     ```
 
-    *   **`server_url`**: This is the API endpoint URL of your deployed AI agent.
-    *   **`api_key`**: If your agent requires an API key for authentication, provide it here.
+    *   **`host`**: (Optional) This is the custom endpoint host/address of your deployed agent. If omitted, the default SecGemini cloud endpoint will be used.
+    *   **`api_key`**: The API key required to authenticate with the SecGemini service.
     *   Those values can vary depending on the provider you are using.
 
 3.  **Restart Timesketch:**

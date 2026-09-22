@@ -37,11 +37,11 @@ def format_output(
     Supported output formats are 'text', 'csv', 'json', 'jsonl', and 'tabular'.
 
     Args:
-        search_obj (search.Search): The API Search object containing search results.
-        output_format (str): The desired output format
+        search_obj: The API Search object containing search results.
+        output_format: The desired output format
             ('text', 'csv', 'json', 'jsonl', or 'tabular').
-        show_headers (bool): If True, includes headers in the output.
-        show_internal_columns (bool): If True, includes internal columns in the output.
+        show_headers: If True, includes headers in the output.
+        show_internal_columns: If True, includes internal columns in the output.
 
     Returns:
         The formatted search results as a string, or None if an error occurs.
@@ -96,7 +96,7 @@ def describe_query(search_obj: search.Search):
     with a search object.
 
     Args:
-        search_obj (search.Search): The search object to describe.
+        search_obj: The search object to describe.
 
     Outputs:
         Text: The query string, return fields, and a formatted JSON
@@ -189,26 +189,23 @@ def search_group(
     filters and formatting the output.
     Supports queries using OpenSearch query string syntax, date/time filtering,
     label filtering, and saved searches.
-    The output can be formatted as text, CSV, JSON, JSONL, or tabular,
-    depending on the context's 'output_format' setting.
+    Supported output formats are 'text', 'csv', 'json', 'jsonl', and 'tabular'.
 
     Args:
-        ctx (click.Context): The Click context object,
-            containing the sketch and output format.
-        query (str): The search query in OpenSearch query string format
+        query: The search query in OpenSearch query string format
             (default: "*").
-        times (Tuple[str, ...]): Datetime filters (e.g., "2020-01-01T12:00").
-        time_ranges (Tuple[Tuple[str, str], ...]): Datetime range filters
+        times: Datetime filters (e.g., "2020-01-01T12:00").
+        time_ranges: Datetime range filters
             (e.g., ("2020-01-01", "2020-02-01")).
-        labels (Tuple[str, ...]): Filters events with the specified labels.
-        header (bool): Toggles header information in the output (default: True).
-        return_fields (str): Specifies which event fields to show.
-        order (str): Orders the output ("asc" or "desc") based on the time field
+        labels: Filters events with the specified labels.
+        header: Toggles header information in the output (default: True).
+        return_fields: Specifies which event fields to show.
+        order: Orders the output ("asc" or "desc") based on the time field
             (default: "asc").
-        limit (int): Limits the number of events to show (default: 40).
-        saved_search (Optional[int]): Uses a saved search query and filters by its ID.
-        describe (bool): Shows the query and filter details and then exits.
-        show_internal_columns (bool): Shows all columns, including Timesketch
+        limit: Limits the number of events to show (default: 40).
+        saved_search: Uses a saved search query and filters by its ID.
+        describe: Shows the query and filter details and then exits.
+        show_internal_columns: Shows all columns, including Timesketch
             internal ones.
 
     Raises:
@@ -218,6 +215,8 @@ def search_group(
     Outputs:
         Formatted search results in the specified output format
             (text, CSV, JSON, JSONL, or tabular).
+        Note: The output format is determined by the global '--output-format'
+        flag or the context's 'output_format' setting.
         If '--describe' is used, query details are printed instead.
 
     Example:
@@ -320,11 +319,11 @@ def list_saved_searches(ctx: click.Context):
     Retrieves and displays a list of saved searches from the sketch, showing
     their IDs and names.
 
-    Args:
-        ctx (click.Context): The Click context object, containing the sketch.
-
     Outputs:
-        Text: A list of saved searches, with each line showing the search ID and name.
+        Text: A list of saved searches, with each line showing the search ID
+              and name.
+        Note: The output format is determined by the global '--output-format'
+        flag or the context's 'output_format' setting.
 
     Example:
         saved-searches list  # Lists all saved searches in the current sketch.
@@ -344,15 +343,14 @@ def describe_saved_search(ctx: click.Context, search_id: int):
     identified by its ID.
 
     Args:
-        ctx (click.Context): The Click context object, containing the sketch.
-        search_id (int): The ID of the saved search to describe.
+        search_id: The ID of the saved search to describe.
 
     Raises:
         click.ClickException: If the specified saved search ID does not exist.
 
     Outputs:
         Text: The query string and formatted JSON representation of the query
-        filter for the saved search.
+              filter for the saved search.
 
     Example:
         saved-searches describe 123  # Describes the saved search with ID 123.
@@ -395,7 +393,6 @@ def search_wildcard(ctx: click.Context, query: str, limit: int, compare: bool) -
     substring pattern matching on a selected target field list.
 
     Args:
-        ctx: Click Context object holding global settings and active sketch.
         query: The raw wildcard search pattern string (e.g. '*evil*' or
             'message:*evil*').
         limit: Max integer limit of matching event hits to return.

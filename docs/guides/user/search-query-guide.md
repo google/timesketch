@@ -172,6 +172,49 @@ Below are syntax elements and example regular expressions
   </tr>
 </table>
 
+### Wildcard Search Mode
+
+Timesketch includes a dedicated **Wildcard Search Mode** (introduced starting
+with version `20260617`) designed for case-insensitive substring searching.
+Under the hood, this mode leverages the
+[OpenSearch wildcard field type](https://opensearch.org/docs/latest/field-types/supported-field-types/wildcard/),
+making queries with leading/trailing wildcards (e.g., `*malicious*`)
+significantly faster and more reliable compared to the classic query string
+search.
+
+To use Wildcard Search Mode:
+* **In the Web UI:** Select the **WC** (Wildcard) mode from the toggle button
+at the left of the query bar (which otherwise defaults to **QS** for Query
+String).
+* **In Settings:** You can choose to enable **"Use Wildcard Search by default"**
+under your user settings.
+
+#### Query Syntax & Examples
+
+Wildcard mode tokenizes queries by space and parentheses, supporting standard
+Boolean logic and parenthetical groupings:
+
+* **Global substring search:** `*evil*` searches case-insensitively across all
+fields mapped with wildcard properties (string based fields by default).
+* **Field-specific search:** `message:*evil*` searches only within the
+`message` field.
+* **Logical operators:** `*evil* AND *good*` or `*evil* OR *good*`. The
+operators `AND`, `OR`, and `NOT` must be capitalized.
+* **Implicit AND:** Multiple terms separated by a space (e.g., `*evil* *good*`)
+are implicitly combined with `AND`.
+* **Exact values with colons:** If your query contains colons (such as paths,
+MAC addresses, or URLs), you **must** wrap it in double quotes (e.g.,
+`url:"http://google.com/"` or `"*count: 1*"`), otherwise the colon is
+interpreted as a field separator.
+* **No Escaping Required:** You do not need to escape special characters like
+`.` or `-` with backslashes. Matches are literal, and escaping them (e.g.
+`*\.com*`) will actually search for a literal backslash.
+
+*Note: Wildcard Search Mode requires timeline indices to have
+[wildcard mapping enabled](../admin/index-mappings.md). Older timelines
+imported before this feature was introduced do not support it and will default
+back to Query String mode.*
+
 ### Date Related Searches
 
 | Description            | Example Query                                            |

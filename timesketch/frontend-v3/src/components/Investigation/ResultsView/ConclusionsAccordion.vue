@@ -39,9 +39,7 @@ limitations under the License.
         <v-expansion-panel-title color="#F8F9FA">
           <div class="d-flex align-center justify-space-between w-100">
             <div>
-              <p>
-                {{ conclusion.conclusion }}
-              </p>
+              <div v-html="renderMarkdown(conclusion.conclusion)"></div>
               <v-spacer />
               <v-chip v-if="conclusion.automated"
                 size="x-small"
@@ -213,6 +211,8 @@ limitations under the License.
 import { useAppStore } from "@/stores/app"
 import RestApiClient from "@/utils/RestApiClient"
 import EventsLog from '@/components/Investigation/EventsLog/index.vue'
+import DOMPurify from 'dompurify'
+import { marked } from 'marked'
 
 export default {
   components: {
@@ -264,6 +264,13 @@ export default {
     },
   },
   methods: {
+    renderMarkdown(text) {
+      if (!text) {
+        return ''
+      }
+      const unsafeHtml = marked(text)
+      return DOMPurify.sanitize(unsafeHtml)
+    },
     // Event Log and Drawer Management
     openEventLog(conclusionId = null) {
       this.activeConclusionId = conclusionId

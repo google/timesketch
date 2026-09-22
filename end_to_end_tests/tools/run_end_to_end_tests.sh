@@ -14,9 +14,14 @@ DEFAULT_OPENSEARCH_VERSION=2.19.5
 # Container ID for the web server
 export CONTAINER_ID="$(sudo -E docker container list -f name=e2e_timesketch -q)"
 
+# Configure telemetry if requested
+if [ "$TELEMETRY" = "true" ]; then
+  export TIMESKETCH_OTEL_MODE=otlp-grpc
+  export COMPOSE_PROFILES=telemetry
+fi
+
 # Start containers if necessary
 if [ -z "$CONTAINER_ID" ]; then
-  #sudo -E docker compose -f ./docker/e2e/docker-compose.yml down
   sudo -E docker compose -f ./docker/e2e/docker-compose.yml up -d
   /bin/sleep 120  # Wait for all containers to be available
   export CONTAINER_ID="$(sudo -E docker container list -f name=e2e_timesketch -q)"

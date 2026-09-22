@@ -17,6 +17,8 @@
 import json
 import os
 import uuid
+import tempfile
+import shutil
 import zipfile
 import time
 import csv
@@ -523,6 +525,37 @@ class TestTsctl(interface.BaseEndToEndTest):
         finally:
             if os.path.exists(export_file):
                 os.remove(export_file)
+
+    def test_import_search_templates(self):
+        """Tests importing search templates and verifying they are visible."""
+        template_dir = tempfile.mkdtemp()
+        template_path = os.path.join(template_dir, "template.yaml")
+        template_uuid = str(uuid.uuid4())
+        try:
+            with open(template_path, "w", encoding="utf-8") as f:
+                f.write(f"""
+- id: "{template_uuid}"
+  short_name: "test_template"
+  display_name: "Test Template {template_uuid}"
+  description: "Test Template Description"
+  query_string: "event_id: 123"
+  query_filter: {{}}
+  query_dsl: {{}}
+""")
+
+            # Invoke 'tsctl import-search-templates'
+            result = self.runner.invoke(cli, ["import-search-templates", template_dir])
+            self.assertions.assertEqual(
+                result.exit_code, 0, f"CLI Error: {result.output}"
+            )
+
+            # Verify the template is visible via the API client
+            templates = self.sketch.list_search_templates()
+            template_names = [t.name for t in templates]
+            self.assertions.assertIn(f"Test Template {template_uuid}", template_names)
+
+        finally:
+            shutil.rmtree(template_dir)
 
 
 manager.EndToEndTestManager.register_test(TestTsctl)

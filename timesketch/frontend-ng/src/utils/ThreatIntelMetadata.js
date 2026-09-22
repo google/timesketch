@@ -1,5 +1,5 @@
 const IOCTypes = [
-    { regex: /^(\/[\S]+)+$/i, type: 'fs_path', humanReadable: 'Filesystem path' },
+    { regex: /^(\/[^\s/]+)+$/i, type: 'fs_path', humanReadable: 'Filesystem path' },
     { regex: /^([-\w]+\.)+[a-z]{2,}$/i, type: 'hostname', humanReadable: 'Hostname' },
     {
       regex: /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/g,

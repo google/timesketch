@@ -17,7 +17,6 @@ import json
 import logging
 import os
 import asyncio
-import inspect
 import pathlib
 import tempfile
 from datetime import datetime
@@ -31,11 +30,16 @@ from timesketch.lib.llms.providers import manager
 has_required_deps = True
 try:
     from sec_gemini import SecGemini
-    from sec_gemini.models.enums import MessageType
 except ImportError:
     has_required_deps = False
 
 logger = logging.getLogger(__name__)
+
+
+CONCLUSION_LOG_RECORDS_HEADER = "**What the selected log records are:**\n\n"
+CONCLUSION_RELEVANCE_HEADER = (
+    "**How the selected log records are related to the finding:**\n\n"
+)
 
 
 class SecGeminiLogAnalyzer(interface.LLMProvider):
@@ -66,175 +70,248 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
         if not self.api_key:
             raise ValueError("SecGemini provider requires an 'api_key' in its config.")
 
-        self.server_url = self.config.get("logs_processor_api_url")
-        if self.server_url:
-            os.environ["SEC_GEMINI_LOGS_PROCESSOR_API_URL"] = self.server_url
-
-        self.base_url = self.config.get("base_url")
-        self.wss_url = self.config.get("wss_url")
-        self.agents_config = self.config.get("agents_config", {})
+        self.host = self.config.get("host")
+        self.meta_config = self.config.get("meta", {})
+        self.upload_logs_to_secgemini = self.config.get(
+            "upload_logs_to_secgemini", False
+        )
+        self.byot_tunnel_name = self.config.get(
+            "byot_tunnel_name", "byot-sec-gemini-bot"
+        )
+        self.byot_username = self.config.get("byot_username")
 
         try:
-            if self.base_url and self.wss_url:
-                self.sg_client = SecGemini(
-                    base_url=self.base_url,
-                    base_websockets_url=self.wss_url,
-                    api_key=self.api_key,
-                )
+            if self.host:
+                self.sg_client = SecGemini(api_key=self.api_key, host=self.host)
             else:
                 self.sg_client = SecGemini(api_key=self.api_key)
         except Exception as e:
             raise ValueError(f"Failed to initialize SecGemini client: {e}") from e
 
-        self.model = self.config.get("model", "logs_analysis_agent-1.1")
-        self.custom_fields_mapping = {
-            "id": "_id",
-            "enrichment": "tag",
-            "timestamp": "datetime",
-        }
-        self.enable_logging = self.config.get("enable_logging", False)
         self._events_sent = 0
         self._session = None
         self.session_id = None
-        self.table_hash = None
 
-    async def _run_async_stream(self, log_path, prompt):
+    async def _run_async_stream(self, prompt, log_path=None, sketch=None):
         """Initializes a SecGemini session and streams the analysis response.
 
-        This is an async helper method that:
-        1. Creates a new SecGemini session.
-        2. Uploads the local log file to the session.
-        3. Streams the analysis results for the given prompt.
-        4. If debugging is enabled, streams the raw sec-gemini response to a log.
+        This method supports two modes:
+        1. Local Mode (BYOT): If upload_logs_to_secgemini is False (default),
+           it registers a local BYOT tunnel name and instructs the agent to
+           use describe and search tools.
+        2. Remote Mode: If upload_logs_to_secgemini is True, it uploads the
+           local log file to the SecGemini session for analysis.
 
         Args:
-            log_path (Path): The local filesystem path to the JSONL log file.
             prompt (str): The analysis prompt to send to the agent.
+            log_path (Path, optional): The local filesystem path to the JSONL log file.
+            sketch (Sketch, optional): The active Timesketch Sketch object.
 
         Yields:
             str: The content chunks of the streamed response from the agent.
         """
-        session_params = {
-            "model": self.model,
-            "enable_logging": self.enable_logging,
-        }
-
-        # Check if the installed sec-gemini library supports agents_config
-        sig = inspect.signature(self.sg_client.create_session)
-        if "agents_config" in sig.parameters:
-            session_params["agents_config"] = self.agents_config
-        else:
-            raise ValueError(
-                "The installed version of 'sec_gemini' does not support the "
-                "'agents_config' parameter. Please upgrade the library to a "
-                "version > 1.1.5 to use the log analyzer feature."
-            )
-        self._session = self.sg_client.create_session(**session_params)
-        self.session_id = self._session.id
-        # TODO: Could we check if the API key has logging enabled and if not ERR
-        logger.info("Started new SecGemini session: '%s'", self._session.id)
-        self._session.upload_and_attach_logs(
-            log_path, custom_fields_mapping=self.custom_fields_mapping
-        )
-        if hasattr(self._session, "logs_table") and hasattr(
-            self._session.logs_table, "blake2s"
-        ):
-            self.table_hash = self._session.logs_table.blake2s
-            logger.info(
-                "Uploaded logs table hash (blake2s): '%s'",
-                self._session.logs_table.blake2s,
-            )
-        else:
-            logger.warning("Uploaded logs did not produce a blake2s table hash!")
-
-        logger.info("Starting the SecGemini analysis...")
-        logger.info(
-            "NOTE: 'ConnectionClosedOK' errors from the SecGemini client in the "
-            "log are expected. The client automatically reconnects during "
-            "long-running analysis."
-        )
-
-        debug_log_file = None
-        if current_app.config.get("DEBUG"):
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            log_filename = f"secgemini_response_{timestamp}_{self.session_id}.log"
-            log_file_path = os.path.join(tempfile.gettempdir(), log_filename)
-            flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
-            try:
-                debug_log_file = os.fdopen(
-                    os.open(log_file_path, flags, 0o600), "w", encoding="utf-8"
-                )
-                logger.info(
-                    "SecGemini raw response is being streamed to: %s", log_file_path
-                )
-            except (IOError, FileExistsError) as e:
-                logger.error(
-                    "Failed to create SecGemini debug log at %s: %s",
-                    log_file_path,
-                    e,
-                    exc_info=True,
-                )
-                debug_log_file = None
+        # Start the client connection first
+        await self.sg_client.start()
 
         try:
-            async for response in self._session.stream(prompt):
-                if debug_log_file:
-                    try:
-                        if hasattr(response, "to_json") and callable(
-                            getattr(response, "to_json")
-                        ):
-                            json_bytes = response.to_json()
-                            json_string = json_bytes.decode("utf-8")
-                            debug_log_file.write(json_string + "\n")
+            # Create session via the sessions manager
+            self._session = await self.sg_client.sessions.create()
+            self.session_id = self._session.id
+            logger.info("Started new SecGemini session: '%s'", self.session_id)
+
+            if self.upload_logs_to_secgemini:
+                if not log_path:
+                    raise ValueError("Remote log analysis requires a log_path.")
+                # Upload logs file using the new files.upload API
+                await self._session.files.upload(
+                    str(log_path), content_type="text/plain"
+                )
+                logger.info("Uploaded logs file: '%s'", log_path)
+
+            logger.info("Starting the SecGemini analysis...")
+
+            debug_log_file = None
+            if current_app.config.get("DEBUG"):
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                log_filename = f"secgemini_response_{timestamp}_{self.session_id}.log"
+                log_file_path = os.path.join(tempfile.gettempdir(), log_filename)
+                flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+                try:
+                    debug_log_file = os.fdopen(
+                        os.open(log_file_path, flags, 0o600), "w", encoding="utf-8"
+                    )
+                    logger.info(
+                        "SecGemini raw response is being streamed to: %s", log_file_path
+                    )
+                except (IOError, FileExistsError) as e:
+                    logger.error(
+                        "Failed to create SecGemini debug log at %s: %s",
+                        log_file_path,
+                        e,
+                        exc_info=True,
+                    )
+                    debug_log_file = None
+
+            try:
+                meta = {"config.mode": "dfir"}
+                if self.meta_config:
+                    for key, val in self.meta_config.items():
+                        if key in ("sec-gemini-enabled-byots", "config.mode", "mode"):
+                            continue
+                        if isinstance(val, bool):
+                            meta[key] = "true" if val else "false"
                         else:
+                            meta[key] = str(val)
+
+                if not self.upload_logs_to_secgemini:
+                    meta["sec-gemini-enabled-byots"] = self.byot_tunnel_name
+
+                final_prompt = prompt
+                if not self.upload_logs_to_secgemini:
+                    local_instructions = (
+                        "You MUST query the logs by calling the "
+                        "`describe_available_logs` and `search_logs` tools "
+                        f"provided to you, passing '{sketch.id}' as the "
+                        "`ticket_id` argument.\n"
+                        "CRITICAL: If the required tools are not available in "
+                        "your workspace, or if calling them returns a "
+                        "permission-denied, resource-not-found, or connection "
+                        "failure error (indicating you cannot access the "
+                        "requested sketch), you MUST immediately abort the "
+                        "analysis and output a JSON error message explaining "
+                        "the access failure."
+                    )
+                    final_prompt = local_instructions + "\n\n" + prompt
+                else:
+                    remote_instructions = (
+                        "IMPORTANT: The log records have been uploaded directly to "
+                        "your session environment as a file. There are no "
+                        "describe_available_logs or search_logs tools. You "
+                        "MUST analyze the uploaded log file directly."
+                    )
+                    final_prompt = remote_instructions + "\n\n" + prompt
+
+                # Trigger the prompt first
+                logger.info("Sending prompt to SecGemini: '%s'", final_prompt[:100])
+                await self._session.prompt(final_prompt, meta=meta)
+                logger.info("Prompt sent successfully!")
+
+                # Stream messages using messages.stream()
+                async for response in self._session.messages.stream():
+
+                    if debug_log_file:
+                        try:
                             debug_log_file.write(str(response) + "\n")
-                        debug_log_file.flush()
-                    except IOError as e:
-                        logger.error(
-                            "Failed to write to SecGemini debug log: %s",
-                            e,
-                            exc_info=True,
-                        )
+                            debug_log_file.flush()
+                        except IOError as e:
+                            logger.error(
+                                "Failed to write to SecGemini debug log: %s",
+                                e,
+                                exc_info=True,
+                            )
 
-                if (
-                    response.message_type == MessageType.RESULT
-                    and response.actor == "chat_summarization_agent"
-                ):
-                    content = response.content
-                    json_str = None
-                    if "```json" in content:
-                        json_str = content.split("```json")[1].split("```")[0].strip()
+                    # Extract response dictionary values
+                    msg_type = response.get("message_type")
+                    content = response.get("content", "")
 
-                    if json_str:
-                        yield json_str
-                        # force termination to avoid back2back runs
-                        break
+                    if msg_type == "MESSAGE_TYPE_RESPONSE":
+                        start_marker = "\n## Investigation Findings\n\n"
+                        if start_marker in content:
+                            parts = content.rsplit(start_marker, 1)
+                            report_summary_text = parts[0].strip()
+                            json_str = parts[1].strip()
+                            try:
+                                findings_list = json.loads(json_str)
+                                if isinstance(findings_list, list):
+                                    translated_findings = []
+                                    for f in findings_list:
+                                        log_records = [
+                                            {"record_id": rid}
+                                            for rid in f.get("record_ids", [])
+                                            if rid
+                                        ]
+                                        desc = f.get("description", "")
+                                        relevance = f.get("relevance", "")
+                                        combined_conclusion = (
+                                            f"{CONCLUSION_LOG_RECORDS_HEADER}"
+                                            f"{desc}\n\n<br>\n\n"
+                                            f"{CONCLUSION_RELEVANCE_HEADER}"
+                                            f"{relevance}"
+                                        )
+                                        annotations = [
+                                            {
+                                                "investigative_question": f.get(
+                                                    "finding", ""
+                                                ),
+                                                "conclusions": [combined_conclusion],
+                                                "priority": f.get("severity", "notice"),
+                                            }
+                                        ]
+                                        translated_findings.append(
+                                            {
+                                                "log_records": log_records,
+                                                "annotations": annotations,
+                                            }
+                                        )
+                                    json_str = json.dumps(
+                                        {
+                                            "findings": translated_findings,
+                                            "report_summary": report_summary_text,
+                                        }
+                                    )
+                            except Exception as e:  # pylint: disable=broad-except
+                                logger.error(
+                                    "Failed to translate SecGemini findings JSON: %s",
+                                    e,
+                                    exc_info=True,
+                                )
+                                json_str = json.dumps(
+                                    {
+                                        "findings": [],
+                                        "report_summary": report_summary_text,
+                                    }
+                                )
+                            yield json_str
+                            # force termination to avoid back2back runs
+                            break
+            finally:
+                if debug_log_file:
+                    debug_log_file.close()
+                    logger.info(
+                        "Finished writing SecGemini debug log: %s", log_file_path
+                    )
         finally:
-            if debug_log_file:
-                debug_log_file.close()
-                logger.info("Finished writing SecGemini debug log: %s", log_file_path)
+            if self._session and hasattr(self._session, "close"):
+                try:
+                    await self._session.close()
+                except Exception as e:  # pylint: disable=broad-exception-caught
+                    logger.debug(
+                        "Ignored error closing remote session %s: %s",
+                        self.session_id,
+                        e,
+                    )
+            # Ensure client is properly closed
+            await self.sg_client.close()
 
     def generate_stream_from_logs(
         self,
         log_events_generator: Iterable[Dict[str, Any]],
         prompt: str = None,
+        sketch: Any = None,
     ) -> Generator[str, None, None]:
         """Analyzes a stream of log events using the SecGemini log analysis agent.
 
         This method orchestrates the entire analysis process:
-        1.  It receives a generator of Timesketch log events.
-        2.  Each event is serialized into a JSON string and written to a
-            temporary JSONL (JSON Lines) file on disk.
-        3.  It invokes the asynchronous SecGemini client, passing the path to the
-            log file.
-        4.  It manages an asyncio event loop to handle the async streaming response.
-        5.  It yields chunks of the raw JSON response from the LLM as they are
-            received.
+        1.  If BYOT is enabled (upload_logs_to_secgemini=False), it bypasses
+            file writing and initiates a local tunnel connection to execute
+            tools against Timesketch API.
+        2.  Otherwise, it serializes events into a JSONL temp file and uploads it.
 
         Args:
             log_events_generator: An iterable of dictionaries, where each
                                   dictionary is a Timesketch log event.
             prompt: The prompt to send to the SecGemini agent for analysis.
+            sketch: The active Sketch object.
 
         Yields:
             str: Chunks of the raw JSON string response from the LLM provider.
@@ -244,6 +321,91 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                 "LLM_LOG_ANALYZER_DEFAULT_PROMPT",
                 "Perform a forensics investigation on the provided logs.",
             )
+
+        if not self.upload_logs_to_secgemini:
+            if not sketch:
+                raise ValueError("Local log analysis (BYOT) requires a sketch object.")
+
+            granted_by_automation = False
+            if self.byot_username:
+                try:
+                    success = sketch.grant_permission_by_username(
+                        "read", self.byot_username
+                    )
+                    if success:
+                        granted_by_automation = True
+                        logger.info(
+                            "Automatically granted read permission on sketch "
+                            "%d to bot user %s",
+                            sketch.id,
+                            self.byot_username,
+                        )
+                except ValueError as e:
+                    logger.error(
+                        "Configured byot_username '%s' was not found in "
+                        "the database. Aborting log analysis.",
+                        self.byot_username,
+                    )
+                    raise e
+                except Exception as e:  # pylint: disable=broad-exception-caught
+                    logger.error(
+                        "Failed to auto-grant read permission to bot user '%s': %s",
+                        self.byot_username,
+                        e,
+                        exc_info=True,
+                    )
+
+            try:
+
+                async def main_local():
+                    async for chunk in self._run_async_stream(
+                        prompt=prompt, sketch=sketch
+                    ):
+                        yield chunk
+
+                try:
+                    loop = asyncio.get_event_loop()
+                    if loop.is_closed():
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
+                except RuntimeError:
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+
+                gen = main_local()
+                log_trigger = 0
+                while True:
+                    try:
+                        chunk = loop.run_until_complete(gen.__anext__())
+                        if chunk is not None:
+                            log_trigger += 1
+                            if log_trigger % 50 == 0:
+                                logger.info(
+                                    "[%s] SecGemini is still processing...",
+                                    self.session_id,
+                                )
+                            yield chunk
+                    except StopAsyncIteration:
+                        break
+            finally:
+                if granted_by_automation:
+                    try:
+                        sketch.revoke_permission_by_username("read", self.byot_username)
+                        logger.info(
+                            "Automatically revoked read permission on sketch "
+                            "%d from bot user %s",
+                            sketch.id,
+                            self.byot_username,
+                        )
+                    except Exception as e:  # pylint: disable=broad-exception-caught
+                        logger.error(
+                            "Failed to auto-revoke read permission from bot user "
+                            "'%s': %s",
+                            self.byot_username,
+                            e,
+                            exc_info=True,
+                        )
+            return
 
         with tempfile.NamedTemporaryFile(
             mode="w", delete=True, suffix=".jsonl", encoding="utf-8"
@@ -291,7 +453,9 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
             )
 
             async def main():
-                async for chunk in self._run_async_stream(log_path, prompt):
+                async for chunk in self._run_async_stream(
+                    prompt=prompt, log_path=log_path
+                ):
                     yield chunk
 
             try:
@@ -309,10 +473,8 @@ class SecGeminiLogAnalyzer(interface.LLMProvider):
                         log_trigger += 1
                         if log_trigger % 50 == 0:
                             logger.info(
-                                "[%s] SecGemini is still processing table with "
-                                "hash [%s] ...",
+                                "[%s] SecGemini is still processing...",
                                 self.session_id,
-                                self.table_hash,
                             )
                         yield chunk
                 except StopAsyncIteration:

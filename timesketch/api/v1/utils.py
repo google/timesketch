@@ -333,20 +333,37 @@ def format_upload_path(upload_path, index_name):
     """Format upload path.
 
     Args:
-        upload_path: string with the upload path.
-        index_name: string with the index name in uuid.uuid4.hex format.
+        upload_path (str): string with the upload path.
+        index_name (str): string with the index name in uuid.uuid4.hex format.
 
     Returns:
-        A string with the formatted upload path.
+        str: A string with the formatted upload path.
+
+    Raises:
+        ValueError: If the upload path is not absolute, or if path traversal is
+            detected.
     """
     base_path = pathlib.Path(upload_path)
-    index_name_path = pathlib.Path(index_name)
     if not base_path.is_absolute():
         raise ValueError("Upload path must be absolute")
 
-    if not index_name_path.is_absolute():
-        full_path = base_path / index_name_path
-        return full_path.as_posix()
+    base_path = base_path.resolve()
+    index_name_path = pathlib.Path(index_name)
 
-    full_path = base_path / index_name_path.relative_to(base_path.anchor)
+    # If the index name path is absolute, make it relative by stripping the anchor
+    # (e.g., stripping the leading '/' on Unix or 'C:\' on Windows) to anchor it
+    # to the base path.
+    if index_name_path.is_absolute():
+        index_name_path = index_name_path.relative_to(index_name_path.anchor)
+
+    full_path = (base_path / index_name_path).resolve()
+
+    # Ensure the resolved path is a true subpath of the base path
+    try:
+        full_path.relative_to(base_path)
+    except ValueError as e:
+        raise ValueError(
+            "Path traversal detected: path is outside upload folder"
+        ) from e
+
     return full_path.as_posix()

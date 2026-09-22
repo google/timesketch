@@ -13,7 +13,9 @@
 # limitations under the License.
 """Module providing OpenTelemetry capability to Timesketch."""
 
+import inspect
 import json
+import functools
 import logging
 import os
 
@@ -26,26 +28,185 @@ try:
 
     from opentelemetry import trace
     from opentelemetry.trace import StatusCode
-    from opentelemetry.trace.span import INVALID_SPAN
     from opentelemetry.exporter import cloud_trace
     from opentelemetry.exporter.otlp.proto.grpc import trace_exporter as grpc_exporter
     from opentelemetry.exporter.otlp.proto.http import trace_exporter as http_exporter
     from opentelemetry.instrumentation.celery import CeleryInstrumentor
     from opentelemetry.instrumentation.flask import FlaskInstrumentor
+    from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
     from opentelemetry.sdk.resources import Resource
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
+    from opentelemetry.sdk.trace import SpanProcessor
 
     HAS_OTEL = True
-except (ImportError, ModuleNotFoundError):
+except (ImportError, ModuleNotFoundError) as e:
     HAS_OTEL = False
     trace = None
     StatusCode = None
-    INVALID_SPAN = None
+
+    class SpanProcessor:  # pylint: disable=too-few-public-methods
+        """Dummy class to prevent NameError when opentelemetry is not installed."""
+
+    logger = logging.getLogger("timesketch.telemetry")
+    logger.info("OpenTelemetry is not installed. Error: %s", e)
 
 from timesketch.version import get_version
 
 logger = logging.getLogger("timesketch.telemetry")
+
+
+def _extract_total_hits(result) -> int:
+    """Helper to extract total hits count from different result formats."""
+    if isinstance(result, int):
+        return result
+    if not isinstance(result, dict):
+        return 0
+    hits = result.get("hits")
+    if not isinstance(hits, dict):
+        return 0
+    total = hits.get("total")
+    if total is None:
+        return 0
+    if isinstance(total, dict):
+        return total.get("value", 0) or 0
+    return total
+
+
+def instrument_search(func):
+    """Decorator to instrument OpenSearch search calls with OpenTelemetry.
+
+    This decorator wraps OpenSearch search methods to automatically create
+    telemetry spans ("opensearch.search") for each query. It extracts useful
+    context from the query, such as the `sketch_id`, and records it as an
+    attribute (`timesketch.sketch_id`) to help correlate backend performance
+    with specific user sketches.
+
+    Additionally, if the OpenSearch client returns a dictionary containing a
+    "took" field, the decorator captures this value and adds it to the span
+    under the attribute `db.opensearch.took_ms`.
+
+    If the query fails and raises an exception, the exception is recorded
+    on the span and the span's status is set to ERROR.
+
+    If OpenTelemetry is not installed or enabled via `TIMESKETCH_OTEL_MODE`,
+    this decorator acts as a no-op and safely runs the function without spans.
+    """
+    try:
+        sig = inspect.signature(func)
+    except Exception as e:  # pylint: disable=broad-except
+        logger.warning(
+            "Telemetry failed to extract signature of %s: %s",
+            func.__name__,
+            e,
+        )
+        sig = None
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        if not is_enabled():
+            return func(*args, **kwargs)
+
+        tracer = trace.get_tracer("timesketch.lib.datastores.opensearch")
+        with tracer.start_as_current_span("opensearch.search") as span:
+            # Safely extract parameter values using inspect
+            if sig:
+                try:
+                    bound_args = sig.bind_partial(*args, **kwargs)
+                    bound_args.apply_defaults()
+
+                    # Retrieve args/kwargs
+                    sketch_id = bound_args.arguments.get("sketch_id")
+                    indices = bound_args.arguments.get("indices", [])
+                    query_filter = bound_args.arguments.get("query_filter") or {}
+                    count = bound_args.arguments.get("count", False)
+                    query_dsl = bound_args.arguments.get("query_dsl")
+                    enable_scroll = bound_args.arguments.get("enable_scroll", False)
+                    use_wildcard_fields = bound_args.arguments.get(
+                        "use_wildcard_fields", False
+                    )
+
+                    # Set span attributes for query parameters
+                    if sketch_id is not None:
+                        span.set_attribute("timesketch.sketch_id", sketch_id)
+
+                    span.set_attribute(
+                        "timesketch.search.use_wildcard_fields",
+                        bool(use_wildcard_fields),
+                    )
+                    span.set_attribute("timesketch.search.is_count", bool(count))
+                    span.set_attribute(
+                        "timesketch.search.enable_scroll", bool(enable_scroll)
+                    )
+                    span.set_attribute(
+                        "timesketch.search.is_dsl", query_dsl is not None
+                    )
+
+                    if isinstance(indices, str):
+                        span.set_attribute("timesketch.search.indices_count", 1)
+                    elif isinstance(indices, (list, tuple, set)):
+                        span.set_attribute(
+                            "timesketch.search.indices_count", len(indices)
+                        )
+
+                    # Page pagination attributes
+                    if isinstance(query_filter, dict):
+                        size = query_filter.get("size")
+                        if size is not None:
+                            try:
+                                span.set_attribute(
+                                    "timesketch.search.page_size", int(size)
+                                )
+                            except (ValueError, TypeError):
+                                pass
+
+                        offset = query_filter.get("from")
+                        if offset is not None:
+                            try:
+                                span.set_attribute(
+                                    "timesketch.search.page_offset", int(offset)
+                                )
+                            except (ValueError, TypeError):
+                                pass
+
+                except Exception as e:  # pylint: disable=broad-except
+                    logger.warning(
+                        "Telemetry failed to extract signature attributes: %s", e
+                    )
+
+            try:
+                result = func(*args, **kwargs)
+            except Exception as e:
+                span.set_status(StatusCode.ERROR, str(e))
+                span.record_exception(e)
+                raise
+
+            try:
+                # Set post-execution telemetry attributes
+                if isinstance(result, dict):
+                    if "took" in result:
+                        span.set_attribute(
+                            "db.opensearch.took_ms", result.get("took", 0)
+                        )
+
+                    hits_dict = result.get("hits")
+                    if isinstance(hits_dict, dict):
+                        hits = hits_dict.get("hits", [])
+                        if isinstance(hits, list):
+                            span.set_attribute(
+                                "timesketch.search.returned_hits", len(hits)
+                            )
+
+                total_hits = _extract_total_hits(result)
+                span.set_attribute("timesketch.search.total_hits", total_hits)
+            except Exception as e:  # pylint: disable=broad-except
+                logger.warning(
+                    "Telemetry failed to extract search result attributes: %s", e
+                )
+
+            return result
+
+    return wrapper
 
 
 def safe_telemetry_call(func):
@@ -90,6 +251,22 @@ def is_enabled() -> bool:
     return otel_mode.startswith("otlp-")
 
 
+class SQLAlchemyRedactingProcessor(SpanProcessor):
+    """Custom span processor to remove raw SQL statements from telemetry spans.
+
+    SQLAlchemyInstrumentor collects raw queries (db.statement) by default, which
+    poses a security risk if those queries contain PII or session tokens. This
+    processor drops the db.statement attribute before the span is exported.
+    """
+
+    def on_end(self, span):
+        """Called when a span ends. We redact the db.statement attribute here."""
+        # pylint: disable=protected-access
+        attributes = getattr(span, "_attributes", None)
+        if attributes and hasattr(attributes, "pop"):
+            attributes.pop("db.statement", None)
+
+
 def setup_telemetry(service_name: str):
     """Configures the OpenTelemetry trace exporter.
 
@@ -105,6 +282,10 @@ def setup_telemetry(service_name: str):
         service_name (str): The name of the service to identify traces in the backend.
     """
     if not is_enabled():
+        return
+
+    # Prevent overriding if already set (e.g. by Flask auto-reloader)
+    if isinstance(trace.get_tracer_provider(), TracerProvider):
         return
 
     resource = Resource(
@@ -150,8 +331,13 @@ def setup_telemetry(service_name: str):
 
     # --- Tracing Setup ---
     trace_provider = TracerProvider(resource=resource)
+    trace_provider.add_span_processor(SQLAlchemyRedactingProcessor())
     trace_provider.add_span_processor(BatchSpanProcessor(trace_exporter))
     trace.set_tracer_provider(trace_provider)
+
+    # Globally instrument SQLAlchemy so all future engine creations are traced.
+    if HAS_OTEL:
+        SQLAlchemyInstrumentor().instrument()
 
 
 def instrument_celery_app(celery_app, **kwargs):
@@ -190,7 +376,7 @@ def set_status_on_current_span(status_name: str, description: str = None):
         return
 
     otel_span = trace.get_current_span()
-    if otel_span != INVALID_SPAN:
+    if otel_span.is_recording():
         code = getattr(StatusCode, status_name.upper(), StatusCode.UNSET)
         otel_span.set_status(code, description)
 
@@ -206,7 +392,7 @@ def add_event_to_current_span(event: str):
         return
 
     otel_span = trace.get_current_span()
-    if otel_span != INVALID_SPAN:
+    if otel_span.is_recording():
         otel_span.add_event(event)
 
 
@@ -224,7 +410,7 @@ def add_attribute_to_current_span(name: str, value: object):
         return
 
     otel_span = trace.get_current_span()
-    if otel_span != INVALID_SPAN:
+    if otel_span.is_recording():
         if isinstance(value, (str, bool, int, float)):
             otel_span.set_attribute(name, value)
         else:

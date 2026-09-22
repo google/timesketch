@@ -1143,6 +1143,13 @@ class EventAnnotationResource(resources.ResourceMixin, Resource):
                             HTTP_STATUS_CODE_BAD_REQUEST,
                             "Conclusion ID is required to add a fact.",
                         )
+                    # Enforce that the conclusion belongs to the sketch in the
+                    # URL to prevent cross-sketch linkage of facts.
+                    if conclusion.investigativequestion.sketch.id != sketch.id:
+                        abort(
+                            HTTP_STATUS_CODE_NOT_FOUND,
+                            "No conclusion found with this ID.",
+                        )
                     # Adding facts to conclusions
                     if not form.remove.data:
                         event.conclusions.append(conclusion)
@@ -1457,6 +1464,16 @@ class MarkEventsWithTimelineIdentifier(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_NOT_FOUND,
                 f"The sketch ID ({sketch.id:d}) does not match with the timeline "
                 f"sketch ID ({timeline.sketch.id:d})",
+            )
+
+        # Check that the supplied search index belongs to the validated timeline
+        # (and therefore to this sketch) to prevent relabeling events on an
+        # arbitrary search index.
+        if timeline.searchindex_id != searchindex.id:
+            abort(
+                HTTP_STATUS_CODE_NOT_FOUND,
+                f"The search index ID ({searchindex.id:d}) does not match with "
+                f"the timeline search index ID ({timeline.searchindex_id:d})",
             )
 
         query_dsl = {
