@@ -137,9 +137,10 @@ class LLMLogAnalyzer(interface.BaseAnalyzer):
                     f"errors."
                 )
 
+            session_id = getattr(llm_provider, "session_id", "N/A")
+
             # Add provider-specific details if available
             if llm_provider.NAME == "secgemini_log_analyzer_agent":
-                session_id = getattr(llm_provider, "session_id", "N/A")
                 table_hash = getattr(llm_provider, "table_hash", "N/A")
                 summary += (
                     f"\n\n## SecGemini Session Details:\n"
