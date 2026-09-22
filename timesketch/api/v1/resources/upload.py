@@ -30,6 +30,7 @@ from flask_login import current_user
 
 from timesketch.api.v1 import resources
 from timesketch.api.v1 import utils
+from timesketch.lib import index_name as index_name_lib
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
@@ -78,6 +79,15 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             if not isinstance(index_name, str):
                 index_name = codecs.decode(index_name, "utf-8")
 
+            prefix = current_app.config.get("OPENSEARCH_INDEX_PREFIX", "")
+            if prefix:
+                try:
+                    index_name = index_name_lib.canonicalize_index_name(
+                        index_name, prefix=prefix
+                    )
+                except ValueError:
+                    pass
+
             searchindex = SearchIndex.query.filter_by(
                 name=name, index_name=index_name
             ).first()
@@ -108,7 +118,14 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             ):
                 return index
 
-        index_name = index_name or uuid.uuid4().hex
+        prefix = current_app.config.get("OPENSEARCH_INDEX_PREFIX", "")
+        if prefix:
+            index_name = index_name_lib.canonicalize_index_name(
+                index_name, prefix=prefix
+            )
+        else:
+            index_name = index_name or uuid.uuid4().hex
+
         searchindex = SearchIndex.get_or_create(
             name=name, index_name=index_name, description=description, user=current_user
         )
@@ -514,14 +531,20 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         # For file chunks we need the correct filepath, otherwise each chunk
         # will get their own UUID as a filename.
         if index_name:
-            if not utils.is_valid_index_name(index_name):
+            prefix = current_app.config.get("OPENSEARCH_INDEX_PREFIX", "")
+            is_valid = (
+                index_name_lib.is_canonical_index_name(index_name, prefix=prefix)
+                if prefix
+                else index_name_lib.is_uuid_hex(index_name)
+            )
+            if not is_valid:
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
                     "Unable to upload file. Index name is not valid",
                 )
             file_path = utils.format_upload_path(upload_folder, index_name)
         elif chunk_index_name:
-            if not utils.is_valid_index_name(chunk_index_name):
+            if not index_name_lib.is_uuid_hex(chunk_index_name):
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
                     "Unable to upload file. Index name is not valid",
@@ -653,6 +676,24 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         utils.update_sketch_last_activity(sketch)
 
         index_name = form.get("index_name", "")
+        prefix = current_app.config.get("OPENSEARCH_INDEX_PREFIX", "")
+        if index_name:
+            if prefix:
+                try:
+                    index_name = index_name_lib.canonicalize_index_name(
+                        index_name, prefix=prefix
+                    )
+                except ValueError:
+                    abort(
+                        HTTP_STATUS_CODE_BAD_REQUEST,
+                        "Unable to upload data. Index name is not valid",
+                    )
+            else:
+                if not index_name_lib.is_uuid_hex(index_name):
+                    abort(
+                        HTTP_STATUS_CODE_BAD_REQUEST,
+                        "Unable to upload data. Index name is not valid",
+                    )
         plaso_event_filter = form.get("plaso_event_filter", "")
         file_storage = request.files.get("file")
         if file_storage:

@@ -26,8 +26,10 @@ import logging
 
 from werkzeug.exceptions import Forbidden
 
+from flask import current_app
 from timesketch.app import create_app
 from timesketch.lib import tasks
+from timesketch.lib import index_name as index_name_lib
 from timesketch.models import db_session
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
@@ -83,6 +85,11 @@ def setup_sketch(timeline_name, index_name, username, sketch_id=None):
         (tuple) sketch ID and timeline ID as integers
     """
     with app.app_context():
+        prefix = current_app.config.get("OPENSEARCH_INDEX_PREFIX", "")
+        if prefix:
+            index_name = index_name_lib.canonicalize_index_name(
+                index_name, prefix=prefix
+            )
         user = User.get_or_create(username=username, name=username)
         sketch = None
 
@@ -182,7 +189,9 @@ def callback(message):
         return
 
     timeline_name = os.path.splitext(gcs_plaso_filename)[0]
-    index_name = uuid.uuid4().hex
+    with app.app_context():
+        prefix = current_app.config.get("OPENSEARCH_INDEX_PREFIX", "")
+        index_name = index_name_lib.canonicalize_index_name(None, prefix=prefix)
     sketch_id, timeline_id = setup_sketch(
         timeline_name, index_name, "admin", sketch_id_from_metadata
     )

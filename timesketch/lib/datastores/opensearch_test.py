@@ -420,3 +420,78 @@ class OpenSearchDataStoreTest(BaseTest):
 
         ds = OpenSearchDataStore(host="127.0.0.1", port=9200)
         self.assertEqual(ds.version, "2.19.5")
+
+    @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
+    def test_create_index_unique_generated_names(self, mock_client):
+        """Test that calling create_index with None generates unique index names."""
+        mock_es_instance = mock_client.return_value
+        mock_es_instance.indices.exists.return_value = False
+        mock_es_instance.indices.create.return_value = {}
+
+        ds = OpenSearchDataStore(host="127.0.0.1", port=9200, index_prefix="")
+        ds._wait_for_index = mock.Mock(return_value=True)
+
+        name1 = ds.create_index()
+        name2 = ds.create_index()
+        self.assertNotEqual(name1, name2)
+        self.assertEqual(len(name1), 32)
+        self.assertEqual(len(name2), 32)
+
+    @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
+    def test_create_index_with_prefix_success(self, mock_client):
+        """Test create_index with index_prefix enabled for valid inputs."""
+        mock_es_instance = mock_client.return_value
+        mock_es_instance.indices.exists.return_value = False
+        mock_es_instance.indices.create.return_value = {}
+
+        prefix = "timesketch-"
+        ds = OpenSearchDataStore(host="127.0.0.1", port=9200, index_prefix=prefix)
+        ds._wait_for_index = mock.Mock(return_value=True)
+
+        # None should generate a prefixed 32-hex index name
+        name_gen = ds.create_index()
+        self.assertTrue(name_gen.startswith(prefix))
+        self.assertEqual(len(name_gen), len(prefix) + 32)
+
+        # Valid canonical prefixed index name should succeed
+        canonical_name = f"{prefix}a89933473b2a48948beee2c7e870209f"
+        result = ds.create_index(canonical_name)
+        self.assertEqual(result, canonical_name)
+
+    @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
+    def test_create_index_with_prefix_enforcement_failures(self, mock_client):
+        """Test datastore boundary rejects non-canonical names when prefix is active."""
+        mock_es_instance = mock_client.return_value
+        mock_es_instance.indices.exists.return_value = False
+
+        prefix = "timesketch-"
+        ds = OpenSearchDataStore(host="127.0.0.1", port=9200, index_prefix=prefix)
+        ds._wait_for_index = mock.Mock(return_value=True)
+
+        # Bare UUID must fail at datastore boundary (normalization is API responsibility)
+        with self.assertRaises(ValueError):
+            ds.create_index("a89933473b2a48948beee2c7e870209f")
+
+        # Prefixed non-32hex must fail
+        with self.assertRaises(ValueError):
+            ds.create_index("timesketch-malcolm-session-123")
+
+        with self.assertRaises(ValueError):
+            ds.create_index("timesketch-whoops")
+
+        with self.assertRaises(ValueError):
+            ds.create_index("timesketch-../../traversal")
+
+    @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
+    def test_create_index_empty_prefix_backwards_compatible(self, mock_client):
+        """Test create_index with empty prefix preserves existing behavior."""
+        mock_es_instance = mock_client.return_value
+        mock_es_instance.indices.exists.return_value = False
+        mock_es_instance.indices.create.return_value = {}
+
+        ds = OpenSearchDataStore(host="127.0.0.1", port=9200, index_prefix="")
+        ds._wait_for_index = mock.Mock(return_value=True)
+
+        result = ds.create_index("test3")
+        self.assertEqual(result, "test3")
+

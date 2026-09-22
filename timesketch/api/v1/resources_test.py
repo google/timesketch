@@ -1440,6 +1440,55 @@ class SearchIndexResourceTest(BaseTest):
         self.assertIsInstance(response.json, dict)
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
 
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_post_create_searchindex_with_prefix_arbitrary_name_rejected(self):
+        """Test that arbitrary index name is rejected when prefix is enabled."""
+        self.login()
+        self.app.config["OPENSEARCH_INDEX_PREFIX"] = "timesketch-"
+        data = {"searchindex_name": "test3", "es_index_name": "test3", "public": False}
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_post_create_searchindex_with_prefix_bare_uuid(self):
+        """Test bare UUID is canonicalized with prefix when prefix is enabled."""
+        self.login()
+        self.app.config["OPENSEARCH_INDEX_PREFIX"] = "timesketch-"
+        bare_uuid = "a89933473b2a48948beee2c7e870209f"
+        data = {"searchindex_name": "test_bare", "es_index_name": bare_uuid, "public": False}
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+        self.assertEqual(
+            response.json["objects"][0]["index_name"],
+            f"timesketch-{bare_uuid}",
+        )
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_post_create_searchindex_with_prefix_prefixed_uuid(self):
+        """Test prefixed UUID is accepted as-is when prefix is enabled."""
+        self.login()
+        self.app.config["OPENSEARCH_INDEX_PREFIX"] = "timesketch-"
+        prefixed_uuid = "timesketch-b89933473b2a48948beee2c7e870209f"
+        data = {"searchindex_name": "test_prefixed", "es_index_name": prefixed_uuid, "public": False}
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+        self.assertEqual(
+            response.json["objects"][0]["index_name"],
+            prefixed_uuid,
+        )
+
 
 class TimelineListResourceTest(BaseTest):
     """Test TimelineList resource."""
@@ -2984,6 +3033,57 @@ class UploadFileResourceTest(BaseTest):
             )
 
         mock_os_chmod.assert_called_once_with(file_path, 0o640)
+
+    @mock.patch("timesketch.api.v1.resources.upload.current_app")
+    def test_upload_continuation_reuses_searchindex(self, mock_current_app):
+        """Test server returns prefixed index and client reusing it references same SearchIndex."""
+        self.app.config["OPENSEARCH_INDEX_PREFIX"] = "timesketch-"
+        mock_current_app.config = self.app.config
+
+        resource = upload.UploadFileResource()
+        sketch_mock = mock.MagicMock()
+        sketch_mock.timelines = []
+        sketch_mock.has_permission.return_value = True
+
+        # First upload: no index_name supplied -> generated prefixed index
+        si1 = resource._get_index(
+            name="timeline_continuation",
+            description="timeline_continuation",
+            sketch=sketch_mock,
+            index_name="",
+            data_label="generic",
+        )
+        self.assertTrue(si1.index_name.startswith("timesketch-"))
+        created_index_name = si1.index_name
+
+        # Simulate timeline attached to sketch
+        timeline_mock = mock.MagicMock()
+        timeline_mock.searchindex = si1
+        timeline_mock.get_status.status = "ready"
+        sketch_mock.timelines = [timeline_mock]
+
+        # Second upload: client sends back the canonical prefixed index name
+        si2 = resource._get_index(
+            name="timeline_continuation",
+            description="timeline_continuation",
+            sketch=sketch_mock,
+            index_name=created_index_name,
+            data_label="generic",
+        )
+        self.assertEqual(si1.id, si2.id)
+        self.assertEqual(si2.index_name, created_index_name)
+
+        # Third upload: legacy client sends bare UUID of that index
+        bare_uuid = created_index_name[len("timesketch-"):]
+        si3 = resource._get_index(
+            name="timeline_continuation",
+            description="timeline_continuation",
+            sketch=sketch_mock,
+            index_name=bare_uuid,
+            data_label="generic",
+        )
+        self.assertEqual(si1.id, si3.id)
+        self.assertEqual(si3.index_name, created_index_name)
 
 
 class UserSettingsResourceTest(BaseTest):

@@ -39,6 +39,7 @@ from flask_login import current_user
 
 from timesketch.api.v1 import resources
 from timesketch.lib import forms
+from timesketch.lib import index_name as index_name_lib
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
@@ -182,6 +183,12 @@ class EventCreateResource(resources.ResourceMixin, Resource):
         index_name = hashlib.md5(index_name_seed.encode()).hexdigest()
         if six.PY2:
             index_name = codecs.decode(index_name, "utf-8")
+
+        prefix = current_app.config.get("OPENSEARCH_INDEX_PREFIX", "")
+        if prefix:
+            index_name = index_name_lib.canonicalize_index_name(
+                index_name, prefix=prefix
+            )
 
         # Try to create index
         timeline = None
