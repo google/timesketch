@@ -326,6 +326,8 @@ class OpenSearchDataStore:
                 )
             except (RuntimeError, AttributeError):
                 self.index_prefix = ""
+        if self.index_prefix:
+            index_name_lib.validate_index_prefix(self.index_prefix)
         self.sliced_export_default_page_size = current_app.config.get(
             "OPENSEARCH_SLICED_EXPORT_DEFAULT_PAGE_SIZE", 10000
         )

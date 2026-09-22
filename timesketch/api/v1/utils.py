@@ -18,7 +18,6 @@ import json
 import time
 import os
 import pathlib
-import re
 import yaml
 
 from flask import abort

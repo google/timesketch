@@ -19,6 +19,31 @@ import uuid
 
 _HEX32_PATTERN = re.compile(r"^[0-9a-fA-F]{32}$")
 _HEX32_LOWER_PATTERN = re.compile(r"^[0-9a-f]{32}$")
+_PREFIX_PATTERN = re.compile(r"^[a-z0-9][a-z0-9_-]*$")
+
+
+def validate_index_prefix(prefix: Optional[str]) -> None:
+    """Validate that prefix is a valid OpenSearch index name prefix.
+
+    A valid prefix must be a lowercase string, start with an alphanumeric
+    character, and contain only lowercase alphanumeric characters, underscores,
+    or hyphens. Empty string and None are valid (indicating no prefix).
+
+    Args:
+        prefix: The prefix string to validate.
+
+    Raises:
+        ValueError: If prefix is not a string or contains invalid characters.
+    """
+    if prefix is None or prefix == "":
+        return
+    if not isinstance(prefix, str):
+        raise ValueError(f"Index prefix must be a string, got {type(prefix).__name__}")
+    if not _PREFIX_PATTERN.fullmatch(prefix):
+        raise ValueError(
+            f"Invalid index prefix {prefix!r}. Prefix must be lowercase, start with "
+            "an alphanumeric character, and contain only [a-z0-9_-]."
+        )
 
 
 def is_uuid_hex(value: Optional[str]) -> bool:
@@ -50,6 +75,7 @@ def is_canonical_index_name(index_name: Optional[str], prefix: str = "") -> bool
     Returns:
         True if index_name is in canonical format, False otherwise.
     """
+    validate_index_prefix(prefix)
     if not index_name or not isinstance(index_name, str):
         return False
     prefix = prefix or ""
@@ -61,9 +87,7 @@ def is_canonical_index_name(index_name: Optional[str], prefix: str = "") -> bool
     return bool(_HEX32_LOWER_PATTERN.fullmatch(index_name))
 
 
-def canonicalize_index_name(
-    index_name: Optional[str] = None, prefix: str = ""
-) -> str:
+def canonicalize_index_name(index_name: Optional[str] = None, prefix: str = "") -> str:
     """Canonicalize an index name according to configured prefix.
 
     OpenSearch requires index names to be strictly lowercase.
@@ -87,16 +111,18 @@ def canonicalize_index_name(
         The canonical lowercase index name string.
 
     Raises:
-        ValueError: If index_name is invalid or does not match acceptable patterns.
+        ValueError: If index_name or prefix is invalid.
     """
+    validate_index_prefix(prefix)
     prefix = prefix or ""
-    if not index_name:
-        return f"{prefix}{uuid.uuid4().hex}"
 
-    if not isinstance(index_name, str):
+    if index_name is not None and not isinstance(index_name, str):
         raise ValueError(
             f"Index name must be a string, got {type(index_name).__name__}"
         )
+
+    if index_name is None or index_name == "":
+        return f"{prefix}{uuid.uuid4().hex}"
 
     clean_name = index_name.strip()
     if not clean_name:
@@ -106,14 +132,13 @@ def canonicalize_index_name(
     if is_uuid_hex(clean_name):
         return f"{prefix}{clean_name.lower()}"
 
-    # Check prefixed 32 hex (case-insensitive on prefix and suffix, canonicalized to lowercase)
+    # Check prefixed 32 hex (case-insensitive suffix, canonical lowercase)
     if prefix:
         clean_lower = clean_name.lower()
-        prefix_lower = prefix.lower()
-        if clean_lower.startswith(prefix_lower):
-            suffix = clean_lower[len(prefix_lower) :]
+        if clean_lower.startswith(prefix):
+            suffix = clean_lower[len(prefix) :]
             if bool(_HEX32_LOWER_PATTERN.fullmatch(suffix)):
-                return f"{prefix_lower}{suffix}"
+                return f"{prefix}{suffix}"
 
     raise ValueError(
         f"Invalid index name {index_name!r} for prefix {prefix!r}. "

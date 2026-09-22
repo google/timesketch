@@ -22,6 +22,41 @@ from timesketch.lib import index_name
 class IndexNameTest(unittest.TestCase):
     """Tests for index_name utility functions."""
 
+    def test_validate_index_prefix(self):
+        """Test validate_index_prefix validation rules."""
+        # Valid prefixes
+        index_name.validate_index_prefix(None)
+        index_name.validate_index_prefix("")
+        index_name.validate_index_prefix("timesketch-")
+        index_name.validate_index_prefix("timesketch_")
+        index_name.validate_index_prefix("ts-")
+        index_name.validate_index_prefix("ts123-")
+
+        # Non-string prefixes
+        with self.assertRaises(ValueError):
+            index_name.validate_index_prefix(123)
+        with self.assertRaises(ValueError):
+            index_name.validate_index_prefix(False)
+
+        # Disallowed prefix formats
+        invalid_prefixes = [
+            "Timesketch-",  # uppercase
+            "-timesketch-",  # starts with hyphen
+            "_timesketch-",  # starts with underscore
+            "+timesketch-",  # starts with plus
+            "timesketch -",  # contains space
+            "timesketch/*-",  # contains special characters
+        ]
+        for inv in invalid_prefixes:
+            with self.assertRaises(ValueError):
+                index_name.validate_index_prefix(inv)
+            with self.assertRaises(ValueError):
+                index_name.canonicalize_index_name(None, prefix=inv)
+            with self.assertRaises(ValueError):
+                index_name.is_canonical_index_name(
+                    "timesketch-a89933473b2a48948beee2c7e870209f", prefix=inv
+                )
+
     def test_is_uuid_hex(self):
         """Test is_uuid_hex validation."""
         valid_hex = uuid.uuid4().hex
@@ -34,11 +69,16 @@ class IndexNameTest(unittest.TestCase):
         self.assertFalse(index_name.is_uuid_hex(""))
         self.assertFalse(index_name.is_uuid_hex(123))
         self.assertFalse(index_name.is_uuid_hex("short"))
-        self.assertFalse(index_name.is_uuid_hex("a89933473b2a48948beee2c7e870209"))  # 31 chars
-        self.assertFalse(index_name.is_uuid_hex("a89933473b2a48948beee2c7e870209ff"))  # 33 chars
-        self.assertFalse(index_name.is_uuid_hex("g89933473b2a48948beee2c7e870209f"))  # non-hex
+        # 31 chars
+        self.assertFalse(index_name.is_uuid_hex("a89933473b2a48948beee2c7e870209"))
+        # 33 chars
+        self.assertFalse(index_name.is_uuid_hex("a89933473b2a48948beee2c7e870209ff"))
+        # non-hex
+        self.assertFalse(index_name.is_uuid_hex("g89933473b2a48948beee2c7e870209f"))
         self.assertFalse(index_name.is_uuid_hex("malcolm-session-123"))
-        self.assertFalse(index_name.is_uuid_hex("timesketch-a89933473b2a48948beee2c7e870209f"))
+        self.assertFalse(
+            index_name.is_uuid_hex("timesketch-a89933473b2a48948beee2c7e870209f")
+        )
 
     def test_is_canonical_index_name_with_prefix(self):
         """Test is_canonical_index_name when prefix is configured."""
@@ -49,8 +89,14 @@ class IndexNameTest(unittest.TestCase):
         self.assertTrue(index_name.is_canonical_index_name(canonical, prefix=prefix))
 
         # OpenSearch index names must be lowercase; uppercase is not canonical
-        self.assertFalse(index_name.is_canonical_index_name(canonical.upper(), prefix=prefix))
-        self.assertFalse(index_name.is_canonical_index_name(f"{prefix}{valid_hex.upper()}", prefix=prefix))
+        self.assertFalse(
+            index_name.is_canonical_index_name(canonical.upper(), prefix=prefix)
+        )
+        self.assertFalse(
+            index_name.is_canonical_index_name(
+                f"{prefix}{valid_hex.upper()}", prefix=prefix
+            )
+        )
 
         # Bare UUID is not canonical when prefix is required
         self.assertFalse(index_name.is_canonical_index_name(valid_hex, prefix=prefix))
@@ -58,18 +104,38 @@ class IndexNameTest(unittest.TestCase):
         # Partial prefix or invalid suffixes
         self.assertFalse(index_name.is_canonical_index_name(None, prefix=prefix))
         self.assertFalse(index_name.is_canonical_index_name("", prefix=prefix))
-        self.assertFalse(index_name.is_canonical_index_name("timesketch-", prefix=prefix))
-        self.assertFalse(index_name.is_canonical_index_name("timesketch-malcolm-session-123", prefix=prefix))
-        self.assertFalse(index_name.is_canonical_index_name("timesketch-whoops", prefix=prefix))
-        self.assertFalse(index_name.is_canonical_index_name("timesketch-../../whatever", prefix=prefix))
-        self.assertFalse(index_name.is_canonical_index_name("otherprefix-" + valid_hex, prefix=prefix))
+        self.assertFalse(
+            index_name.is_canonical_index_name("timesketch-", prefix=prefix)
+        )
+        self.assertFalse(
+            index_name.is_canonical_index_name(
+                "timesketch-malcolm-session-123", prefix=prefix
+            )
+        )
+        self.assertFalse(
+            index_name.is_canonical_index_name("timesketch-whoops", prefix=prefix)
+        )
+        self.assertFalse(
+            index_name.is_canonical_index_name(
+                "timesketch-../../whatever", prefix=prefix
+            )
+        )
+        self.assertFalse(
+            index_name.is_canonical_index_name(
+                "otherprefix-" + valid_hex, prefix=prefix
+            )
+        )
 
     def test_is_canonical_index_name_empty_prefix(self):
         """Test is_canonical_index_name when prefix is empty."""
         valid_hex = "a89933473b2a48948beee2c7e870209f"
         self.assertTrue(index_name.is_canonical_index_name(valid_hex, prefix=""))
-        self.assertFalse(index_name.is_canonical_index_name(valid_hex.upper(), prefix=""))
-        self.assertFalse(index_name.is_canonical_index_name("timesketch-" + valid_hex, prefix=""))
+        self.assertFalse(
+            index_name.is_canonical_index_name(valid_hex.upper(), prefix="")
+        )
+        self.assertFalse(
+            index_name.is_canonical_index_name("timesketch-" + valid_hex, prefix="")
+        )
         self.assertFalse(index_name.is_canonical_index_name("arbitrary", prefix=""))
         self.assertFalse(index_name.is_canonical_index_name(None, prefix=""))
 
@@ -93,15 +159,26 @@ class IndexNameTest(unittest.TestCase):
         self.assertEqual(result, f"timesketch-{bare_uuid}")
 
         # Mixed-case bare UUID normalized to lowercase
-        result_upper = index_name.canonicalize_index_name(bare_uuid.upper(), prefix=prefix)
+        result_upper = index_name.canonicalize_index_name(
+            bare_uuid.upper(), prefix=prefix
+        )
         self.assertEqual(result_upper, f"timesketch-{bare_uuid.lower()}")
 
         # Already prefixed UUID (including uppercase) -> normalized to lowercase
         prefixed = f"timesketch-{bare_uuid}"
-        self.assertEqual(index_name.canonicalize_index_name(prefixed, prefix=prefix), prefixed)
         self.assertEqual(
-            index_name.canonicalize_index_name(prefixed.upper(), prefix=prefix), prefixed
+            index_name.canonicalize_index_name(prefixed, prefix=prefix),
+            prefixed,
         )
+        self.assertEqual(
+            index_name.canonicalize_index_name(prefixed.upper(), prefix=prefix),
+            prefixed,
+        )
+
+        # Non-string falsy values must raise ValueError
+        for non_string_val in [False, 0, [], {}, 0.0]:
+            with self.assertRaises(ValueError):
+                index_name.canonicalize_index_name(non_string_val, prefix=prefix)
 
         # Invalid index names must be rejected
         with self.assertRaises(ValueError):
@@ -114,7 +191,9 @@ class IndexNameTest(unittest.TestCase):
             index_name.canonicalize_index_name("timesketch-whoops", prefix=prefix)
 
         with self.assertRaises(ValueError):
-            index_name.canonicalize_index_name("timesketch-../../traversal", prefix=prefix)
+            index_name.canonicalize_index_name(
+                "timesketch-../../traversal", prefix=prefix
+            )
 
         with self.assertRaises(ValueError):
             index_name.canonicalize_index_name(123, prefix=prefix)
@@ -130,6 +209,11 @@ class IndexNameTest(unittest.TestCase):
         # Bare UUID -> bare UUID lowercase
         result = index_name.canonicalize_index_name(bare_uuid, prefix="")
         self.assertEqual(result, bare_uuid)
+
+        # Non-string falsy values must raise ValueError
+        for non_string_val in [False, 0, [], {}, 0.0]:
+            with self.assertRaises(ValueError):
+                index_name.canonicalize_index_name(non_string_val, prefix="")
 
         # Invalid names
         with self.assertRaises(ValueError):

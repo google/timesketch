@@ -20,7 +20,6 @@ import argparse
 import time
 import os
 import sys
-import uuid
 import json
 import logging
 

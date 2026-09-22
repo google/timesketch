@@ -81,12 +81,9 @@ class UploadFileResource(resources.ResourceMixin, Resource):
 
             prefix = current_app.config.get("OPENSEARCH_INDEX_PREFIX", "")
             if prefix:
-                try:
-                    index_name = index_name_lib.canonicalize_index_name(
-                        index_name, prefix=prefix
-                    )
-                except ValueError:
-                    pass
+                index_name = index_name_lib.canonicalize_index_name(
+                    index_name, prefix=prefix
+                )
 
             searchindex = SearchIndex.query.filter_by(
                 name=name, index_name=index_name

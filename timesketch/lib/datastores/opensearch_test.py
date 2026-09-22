@@ -468,7 +468,8 @@ class OpenSearchDataStoreTest(BaseTest):
         ds = OpenSearchDataStore(host="127.0.0.1", port=9200, index_prefix=prefix)
         ds._wait_for_index = mock.Mock(return_value=True)
 
-        # Bare UUID must fail at datastore boundary (normalization is API responsibility)
+        # Bare UUID must fail at datastore boundary
+        # (normalization is API responsibility)
         with self.assertRaises(ValueError):
             ds.create_index("a89933473b2a48948beee2c7e870209f")
 
@@ -481,6 +482,18 @@ class OpenSearchDataStoreTest(BaseTest):
 
         with self.assertRaises(ValueError):
             ds.create_index("timesketch-../../traversal")
+
+    @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
+    def test_init_with_invalid_prefix(self, mock_client):
+        """Test datastore rejects invalid index prefixes on initialization."""
+        with self.assertRaises(ValueError):
+            OpenSearchDataStore(
+                host="127.0.0.1", port=9200, index_prefix="Timesketch-"
+            )
+        with self.assertRaises(ValueError):
+            OpenSearchDataStore(
+                host="127.0.0.1", port=9200, index_prefix="-invalid"
+            )
 
     @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
     def test_create_index_empty_prefix_backwards_compatible(self, mock_client):

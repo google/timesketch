@@ -1459,7 +1459,11 @@ class SearchIndexResourceTest(BaseTest):
         self.login()
         self.app.config["OPENSEARCH_INDEX_PREFIX"] = "timesketch-"
         bare_uuid = "a89933473b2a48948beee2c7e870209f"
-        data = {"searchindex_name": "test_bare", "es_index_name": bare_uuid, "public": False}
+        data = {
+            "searchindex_name": "test_bare",
+            "es_index_name": bare_uuid,
+            "public": False,
+        }
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data),
@@ -1477,7 +1481,11 @@ class SearchIndexResourceTest(BaseTest):
         self.login()
         self.app.config["OPENSEARCH_INDEX_PREFIX"] = "timesketch-"
         prefixed_uuid = "timesketch-b89933473b2a48948beee2c7e870209f"
-        data = {"searchindex_name": "test_prefixed", "es_index_name": prefixed_uuid, "public": False}
+        data = {
+            "searchindex_name": "test_prefixed",
+            "es_index_name": prefixed_uuid,
+            "public": False,
+        }
         response = self.client.post(
             self.resource_url,
             data=json.dumps(data),
@@ -3036,7 +3044,9 @@ class UploadFileResourceTest(BaseTest):
 
     @mock.patch("timesketch.api.v1.resources.upload.current_app")
     def test_upload_continuation_reuses_searchindex(self, mock_current_app):
-        """Test server returns prefixed index and client reusing it references same SearchIndex."""
+        """Test server returns prefixed index and client reusing it references
+        the same SearchIndex."""
+        self.login()
         self.app.config["OPENSEARCH_INDEX_PREFIX"] = "timesketch-"
         mock_current_app.config = self.app.config
 
