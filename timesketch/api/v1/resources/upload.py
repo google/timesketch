@@ -674,23 +674,16 @@ class UploadFileResource(resources.ResourceMixin, Resource):
 
         index_name = form.get("index_name", "")
         prefix = current_app.config.get("OPENSEARCH_INDEX_PREFIX", "")
-        if index_name:
-            if prefix:
-                try:
-                    index_name = index_name_lib.canonicalize_index_name(
-                        index_name, prefix=prefix
-                    )
-                except ValueError:
-                    abort(
-                        HTTP_STATUS_CODE_BAD_REQUEST,
-                        "Unable to upload data. Index name is not valid",
-                    )
-            else:
-                if not index_name_lib.is_uuid_hex(index_name):
-                    abort(
-                        HTTP_STATUS_CODE_BAD_REQUEST,
-                        "Unable to upload data. Index name is not valid",
-                    )
+        if index_name and prefix:
+            try:
+                index_name = index_name_lib.canonicalize_index_name(
+                    index_name, prefix=prefix
+                )
+            except ValueError:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    "Unable to upload data. Index name is not valid",
+                )
         plaso_event_filter = form.get("plaso_event_filter", "")
         file_storage = request.files.get("file")
         if file_storage:

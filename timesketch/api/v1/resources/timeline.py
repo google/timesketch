@@ -682,9 +682,7 @@ class TimelineCreateResource(resources.ResourceMixin, Resource):
         # datastore index name, so we use UUIDs here.
         prefix = current_app.config.get("OPENSEARCH_INDEX_PREFIX", "")
         if prefix:
-            index_name = index_name_lib.canonicalize_index_name(
-                None, prefix=prefix
-            )
+            index_name = index_name_lib.canonicalize_index_name(None, prefix=prefix)
         else:
             index_name = uuid.uuid4().hex
         if not isinstance(index_name, str):

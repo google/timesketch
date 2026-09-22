@@ -2569,6 +2569,34 @@ class UploadFileResourceTest(BaseTest):
         if os.path.exists(self.upload_folder):
             shutil.rmtree(self.upload_folder)
 
+    def test_post_empty_prefix_allows_custom_index_name(self):
+        """Test empty prefix preserves custom upload index names."""
+        self.login()
+        self.app.config["OPENSEARCH_INDEX_PREFIX"] = ""
+        custom_index_name = "shared_index_a89933473b2a48948beee2c7e870209f"
+
+        with mock.patch.object(
+            upload.UploadFileResource,
+            "_upload_events",
+            return_value=({"ok": True}, HTTP_STATUS_CODE_OK),
+        ) as mock_upload_events:
+            response = self.client.post(
+                "/api/v1/upload/",
+                data={
+                    "sketch_id": "1",
+                    "name": "legacy_custom_index",
+                    "index_name": custom_index_name,
+                    "events": "[]",
+                },
+            )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        mock_upload_events.assert_called_once()
+        self.assertEqual(
+            mock_upload_events.call_args.kwargs["index_name"],
+            custom_index_name,
+        )
+
     @mock.patch("timesketch.api.v1.resources.upload.utils.format_upload_path")
     @mock.patch("timesketch.api.v1.resources.upload.current_app")
     def test_out_of_order_chunks(self, mock_current_app, mock_format_upload_path):
@@ -3056,6 +3084,7 @@ class UploadFileResourceTest(BaseTest):
         sketch_mock.has_permission.return_value = True
 
         # First upload: no index_name supplied -> generated prefixed index
+        # pylint: disable=protected-access
         si1 = resource._get_index(
             name="timeline_continuation",
             description="timeline_continuation",
@@ -3084,7 +3113,7 @@ class UploadFileResourceTest(BaseTest):
         self.assertEqual(si2.index_name, created_index_name)
 
         # Third upload: legacy client sends bare UUID of that index
-        bare_uuid = created_index_name[len("timesketch-"):]
+        bare_uuid = created_index_name[len("timesketch-") :]
         si3 = resource._get_index(
             name="timeline_continuation",
             description="timeline_continuation",

@@ -506,4 +506,3 @@ class OpenSearchDataStoreTest(BaseTest):
 
         result = ds.create_index("test3")
         self.assertEqual(result, "test3")
-
