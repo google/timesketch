@@ -486,14 +486,13 @@ class OpenSearchDataStoreTest(BaseTest):
     @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
     def test_init_with_invalid_prefix(self, mock_client):
         """Test datastore rejects invalid index prefixes on initialization."""
-        with self.assertRaises(ValueError):
-            OpenSearchDataStore(
-                host="127.0.0.1", port=9200, index_prefix="Timesketch-"
-            )
-        with self.assertRaises(ValueError):
-            OpenSearchDataStore(
-                host="127.0.0.1", port=9200, index_prefix="-invalid"
-            )
+        for invalid_prefix in [False, 0, [], {}, "Timesketch-", "-invalid"]:
+            with self.assertRaises(ValueError):
+                OpenSearchDataStore(
+                    host="127.0.0.1",
+                    port=9200,
+                    index_prefix=invalid_prefix,
+                )
 
     @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
     def test_create_index_empty_prefix_backwards_compatible(self, mock_client):

@@ -38,6 +38,7 @@ from timesketch.lib import telemetry
 
 from timesketch.api.v1.routes import API_ROUTES as V1_API_ROUTES
 from timesketch.lib.errors import ApiHTTPError
+from timesketch.lib import index_name as index_name_lib
 from timesketch.models import configure_engine
 from timesketch.models import init_db
 from timesketch.models.user import User
@@ -140,6 +141,10 @@ def create_app(
     app.request_class.max_form_memory_size = app.config.get(
         "MAX_FORM_MEMORY_SIZE", 209715200
     )
+
+    # Validate OpenSearch index prefix configuration.
+    prefix = app.config.get("OPENSEARCH_INDEX_PREFIX", "")
+    index_name_lib.validate_index_prefix(prefix)
 
     # Make sure that SECRET_KEY is configured.
     if not app.config["SECRET_KEY"]:
