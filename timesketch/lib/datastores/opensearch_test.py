@@ -484,7 +484,7 @@ class OpenSearchDataStoreTest(BaseTest):
             ds.create_index("timesketch-../../traversal")
 
     @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
-    def test_init_with_invalid_prefix(self, mock_client):
+    def test_init_with_invalid_prefix(self, _mock_client):
         """Test datastore rejects invalid index prefixes on initialization."""
         for invalid_prefix in [False, 0, [], {}, "Timesketch-", "-invalid"]:
             with self.assertRaises(ValueError):
