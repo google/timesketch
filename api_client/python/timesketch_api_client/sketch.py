@@ -502,13 +502,17 @@ class Sketch(resource.BaseResource):
         # Check the return status. If it's not a success (20x),
         # error_message will raise a RuntimeError.
         if not error.check_return_status(response, logger):
+            if response.status_code == definitions.HTTP_STATUS_CODE_NOT_FOUND:
+                error.error_message(
+                    response,
+                    message=f"Failed to delete sketch {self.id}",
+                    error=error.NotFoundError,
+                )
             error.error_message(
                 response,
                 message=f"Failed to delete sketch {self.id}",
-                error=RuntimeError,
             )
-        else:
-            return error.check_return_status(response, logger)
+
         return True
 
     def add_to_acl(
@@ -991,12 +995,16 @@ class Sketch(resource.BaseResource):
             return timelines
 
         for timeline_dict in objects[0].get("timelines", []):
+            searchindex = timeline_dict.get("searchindex")
+            searchindex_name = ""
+            if isinstance(searchindex, dict):
+                searchindex_name = searchindex.get("index_name") or ""
             timeline_obj = timeline.Timeline(
-                timeline_id=timeline_dict["id"],
+                timeline_id=timeline_dict.get("id"),
                 sketch_id=self.id,
                 api=self.api,
-                name=timeline_dict["name"],
-                searchindex=timeline_dict["searchindex"]["index_name"],
+                name=timeline_dict.get("name"),
+                searchindex=searchindex_name,
             )
             timelines.append(timeline_obj)
         return timelines
