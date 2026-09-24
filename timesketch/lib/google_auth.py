@@ -20,6 +20,8 @@ import time
 import json
 import hashlib
 import os
+import re
+from typing import Optional
 
 # six.moves is a dynamically-created namespace that doesn't actually
 # exist and therefore pylint can't statically analyze it.
@@ -127,7 +129,9 @@ def get_oauth2_authorize_url(hosted_domain: str = ""):
     redirect_uri = url_for(
         "user_views.google_openid_connect", _scheme="https", _external=True
     )
-    scopes = ("openid", "email", "profile")
+    scopes = current_app.config.get(
+        "GOOGLE_OIDC_SCOPES", ["openid", "email", "profile"]
+    )
 
     # Add the generated CSRF token to the client session for later validation.
     session[CSRF_KEY] = csrf_token
@@ -278,6 +282,80 @@ def validate_jwt(decoded_jwt: str, expected_issuer: str, expected_domain: str = 
                 raise JwtValidationError(f"Wrong domain: {domain}")
         except KeyError as e:
             raise JwtValidationError(f"Missing domain: {e}") from e
+
+
+def _extract_group_name(group_name: str, regex_pattern: Optional[str]):
+    """Apply an optional regex to a single raw group name.
+
+    Args:
+        group_name: Raw, already-stripped group name.
+        regex_pattern: Optional regex to extract the group name. The first
+            capture group is used if present, otherwise the whole match.
+
+    Returns:
+        The extracted group name, or None if it doesn't match/is empty.
+    """
+    if not regex_pattern:
+        return group_name
+
+    match = re.search(regex_pattern, group_name)
+    if not match:
+        return None
+
+    extracted = (
+        match.group(1)
+        if (match.groups() and match.group(1) is not None)
+        else match.group(0)
+    )
+    return extracted.strip() or None
+
+
+def _split_raw_groups(raw_value, separator: Optional[str]):
+    """Normalize a raw claim value into a list of raw group values."""
+    if isinstance(raw_value, str):
+        return raw_value.split(separator) if separator else [raw_value]
+    if isinstance(raw_value, (list, tuple, set)):
+        return list(raw_value)
+    return [raw_value]
+
+
+def get_groups_from_jwt(
+    decoded_jwt: dict,
+    claim_name: Optional[str] = None,
+    separator: Optional[str] = None,
+    regex_pattern: Optional[str] = None,
+):
+    """Extract and normalize group/role names from a decoded token claim.
+
+    Args:
+        decoded_jwt: Decoded token claims dict.
+        claim_name: Claim name holding groups/roles (e.g. "groups", "roles").
+            None returns empty list.
+        separator: Optional separator for string claims (e.g. semicolon).
+        regex_pattern: Optional regex to extract group names. First capture
+            group is used if present.
+
+    Returns:
+        List of extracted group/role names; empty list if claim missing/empty.
+    """
+    if not claim_name:
+        return []
+
+    raw_value = decoded_jwt.get(claim_name)
+    if not raw_value:
+        return []
+
+    groups = []
+    for raw_group in _split_raw_groups(raw_value, separator):
+        group_name = str(raw_group).strip()
+        if not group_name:
+            continue
+
+        group_name = _extract_group_name(group_name, regex_pattern)
+        if group_name:
+            groups.append(group_name)
+
+    return groups
 
 
 def get_public_key_for_jwt(encoded_jwt: str, url: str):
