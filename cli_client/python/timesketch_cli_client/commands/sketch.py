@@ -356,7 +356,7 @@ def delete_sketch(ctx: click.Context, force_delete: bool) -> None:
         sketch_status = sketch.status
         sketch_labels = sketch.labels
         timelines = sketch.list_timelines()
-    except NotFoundError as e:  # pylint: disable=unused-variable
+    except NotFoundError:
         pass
 
     # Dryrun:
