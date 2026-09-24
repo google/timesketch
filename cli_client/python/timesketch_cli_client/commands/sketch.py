@@ -374,7 +374,7 @@ def delete_sketch(ctx: click.Context, force_delete: bool) -> None:
             # timeline.description and timeline.status lazy-load from the API.
             timeline_desc = timeline.description
             timeline_status = timeline.status
-        except NotFoundError as e:  # pylint: disable=unused-variable
+        except NotFoundError:
             pass
         click.echo(
             f"  Timeline: {timeline.id} {timeline.name} {timeline_desc} {timeline_status}"  # pylint: disable=line-too-long
