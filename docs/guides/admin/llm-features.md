@@ -115,13 +115,14 @@ Administrators can further customize the behavior of the LLM features by
 configuring the paths to various prompt and data files within the `timesketch.conf` file.
 
 ```python
-# LLM nl2q configuration
-DATA_TYPES_PATH = '/etc/timesketch/nl2q/data_types.csv'
-PROMPT_NL2Q = '/etc/timesketch/nl2q/prompt_nl2q'
-EXAMPLES_NL2Q = '/etc/timesketch/nl2q/examples_nl2q'
-
-# LLM event summarization configuration
-PROMPT_LLM_SUMMARIZATION = '/etc/timesketch/llm_summarize/prompt.txt'
+# LLM prompts configuration
+# All LLM prompt files are stored in a single unified folder.
+DATA_TYPES_PATH = '/etc/timesketch/llm_prompts/nl2q_data_types.csv'
+PROMPT_NL2Q = '/etc/timesketch/llm_prompts/nl2q_prompt.txt'
+EXAMPLES_NL2Q = '/etc/timesketch/llm_prompts/nl2q_examples.txt'
+PROMPT_LLM_SUMMARIZATION = '/etc/timesketch/llm_prompts/llm_summarize_prompt.txt'
+PROMPT_LLM_SYNTHESIZE = '/etc/timesketch/llm_prompts/llm_synthesize_prompt.txt'
+PROMPT_LLM_STARRED_EVENTS_REPORT = '/etc/timesketch/llm_prompts/llm_starred_events_report_prompt.txt'
 ```
 
 *   `DATA_TYPES_PATH`: Specifies the path to a CSV file defining common Timesketch
@@ -133,12 +134,15 @@ PROMPT_LLM_SUMMARIZATION = '/etc/timesketch/llm_summarize/prompt.txt'
     corresponding Timesketch search queries, which help improve the accuracy of the NL2Q feature.
 *   `PROMPT_LLM_SUMMARIZATION`: Specifies the path to the prompt file used by the
     event summarization feature.  Administrators can modify this file to customize
-    the summarization output to their specific needs. This template allows for
-    injecting the event data into the prompt using Python-style string formatting
-    using curly braces `{}`.
-Timesketch provides some default configuration files for both features:
-* [NL2Q default configuration](https://github.com/google/timesketch/tree/master/data/nl2q).
-* [LLM Summarization default configuration](https://github.com/google/timesketch/tree/master/data/llm_summarize).
+    the summarization output to their specific needs.
+*   `PROMPT_LLM_SYNTHESIZE`: Specifies the path to the prompt used for synthesizing
+    investigative question conclusions into a coherent summary.
+*   `PROMPT_LLM_STARRED_EVENTS_REPORT`: Specifies the path to the prompt used to
+    generate a forensic report from starred events.
+
+All prompt files are located in the unified
+[`data/llm_prompts/`](https://github.com/google/timesketch/tree/master/data/llm_prompts)
+directory for easier management and discoverability.
 
 
 # AI Investigation Agent

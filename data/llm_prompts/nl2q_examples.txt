@@ -1,0 +1,73 @@
+Use the following data types with their fields to convert this question to a Timesketch query: `Have files been made executable in temp folders?`.
+**Data types**:
+* "shell:zsh:history" -> "command", "elapsed_seconds", "last_written_time", "message"
+* "bash:history:entry" -> "command", "written_time", "message"
+* "linux:apt_history_log:entry" -> "command", "command_line", "end_time", "error", "packages", "requester", "start_time", "message"
+* "selinux:line" -> "audit_type", "body", "last_written_time", "pid", "message"
+* "syslog:line" -> "authentication_method", "body", "fingerprint", "hostname", "ip_address", "last_written_time", "pid", "port", "protocol", "reporter", "severity", "username", "message"
+**Answer**: `data_type:("shell:zsh:history" OR "bash:history:entry" OR "linux:apt_history_log:entry" OR "selinux:line" OR "syslog:line") AND message:*tmp* AND message:*chmod* AND message:*777*`
+
+Use the following data types with their fields to convert this question to a Timesketch query: `Are there SSH root logins?`.
+**Data types**:
+* "syslog:ssh:login" -> "authentication_method", "fingerprint", "ip_address", "last_written_time", "port", "protocol", "username", "message"
+**Answer**: `data_type:("syslog:ssh:login") AND message:*root*`
+
+Use the following data types with their fields to convert this question to a TimeSketch query: `Was any creation of GCP resources by user joe?`.
+**Data types**:
+* "gcp:log:entry" -> "container", "event_subtype", "event_type", "filename", "log_name", "message", "recorded_time", "request_account_identifier", "request_description", "request_direction", "request_email", "request_member", "request_name", "request_target_tags", "resource_name", "service_account_display_name", "service_name", "severity", "text_payload", "user", "message"
+**Answer**: `data_type:"gcp:log:entry" AND request_name:Create AND user:joe`
+
+Use the following data types with their fields to convert this question to a TimeSketch query: `Was traffic to IP 1.1.1.2 and port 90 allowed?`.
+**Data types**:
+* "windows:firewall_log:entry" -> "action", "destination_ip", "destination_port", "icmp_code", "icmp_type", "information", "last_written_time", "packet_size", "path", "protocol", "source_ip", "source_port", "tcp_ack", "tcp_flags", "tcp_sequence_number", "tcp_window_size", "message"
+**Answer**: `data_type:"windows:firewall_log:entry" AND destination_ip:1.1.1.2 AND destination_port:90 AND action:ALLOW`
+
+Use the following data types with their fields to convert this question to a Timesketch query: `Was file x created?`.
+**Data types**:
+* "fs:bodyfile:entry" -> "access_time", "change_time", "creation_time", "filename", "group_identifier", "inode", "md5", "mode_as_string", "modification_time", "offset", "owner_identifier", "size", "symbolic_link_target", "message"
+**Answer**: `data_type:"fs:bodyfile:entry" AND filename:x`
+
+Use the following data types with their fields to convert this question to a TimeSketch query: `Were files created by process x?`.
+**Data types**:
+* "santa:file_system_event" -> "action", "file_new_path", "file_path", "gid", "group", "last_written_time", "pid", "pid_version", "ppid", "process", "process_path", "uid", "user", "message"
+**Answer**: `data_type:"santa:file_system_event" AND action:CREATE AND process:x`
+
+Use the following data types with their fields to convert this question to a Timesketch query: `What are the files accessed after time 2024-01-01?`.
+**Data types**:
+* "fs:bodyfile:entry" -> "access_time", "change_time", "creation_time", "filename", "group_identifier", "inode", "md5", "mode_as_string", "modification_time", "offset", "owner_identifier", "size", "symbolic_link_target", "message"
+**Answer**: `data_type:"fs:bodyfile:entry" AND acess_time>2024-01-01`
+
+Use the following data types with their fields to convert this question to a TimeSketch query: `Were cloud providers pages visited?`.
+**Data types**:
+* "firefox:places:page_visited" -> "from_visit", "hidden", "host", "last_visited_time", "offset", "query", "title", "typed", "url", "visit_count", "visit_type", "message"
+* "opera:history:entry" -> "description", "last_visited_time", "popularity_index", "title", "url", "message"
+* "safari:history:visit" -> "display_title", "last_visited_time", "title", "url", "visit_count", "was_http_non_get", "message"
+* "safari:history:visit_sqlite" -> "host", "last_visited_time", "offset", "query", "title", "url", "visit_count", "was_http_non_get", "message"
+**Answer**: `data_type:("firefox:places:page_visited" OR "opera:history:entry" OR "safari:history:visit" OR "safari:history:visit_sqlite") AND (url:*dropbox.com* OR url: *box.com* OR url: *.dropbox.com* OR url: *.dropbox-dns.com* OR url: *.protonmail.com* OR url: *.protonmail.ch* OR url: *.onedrive.com* OR url: *.live.com* OR url: *.mega.nz* OR url: *.mega.co.nz.sync.com* OR url: *.tresorit.com*)`
+
+Use the following data types with their fields to convert this question to a Timesketch query: `Was chrome used in incognito mode?`.
+**Data types**:
+* "windows:prefetch:execution" -> "executable", "last_run_time", "number_of_volumes", "prefetch_hash", "run_count", "message"
+**Answer**: `"chrome.exe" AND message:*--disable-databases*`
+
+Use the following data types with their fields to convert this question to a Timesketch query: `Are there SSH logins?`.
+**Data types**:
+* "syslog:ssh:login" -> "authentication_method", "fingerprint", "ip_address", "last_written_time", "port", "protocol", "username", "message"
+**Answer**: `data_type:"syslog:ssh:login" body:*Accept*`
+
+Use the following data types with their fields to convert this question to a TimeSketch query: `Did process y trigger antivirus detections?`.
+**Data types**:
+* "av:defender:detection_history" -> "filename", "host_and_user", "process", "recorded_time", "sha256", "threat_name", "message"
+* "av:mcafee:accessprotectionlog" -> "action", "filename", "offset", "rule", "status", "trigger_location", "username", "written_time", "message"
+* "av:trendmicro:scan" -> "action", "filename", "offset", "path", "scan_type", "threat", "written_time", "message"
+**Answer**: `data_type:"av:defender:detection_history" AND process:y`
+
+Use the following data types with their fields to convert this question to a Timesketch query: `Was any attempt to change a password?`.
+**Data types**:
+* "windows:evtx:record" -> "computer_name", "creation_time", "event_identifier", "event_level", "event_version", "message_identifier", "offset", "provider_identifier", "record_number", "recovered", "source_name", "user_sid", "written_time", "xml_string", "message"
+**Answer**: `data_type:"windows:evtx:record" AND event_identifier:4723`
+
+Use the following data types with their fields to convert this question to a Timesketch query: `Was any attempt to reset a password?`.
+**Data types**:
+* "windows:evtx:record" -> "computer_name", "creation_time", "event_identifier", "event_level", "event_version", "message_identifier", "offset", "provider_identifier", "record_number", "recovered", "source_name", "user_sid", "written_time", "xml_string", "message"
+**Answer**: `data_type:"windows:evtx:record" AND event_identifier:4724`

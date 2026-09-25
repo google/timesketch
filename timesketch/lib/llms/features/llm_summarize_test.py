@@ -31,7 +31,7 @@ class TestLLMSummarizeFeature(BaseTest):
         super().setUp()
         self.llm_feature = LLMSummarizeFeature()
         current_app.config["PROMPT_LLM_SUMMARIZATION"] = (
-            "./data/llm_summarize/prompt.txt"
+            "./data/llm_prompts/llm_summarize_prompt.txt"
         )
         self.datastore = MockDataStore("noserver", 4711)
 
