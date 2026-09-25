@@ -67,7 +67,8 @@ class SearchIndexListResource(resources.ResourceMixin, Resource):
             abort(HTTP_STATUS_CODE_BAD_REQUEST, "Unable to validate form data")
 
         prefix = current_app.config.get("OPENSEARCH_INDEX_PREFIX", "")
-        if prefix:
+        existing_index = SearchIndex.query.filter_by(index_name=es_index_name).first()
+        if prefix and not existing_index:
             try:
                 es_index_name = index_name_lib.canonicalize_index_name(
                     es_index_name, prefix=prefix

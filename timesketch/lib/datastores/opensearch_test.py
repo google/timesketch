@@ -484,6 +484,24 @@ class OpenSearchDataStoreTest(BaseTest):
             ds.create_index("timesketch-../../traversal")
 
     @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
+    def test_create_index_reuses_existing_legacy_index(self, mock_client):
+        """An existing legacy index is reused but never newly created."""
+        mock_indices = mock_client.return_value.indices
+        legacy_name = "a89933473b2a48948beee2c7e870209f"
+        ds = OpenSearchDataStore(
+            host="127.0.0.1", port=9200, index_prefix="timesketch-"
+        )
+
+        mock_indices.exists.return_value = True
+        self.assertEqual(ds.create_index(legacy_name), legacy_name)
+        mock_indices.create.assert_not_called()
+
+        mock_indices.exists.return_value = False
+        with self.assertRaises(ValueError):
+            ds.create_index(legacy_name)
+        mock_indices.create.assert_not_called()
+
+    @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
     def test_init_with_invalid_prefix(self, _mock_client):
         """Test datastore rejects invalid index prefixes on initialization."""
         for invalid_prefix in [False, 0, [], {}, "Timesketch-", "-invalid"]:

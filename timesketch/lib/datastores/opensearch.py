@@ -1737,8 +1737,8 @@ class OpenSearchDataStore:
             Index name in string format.
 
         Raises:
-            ValueError: If index_name does not adhere to the required canonical
-                format when OPENSEARCH_INDEX_PREFIX is configured.
+            ValueError: If a new index name does not adhere to the required
+                canonical format when OPENSEARCH_INDEX_PREFIX is configured.
         """
         if mappings:
             _document_mapping = mappings
@@ -1758,6 +1758,8 @@ class OpenSearchDataStore:
             elif not index_name_lib.is_canonical_index_name(
                 index_name, prefix=self.index_prefix
             ):
+                if self.client.indices.exists(index_name):
+                    return index_name
                 raise ValueError(
                     f"OpenSearch index name {index_name!r} does not match required "
                     f"canonical format for prefix {self.index_prefix!r}."

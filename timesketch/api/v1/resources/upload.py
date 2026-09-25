@@ -79,19 +79,33 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             if not isinstance(index_name, str):
                 index_name = codecs.decode(index_name, "utf-8")
 
+            existing_index = next(
+                (
+                    timeline.searchindex
+                    for timeline in sketch.timelines
+                    if timeline.searchindex.index_name == index_name
+                ),
+                None,
+            )
+            if existing_index:
+                if not existing_index.has_permission(
+                    permission="write", user=current_user
+                ):
+                    abort(HTTP_STATUS_CODE_FORBIDDEN)
+                return existing_index
+
             prefix = current_app.config.get("OPENSEARCH_INDEX_PREFIX", "")
             if prefix:
                 index_name = index_name_lib.canonicalize_index_name(
                     index_name, prefix=prefix
                 )
 
-            searchindex = SearchIndex.query.filter_by(
-                name=name, index_name=index_name
-            ).first()
-
-            if searchindex and searchindex.has_permission(
-                permission="write", user=current_user
-            ):
+            searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
+            if searchindex:
+                if not searchindex.has_permission(
+                    permission="write", user=current_user
+                ):
+                    abort(HTTP_STATUS_CODE_FORBIDDEN)
                 return searchindex
 
         if extension and not data_label:
@@ -104,18 +118,26 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         if data_label in ("csv", "json", "jsonl"):
             data_label = "csv_jsonl"
 
-        indices = (
-            t.searchindex
-            for t in sketch.timelines
-            if t.get_status.status not in ("deleted", "archived")
-        )
-        for index in indices:
-            if index.has_label(data_label) and sketch.has_permission(
-                permission="write", user=current_user
-            ):
-                return index
-
         prefix = current_app.config.get("OPENSEARCH_INDEX_PREFIX", "")
+        if not index_name:
+            indices = (
+                t.searchindex
+                for t in sketch.timelines
+                if t.get_status.status not in ("deleted", "archived")
+            )
+            for index in indices:
+                if (
+                    (
+                        not prefix
+                        or index_name_lib.is_canonical_index_name(
+                            index.index_name, prefix
+                        )
+                    )
+                    and index.has_label(data_label)
+                    and sketch.has_permission(permission="write", user=current_user)
+                ):
+                    return index
+
         if prefix:
             index_name = index_name_lib.canonicalize_index_name(
                 index_name, prefix=prefix
@@ -534,6 +556,10 @@ class UploadFileResource(resources.ResourceMixin, Resource):
                 if prefix
                 else index_name_lib.is_uuid_hex(index_name)
             )
+            is_valid = is_valid or any(
+                timeline.searchindex.index_name == index_name
+                for timeline in sketch.timelines
+            )
             if not is_valid:
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
@@ -675,15 +701,20 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         index_name = form.get("index_name", "")
         prefix = current_app.config.get("OPENSEARCH_INDEX_PREFIX", "")
         if index_name and prefix:
-            try:
-                index_name = index_name_lib.canonicalize_index_name(
-                    index_name, prefix=prefix
-                )
-            except ValueError:
-                abort(
-                    HTTP_STATUS_CODE_BAD_REQUEST,
-                    "Unable to upload data. Index name is not valid",
-                )
+            existing_index = any(
+                timeline.searchindex.index_name == index_name
+                for timeline in sketch.timelines
+            )
+            if not existing_index:
+                try:
+                    index_name = index_name_lib.canonicalize_index_name(
+                        index_name, prefix=prefix
+                    )
+                except ValueError:
+                    abort(
+                        HTTP_STATUS_CODE_BAD_REQUEST,
+                        "Unable to upload data. Index name is not valid",
+                    )
         plaso_event_filter = form.get("plaso_event_filter", "")
         file_storage = request.files.get("file")
         if file_storage:

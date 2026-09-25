@@ -14,6 +14,7 @@
 """Tests for v1 of the Timesketch API."""
 
 import os
+import io
 import shutil
 import tempfile
 import json
@@ -28,6 +29,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_GATEWAY_TIMEOUT
 from timesketch.lib.errors import DatastoreTimeoutError
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
+from timesketch.lib import index_name as index_name_lib
 from timesketch.lib.dfiq import DFIQCatalog
 from timesketch.api.v1.resources import scenarios
 from timesketch.models.sketch import Scenario
@@ -1496,6 +1498,137 @@ class SearchIndexResourceTest(BaseTest):
             response.json["objects"][0]["index_name"],
             prefixed_uuid,
         )
+
+
+class PrefixTransitionResourceTest(BaseTest):
+    """One sketch can contain data created under three prefix settings."""
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch("timesketch.lib.tasks.build_index_pipeline")
+    def test_double_prefix_change(self, mock_pipeline):
+        """New timelines use the prefix; writes to old timelines keep their index."""
+        self.login()
+        self.app.config["UPLOAD_ENABLED"] = True
+        sketch_id = self.sketch1.id
+        upload_url = "/api/v1/upload/"
+        manual_url = f"/api/v1/sketches/{sketch_id}/event/create/"
+        uploaded_indices = []
+        manual_indices = []
+
+        for generation, prefix in enumerate(("", "timesketch-test-", "timesketch_")):
+            self.app.config["OPENSEARCH_INDEX_PREFIX"] = prefix
+            response = self.client.post(
+                upload_url,
+                data={
+                    "sketch_id": str(sketch_id),
+                    "name": f"generation_{generation}",
+                    "events": "[]",
+                },
+            )
+            self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+            uploaded_name = mock_pipeline.call_args.kwargs["index_name"]
+            self.assertTrue(
+                index_name_lib.is_canonical_index_name(uploaded_name, prefix)
+            )
+            uploaded_indices.append(
+                SearchIndex.query.filter_by(index_name=uploaded_name).one()
+            )
+
+            response = self.client.post(
+                manual_url,
+                json={
+                    "message": f"generation {generation}",
+                    "date_string": "2024-01-01T00:00:00Z",
+                },
+            )
+            self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+            manual_timeline = Timeline.get_by_id(response.json["objects"][0]["id"])
+            manual_name = manual_timeline.searchindex.index_name
+            manual_indices.append(manual_name)
+
+            response = self.client.post(
+                "/api/v1/sketches/",
+                json={"name": f"new sketch {generation}", "description": ""},
+            )
+            self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+            new_sketch_id = response.json["objects"][0]["id"]
+            response = self.client.post(
+                upload_url,
+                data={
+                    "sketch_id": str(new_sketch_id),
+                    "name": f"new sketch timeline {generation}",
+                    "events": "[]",
+                },
+            )
+            self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+            self.assertTrue(
+                index_name_lib.is_canonical_index_name(
+                    mock_pipeline.call_args.kwargs["index_name"], prefix
+                )
+            )
+
+        # All three generations stay attached to the same sketch.
+        self.assertEqual(len(set(manual_indices)), 1)
+        self.assertTrue(index_name_lib.is_uuid_hex(manual_indices[0]))
+        for index in uploaded_indices:
+            response = self.client.get(f"/api/v1/searchindices/{index.id}/")
+            self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+            self.assertEqual(
+                response.json["objects"][0]["index_name"], index.index_name
+            )
+
+        # Explicitly naming an older index appends to that timeline.
+        legacy_name = uploaded_indices[0].index_name
+        response = self.client.post(
+            upload_url,
+            data={
+                "sketch_id": str(sketch_id),
+                "name": "from_legacy_name",
+                "index_name": legacy_name,
+                "events": "[]",
+            },
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+        self.assertEqual(mock_pipeline.call_args.kwargs["index_name"], legacy_name)
+        self.assertEqual(SearchIndex.query.filter_by(index_name=legacy_name).count(), 1)
+
+        # Chunked appends also work after switching to another prefix or back
+        # to no prefix.
+        for prefix, old_name in (
+            ("timesketch_", uploaded_indices[1].index_name),
+            ("", uploaded_indices[2].index_name),
+        ):
+            self.app.config["OPENSEARCH_INDEX_PREFIX"] = prefix
+            with tempfile.TemporaryDirectory() as upload_dir:
+                self.app.config["UPLOAD_FOLDER"] = upload_dir
+                response = self.client.post(
+                    upload_url,
+                    data={
+                        "sketch_id": str(sketch_id),
+                        "name": "from_prior_prefix",
+                        "index_name": old_name,
+                        "file": (io.BytesIO(b"abc"), "prior-prefix.jsonl"),
+                        "total_file_size": "3",
+                        "chunk_total_chunks": "1",
+                        "chunk_index": "0",
+                        "chunk_byte_offset": "0",
+                    },
+                )
+            self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+            self.assertEqual(mock_pipeline.call_args.kwargs["index_name"], old_name)
+            self.assertEqual(
+                SearchIndex.query.filter_by(index_name=old_name).count(), 1
+            )
+
+        # A new sketch starts its manual timeline under the current prefix.
+        self.app.config["OPENSEARCH_INDEX_PREFIX"] = "timesketch_"
+        response = self.client.post(
+            f"/api/v1/sketches/{new_sketch_id}/event/create/",
+            json={"message": "new sketch", "date_string": "2024-01-01T00:00:00Z"},
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+        new_manual = Timeline.get_by_id(response.json["objects"][0]["id"])
+        self.assertTrue(new_manual.searchindex.index_name.startswith("timesketch_"))
 
 
 class TimelineListResourceTest(BaseTest):
