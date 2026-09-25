@@ -77,6 +77,49 @@ class TimesketchApiTest(unittest.TestCase):
         self.assertEqual(len(sketches), 1)
         self.assertIsInstance(sketches[0], sketch_lib.Sketch)
 
+    def test_get_sketches_by_name(self):
+        """Test to get sketches by name."""
+        sketches = self.api_client.get_sketches_by_name("test")
+        self.assertIsInstance(sketches, list)
+        self.assertEqual(len(sketches), 1)
+        self.assertIsInstance(sketches[0], sketch_lib.Sketch)
+        self.assertEqual(sketches[0].name, "test")
+
+    def test_get_sketches_by_name_not_found(self):
+        """Test that get_sketches_by_name raises KeyError for unknown name."""
+        with self.assertRaises(KeyError):
+            self.api_client.get_sketches_by_name("nonexistent_sketch")
+
+    @mock.patch("requests.Session", test_lib.mock_session)
+    def test_get_sketches_by_name_duplicates(self):
+        """Test get_sketches_by_name returns multiple sketches with same name."""
+        with mock.patch.object(self.api_client, "list_sketches") as mock_list:
+            sketch_1 = sketch_lib.Sketch(
+                sketch_id=1, api=self.api_client, sketch_name="duplicate"
+            )
+            sketch_2 = sketch_lib.Sketch(
+                sketch_id=2, api=self.api_client, sketch_name="duplicate"
+            )
+            mock_list.return_value = iter([sketch_1, sketch_2])
+
+            sketches = self.api_client.get_sketches_by_name("duplicate")
+            self.assertIsInstance(sketches, list)
+            self.assertEqual(len(sketches), 2)
+            self.assertEqual(sketches[0].id, 1)
+            self.assertEqual(sketches[1].id, 2)
+
+    @mock.patch("requests.Session", test_lib.mock_session)
+    def test_get_sketches_by_name_case_sensitive(self):
+        """Test that get_sketches_by_name matching is case-sensitive."""
+        with mock.patch.object(self.api_client, "list_sketches") as mock_list:
+            sketch_1 = sketch_lib.Sketch(
+                sketch_id=1, api=self.api_client, sketch_name="My Sketch"
+            )
+            mock_list.return_value = iter([sketch_1])
+
+            with self.assertRaises(KeyError):
+                self.api_client.get_sketches_by_name("my sketch")
+
 
 class TimesketchApiRetryTest(unittest.TestCase):
     """Test TimesketchApi client retry logic."""

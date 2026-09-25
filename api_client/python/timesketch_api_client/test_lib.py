@@ -192,6 +192,8 @@ def mock_response(*args, **kwargs):
                 "id": 1,
                 "name": "test",
                 "description": "test",
+                "created_at": "2025-12-11T07:39:20.000000",
+                "user": {"username": "testuser"},
                 "timelines": [
                     {
                         "id": 1,
