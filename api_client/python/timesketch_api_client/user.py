@@ -13,10 +13,16 @@
 # limitations under the License.
 """Timesketch API client library."""
 
+from __future__ import annotations
+
 import logging
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 from . import error
 from . import resource
+
+if TYPE_CHECKING:
+    from .client import TimesketchApi
 
 logger = logging.getLogger("timesketch_api.user")
 
@@ -24,9 +30,14 @@ logger = logging.getLogger("timesketch_api.user")
 class User(resource.BaseResource):
     """User object."""
 
-    def __init__(self, api, user_id=None):
-        """Initializes the user object."""
-        self._object_data = None
+    def __init__(self, api: TimesketchApi, user_id: Optional[int] = None) -> None:
+        """Initializes the user object.
+
+        Args:
+            api: An instance of TimesketchApi object.
+            user_id: Primary key ID of the user (optional).
+        """
+        self._object_data: Optional[Dict[str, Any]] = None
         if not user_id:
             resource_uri = "users/me/"
             super().__init__(api, resource_uri)
@@ -35,7 +46,7 @@ class User(resource.BaseResource):
             self.api = api
             super().__init__(api=api, resource_uri=f"users/{self.id}")
 
-    def _get_data(self):
+    def _get_data(self) -> Dict[str, Any]:
         """Returns dict from the first object of the resource data."""
         if self._object_data:
             return self._object_data
@@ -49,17 +60,17 @@ class User(resource.BaseResource):
 
         return self._object_data
 
-    def change_password(self, new_password):
+    def change_password(self, new_password: str) -> bool:
         """Change the password for the user.
 
         Args:
-            new_password (str): String with the password.
+            new_password: String with the password.
 
         Raises:
             ValueError: If there was an error.
 
         Returns:
-            Boolean: Whether the password was successfully modified.
+            Whether the password was successfully modified.
         """
         if not new_password:
             raise ValueError("No new password supplied.")
@@ -73,31 +84,31 @@ class User(resource.BaseResource):
         return error.check_return_status(response, logger)
 
     @property
-    def groups(self):
+    def groups(self) -> List[str]:
         """Property that returns the groups the user belongs to."""
         data = self._get_data()
         groups = data.get("groups", [])
-        return [x.get("name", "") for x in groups]
+        return [str(x.get("name", "")) for x in groups]
 
     @property
-    def is_active(self):
+    def is_active(self) -> bool:
         """Property that returns bool indicating whether the user is active."""
         data = self._get_data()
-        return data.get("active", True)
+        return bool(data.get("active", True))
 
     @property
-    def is_admin(self):
+    def is_admin(self) -> bool:
         """Property that returns bool indicating whether the user is admin."""
         data = self._get_data()
-        return data.get("admin", False)
+        return bool(data.get("admin", False))
 
     @property
-    def username(self):
+    def username(self) -> str:
         """Property that returns back the username of the current user."""
         data = self._get_data()
-        return data.get("username", "Unknown")
+        return str(data.get("username", "Unknown"))
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Returns a string representation of the username."""
         user_strings = [self.username]
 

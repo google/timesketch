@@ -13,31 +13,29 @@
 # limitations under the License.
 """CLI assistance for importer tools."""
 
-from typing import Any
-from typing import Callable
-from typing import Optional
-from typing import Text
+from __future__ import annotations
 
 import getpass
+from typing import Any, Callable, Optional
 
 
 def ask_question(
-    question: Text,
-    input_type: Callable[[Text], Any],
+    question: str,
+    input_type: Callable[[str], Any],
     default: Optional[Any] = None,
-    hide_input: Optional[bool] = False,
+    hide_input: bool = False,
 ) -> Any:
     """Presents the user with a prompt with a default return value and a type.
 
     Args:
-        question (str): the text that the user will be prompted.
-        input_type (type): the type of the input data.
-        default (object): default value for the question, optional.
-        hide_input (bool): whether the input should be hidden, eg. when asking
+        question: the text that the user will be prompted.
+        input_type: the type of the input data.
+        default: default value for the question, optional.
+        hide_input: whether the input should be hidden, eg. when asking
             for a password.
 
     Returns:
-        object: The value (type of input_type) that is ready by the user.
+        The value (type of input_type) that is ready by the user.
     """
     if hide_input:
         if default:
@@ -56,23 +54,21 @@ def ask_question(
     return input_type(answer)
 
 
-def confirm_choice(
-    choice: Text, default: Optional[bool] = True, abort: Optional[bool] = True
-) -> bool:
+def confirm_choice(choice: str, default: bool = True, abort: bool = True) -> bool:
     """Returns a bool from a yes/no question presented to the end user.
 
     Args:
-        choice (str): the question presented to the end user.
-        default (bool): the default for the confirmation answer. If True the
+        choice: the question presented to the end user.
+        default: the default for the confirmation answer. If True the
             default is Y(es), if False the default is N(o)
-        abort (bool): if the program should abort if the user answer to the
+        abort: if the program should abort if the user answer to the
             confirm prompt is no. The default is an abort.
 
     Raises:
         RuntimeError: If abort is set to True and the choice is no.
 
     Returns:
-        bool: False if the user entered no, True if the user entered yes
+        False if the user entered no, True if the user entered yes
     """
     if default:
         hint = "Y/n"

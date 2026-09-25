@@ -1,4 +1,4 @@
-# Copyright 2019 Google Inc. All rights reserved.
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,15 +13,24 @@
 # limitations under the License.
 """Timesketch API client library."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import json
 import logging
+
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import TYPE_CHECKING
 
 from . import analyzer
 from . import error
 from . import index
 from . import resource
+
+if TYPE_CHECKING:
+    from .client import TimesketchApi
 
 logger = logging.getLogger("timesketch_api.timeline")
 
@@ -33,7 +42,14 @@ class Timeline(resource.BaseResource):
         id: Primary key of the timeline.
     """
 
-    def __init__(self, timeline_id, sketch_id, api, name=None, searchindex=None):
+    def __init__(
+        self,
+        timeline_id: int,
+        sketch_id: int,
+        api: TimesketchApi,
+        name: Optional[str] = None,
+        searchindex: Optional[str] = None,
+    ) -> None:
         """Initializes the Timeline object.
 
         Args:
@@ -53,7 +69,7 @@ class Timeline(resource.BaseResource):
         super().__init__(api, resource_uri)
 
     @property
-    def labels(self):
+    def labels(self) -> List[str]:
         """Property that returns the timeline labels."""
         data = self.lazyload_data(refresh_cache=True)
         objects = data.get("objects", [])
@@ -68,7 +84,7 @@ class Timeline(resource.BaseResource):
         return []
 
     @property
-    def color(self):
+    def color(self) -> str:
         """Property that returns timeline color.
 
         Returns:
@@ -80,13 +96,17 @@ class Timeline(resource.BaseResource):
         return self._color
 
     @color.setter
-    def color(self, color):
-        """Change the color of the timeline."""
+    def color(self, color: str) -> None:
+        """Change the color of the timeline.
+
+        Args:
+            color: The new color of the timeline.
+        """
         self._color = color
         self._commit()
 
     @property
-    def data_sources(self):
+    def data_sources(self) -> List[Dict[str, Any]]:
         """Property that returns the timeline data sources."""
         data = self.lazyload_data(refresh_cache=True)
         objects = data.get("objects", [])
@@ -97,7 +117,7 @@ class Timeline(resource.BaseResource):
         return timeline_data.get("datasources", [])
 
     @property
-    def description(self):
+    def description(self) -> str:
         """Property that returns timeline description.
 
         Returns:
@@ -109,13 +129,17 @@ class Timeline(resource.BaseResource):
         return self._description
 
     @description.setter
-    def description(self, description):
-        """Change the timeline description."""
+    def description(self, description: str) -> None:
+        """Change the timeline description.
+
+        Args:
+            description: The new description of the timeline.
+        """
         self._description = description
         self._commit()
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Property that returns timeline name.
 
         Returns:
@@ -127,13 +151,17 @@ class Timeline(resource.BaseResource):
         return self._name
 
     @name.setter
-    def name(self, name):
-        """Change the name of the timeline."""
+    def name(self, name: str) -> None:
+        """Change the name of the timeline.
+
+        Args:
+            name: The new name of the timeline.
+        """
         self._name = name
         self._commit()
 
     @property
-    def index(self):
+    def index(self) -> Optional[index.SearchIndex]:
         """Property that returns index object.
 
         Returns:
@@ -153,7 +181,7 @@ class Timeline(resource.BaseResource):
         )
 
     @property
-    def index_name(self):
+    def index_name(self) -> str:
         """Property that returns index name.
 
         Returns:
@@ -165,7 +193,7 @@ class Timeline(resource.BaseResource):
             self._searchindex = index_name
         return self._searchindex
 
-    def is_archived(self):
+    def is_archived(self) -> bool:
         """Return a boolean indicating whether the timeline is archived."""
         resource_url = f"{self.api.api_root}/sketches/{self._sketch_id}/archive/"
         response = self.api.session.get(resource_url)
@@ -178,16 +206,21 @@ class Timeline(resource.BaseResource):
             return sketch_is_archived
         return timeline_dict.get(self.index_name)
 
-    def run_analyzer(self, analyzer_name, analyzer_kwargs=None, ignore_previous=False):
+    def run_analyzer(
+        self,
+        analyzer_name: str,
+        analyzer_kwargs: Optional[Dict[str, Any]] = None,
+        ignore_previous: bool = False,
+    ) -> List[analyzer.AnalyzerResult]:
         """Run an analyzer on a timeline.
 
         Args:
-            analyzer_name (str): a name of an analyzer class to run against the
+            analyzer_name: a name of an analyzer class to run against the
                 timeline.
-            analyzer_kwargs (dict): optional dict with parameters for the analyzer.
+            analyzer_kwargs: optional dict with parameters for the analyzer.
                 This is optional and just for those analyzers that can accept
                 further parameters.
-            ignore_previous (bool): an optional bool, if set to True then
+            ignore_previous: an optional bool, if set to True then
                 analyzer is run irrelevant on whether it has been previously
                 been run.
 
@@ -223,19 +256,22 @@ class Timeline(resource.BaseResource):
         )
 
     def run_analyzers(
-        self, analyzer_names, analyzer_kwargs=None, ignore_previous=False
-    ):
+        self,
+        analyzer_names: List[str],
+        analyzer_kwargs: Optional[Dict[str, Any]] = None,
+        ignore_previous: bool = False,
+    ) -> List[analyzer.AnalyzerResult]:
         """Run an analyzer on a timeline.
 
         Args:
-            analyzer_names (list): a list of analyzer class names to run against the
+            analyzer_names: a list of analyzer class names to run against the
                 timeline.
-            analyzer_kwargs (dict): optional dict with parameters for the analyzer.
+            analyzer_kwargs: optional dict with parameters for the analyzer.
                 This is optional and just for those analyzers that can accept
                 further parameters. It is expected that this is a dict with
                 the key value being the analyzer name, and the value being
                 another key/value dict with the parameters for that analyzer.
-            ignore_previous (bool): an optional bool, if set to True then
+            ignore_previous: an optional bool, if set to True then
                 analyzer is run irrelevant on whether it has been previously
                 been run.
 
@@ -278,7 +314,7 @@ class Timeline(resource.BaseResource):
                 "'ignore_previous=True' to overwrite.",
                 analyzer_names,
             )
-            return None
+            return []
 
         analyzer_results = []
         for session_dict in objects[0]:
@@ -303,7 +339,7 @@ class Timeline(resource.BaseResource):
         return analyzer_results
 
     @property
-    def status(self):
+    def status(self) -> str:
         """Property that returns the timeline status.
 
         Returns:
@@ -319,7 +355,7 @@ class Timeline(resource.BaseResource):
         status = status_list[0]
         return status.get("status")
 
-    def _commit(self):
+    def _commit(self) -> bool:
         """Commit changes to the timeline."""
         resource_url = "{0:s}/{1:s}".format(self.api.api_root, self.resource_uri)
 
@@ -336,14 +372,14 @@ class Timeline(resource.BaseResource):
 
         return status
 
-    def add_timeline_label(self, label):
+    def add_timeline_label(self, label: str) -> bool:
         """Add a label to the timeline.
 
         Args:
-            label (str): A string with the label to add to the timeline.
+            label: A string with the label to add to the timeline.
 
         Returns:
-            bool: A boolean to indicate whether the label was successfully
+            A boolean to indicate whether the label was successfully
                   added to the timeline.
         """
         if label in self.labels:
@@ -367,14 +403,14 @@ class Timeline(resource.BaseResource):
 
         return status
 
-    def remove_timeline_label(self, label):
+    def remove_timeline_label(self, label: str) -> bool:
         """Remove a label from the timeline.
 
         Args:
-            label (str): A string with the label to remove from the timeline.
+            label: A string with the label to remove from the timeline.
 
         Returns:
-            bool: A boolean to indicate whether the label was successfully
+            A boolean to indicate whether the label was successfully
                   removed from the timeline.
         """
         if label not in self.labels:
@@ -401,7 +437,7 @@ class Timeline(resource.BaseResource):
 
         return status
 
-    def delete(self):
+    def delete(self) -> bool:
         """Deletes the timeline."""
         resource_url = "{0:s}/{1:s}".format(self.api.api_root, self.resource_uri)
         response = self.api.session.delete(resource_url)
