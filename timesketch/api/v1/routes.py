@@ -25,6 +25,12 @@ from .resources.analysis import AnalyzerSessionActiveListResource
 from .resources.analysis import AnalyzerSessionResource
 from .resources.attribute import AttributeResource
 from .resources.explore import ExploreResource
+from .resources.direct_query import PplQueryResource
+from .resources.direct_query import PplQueryExplainResource
+from .resources.direct_query import PplQueryExportResource
+from .resources.direct_query import SqlQueryResource
+from .resources.direct_query import SqlQueryExplainResource
+from .resources.direct_query import SqlQueryExportResource
 from .resources.explore import SearchHistoryResource
 from .resources.explore import SearchHistoryTreeResource
 from .resources.explore import ExploreWildcardResource
@@ -132,6 +138,14 @@ API_ROUTES = [
         "/sketches/<int:sketch_id>/aggregation/<int:aggregation_id>/",
     ),
     (ExploreResource, "/sketches/<int:sketch_id>/explore/"),
+    # Dialect-specific endpoints, mirroring how explore_wildcard is separated
+    # from explore. The language is fixed by the route, never by the body.
+    (PplQueryResource, "/sketches/<int:sketch_id>/explore/ppl/"),
+    (PplQueryExplainResource, "/sketches/<int:sketch_id>/explore/ppl/explain/"),
+    (PplQueryExportResource, "/sketches/<int:sketch_id>/explore/ppl/export/"),
+    (SqlQueryResource, "/sketches/<int:sketch_id>/explore/sql/"),
+    (SqlQueryExplainResource, "/sketches/<int:sketch_id>/explore/sql/explain/"),
+    (SqlQueryExportResource, "/sketches/<int:sketch_id>/explore/sql/export/"),
     (
         ExploreWildcardResource,
         "/sketches/<int:sketch_id>/explore_wildcard/",

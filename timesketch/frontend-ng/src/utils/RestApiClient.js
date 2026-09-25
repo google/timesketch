@@ -272,6 +272,27 @@ export default {
   exportSearchResult(sketchId, formData) {
     return RestApiBlobClient.post('/sketches/' + sketchId + '/explore/', formData)
   },
+  // PPL and SQL have dedicated endpoints, mirroring the backend split. The
+  // language is never interpolated into the path.
+  // `config` carries the abort signal so a slow query can be cancelled.
+  pplQuery(sketchId, formData, config) {
+    return RestApiClient.post('/sketches/' + sketchId + '/explore/ppl/', formData, config)
+  },
+  pplQueryExplain(sketchId, formData) {
+    return RestApiClient.post('/sketches/' + sketchId + '/explore/ppl/explain/', formData)
+  },
+  pplQueryExport(sketchId, formData) {
+    return RestApiBlobClient.post('/sketches/' + sketchId + '/explore/ppl/export/', formData)
+  },
+  sqlQuery(sketchId, formData, config) {
+    return RestApiClient.post('/sketches/' + sketchId + '/explore/sql/', formData, config)
+  },
+  sqlQueryExplain(sketchId, formData) {
+    return RestApiClient.post('/sketches/' + sketchId + '/explore/sql/explain/', formData)
+  },
+  sqlQueryExport(sketchId, formData) {
+    return RestApiBlobClient.post('/sketches/' + sketchId + '/explore/sql/export/', formData)
+  },
   getSearchHistory(sketchId, limit = null, question = null) {
     let params = { params: {} }
     if (limit) {
