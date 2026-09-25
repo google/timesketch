@@ -108,9 +108,85 @@ class TestNtfsTimestompPlugin(BaseTest):
             self.assertEqual(std_diffs, tc.expected_si_diffs)
             self.assertEqual(fn_diffs, tc.expected_fn_diffs)
 
-    # Mock the OpenSearch datastore.
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
-    def test_analyzer(self):
-        """Test analyzer."""
-        # TODO: Write actual tests here.
-        self.assertEqual(True, True)
+    def test_is_suspicious_no_std_info(self):
+        """Test that FileInfo without a std_info_event is never suspicious."""
+        analyzer = ntfs_timestomp.NtfsTimestompSketchPlugin("test", 1)
+        file_info = ntfs_timestomp.FileInfo(
+            file_reference=1,
+            timestamp_desc="Content Modification Time",
+            std_info_event=None,
+            std_info_timestamp=0,
+            file_names=[(MockEvent(), 9000000000)],
+        )
+        self.assertFalse(analyzer.is_suspicious(file_info))
+
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
+    def test_is_suspicious_no_file_names(self):
+        """Test that FileInfo with no file_names is never suspicious."""
+        analyzer = ntfs_timestomp.NtfsTimestompSketchPlugin("test", 1)
+        file_info = ntfs_timestomp.FileInfo(
+            file_reference=1,
+            timestamp_desc="Content Modification Time",
+            std_info_event=MockEvent(),
+            std_info_timestamp=0,
+            file_names=[],
+        )
+        self.assertFalse(analyzer.is_suspicious(file_info))
+
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
+    def test_is_suspicious_within_threshold(self):
+        """Test that file_names within the threshold are not flagged."""
+        analyzer = ntfs_timestomp.NtfsTimestompSketchPlugin("test", 1)
+        # threshold is 10 * 60000000 = 600000000 microseconds by default.
+        # A diff smaller than the threshold must not trigger detection.
+        fn_event = MockEvent()
+        file_info = ntfs_timestomp.FileInfo(
+            file_reference=1,
+            timestamp_desc="Content Modification Time",
+            std_info_event=MockEvent(),
+            std_info_timestamp=0,
+            file_names=[(fn_event, analyzer.threshold - 1)],
+        )
+        self.assertFalse(analyzer.is_suspicious(file_info))
+        # The time_delta attribute must NOT have been set on the file_name event.
+        self.assertIsNone(fn_event.source.get("time_delta"))
+
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
+    def test_is_suspicious_timestomped(self):
+        """Test that file_names with differences above the threshold are flagged."""
+        analyzer = ntfs_timestomp.NtfsTimestompSketchPlugin("test", 1)
+        fn_event = MockEvent()
+        si_event = MockEvent()
+        large_diff = analyzer.threshold + 1
+        file_info = ntfs_timestomp.FileInfo(
+            file_reference=1,
+            timestamp_desc="Content Modification Time",
+            std_info_event=si_event,
+            std_info_timestamp=0,
+            file_names=[(fn_event, large_diff)],
+        )
+        self.assertTrue(analyzer.is_suspicious(file_info))
+        # The time_delta attribute must be set on every suspicious file_name.
+        self.assertEqual(fn_event.source.get("time_delta"), large_diff)
+        # The accumulated time_deltas must be stored on the STD_INFO event.
+        self.assertEqual(si_event.source.get("time_deltas"), [large_diff])
+
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
+    def test_is_suspicious_mixed_file_names(self):
+        """Test that a single within-threshold file_name prevents detection."""
+        analyzer = ntfs_timestomp.NtfsTimestompSketchPlugin("test", 1)
+        fn_event_large = MockEvent()
+        fn_event_small = MockEvent()
+        file_info = ntfs_timestomp.FileInfo(
+            file_reference=1,
+            timestamp_desc="Content Modification Time",
+            std_info_event=MockEvent(),
+            std_info_timestamp=0,
+            file_names=[
+                (fn_event_large, analyzer.threshold + 1),
+                (fn_event_small, analyzer.threshold - 1),
+            ],
+        )
+        # One file_name is within threshold — detection must be suppressed.
+        self.assertFalse(analyzer.is_suspicious(file_info))

@@ -197,7 +197,36 @@ class TestFeatureExtractionSketchPlugin(BaseTest):
         if aggregate:
             self.assertIsInstance(aggregate, bool)
 
-    # TODO: Add tests for the feature extraction.
+    # Mock the OpenSearch datastore.
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
+    def test_analyzer_properties(self):
+        """Test getters and setters of FeatureExtractionSketchPlugin."""
+        analyzer = FeatureExtractionSketchPlugin("test_index", 1, 1)
+        analyzer.plugin_name = "test_plugin"
+        analyzer.feature_name = "test_feature"
+        analyzer.feature_config = {"test": "config"}
+
+        self.assertEqual(analyzer.plugin_name, "test_plugin")
+        self.assertEqual(analyzer.feature_name, "test_feature")
+        self.assertEqual(analyzer.feature_config, {"test": "config"})
+
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
+    def test_run_empty_plugin_name(self):
+        """Test analyzer run method with empty plugin name."""
+        analyzer = FeatureExtractionSketchPlugin("test_index", 1, 1)
+        # plugin_name is None by default
+        result = analyzer.run()
+        self.assertEqual(result, "Feature extraction plugin name is empty")
+
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
+    def test_run_unregistered_plugin(self):
+        """Test analyzer run method with an unregistered plugin."""
+        analyzer = FeatureExtractionSketchPlugin("test_index", 1, 1)
+        analyzer.plugin_name = "unregistered_plugin"
+        # Since it's unregistered, the PluginManager will return None
+        result = analyzer.run()
+        self.assertTrue(result.startswith("Error: Feature extraction plugin"))
+
     def test_config(self):
         """Tests that the config file is valid."""
         config_file = os.path.join("data", "regex_features.yaml")
