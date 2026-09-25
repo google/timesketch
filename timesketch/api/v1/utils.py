@@ -18,7 +18,6 @@ import json
 import time
 import os
 import pathlib
-import re
 import yaml
 
 from flask import abort
@@ -31,6 +30,7 @@ import altair as alt
 import pandas as pd
 
 from timesketch.lib import ontology
+from timesketch.lib import index_name as index_name_lib
 from timesketch.lib.aggregators import manager as aggregator_manager
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.models import db_session
@@ -316,7 +316,7 @@ def escape_query_string(query_string):
 
 
 def is_valid_index_name(index_name):
-    """Validate index name.
+    """Validate index name in uuid.uuid4.hex format.
 
     Args:
         index_name: string with the index name in uuid.uuid4.hex format.
@@ -324,9 +324,7 @@ def is_valid_index_name(index_name):
     Returns:
         A boolean indicating whether the index name is valid or not.
     """
-    regex = re.compile(r"[0-9a-f]{32}$", re.I)
-    match = regex.fullmatch(index_name)
-    return bool(match)
+    return index_name_lib.is_uuid_hex(index_name)
 
 
 def format_upload_path(upload_path, index_name):

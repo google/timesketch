@@ -1,3 +1,5 @@
 **/.git
+.venv/
+**/node_modules/
 /docs/
 /notebooks/
