@@ -3177,3 +3177,51 @@ class CollaboratorResourceTest(BaseTest):
         )
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
         self.assertFalse(sketch.has_permission(user=self.user2, permission="read"))
+
+    def test_collaborator_change_keeps_public_access(self):
+        """Test that sharing or revoking users does not reset public access."""
+        self.login()
+        response = self.client.post(
+            "/api/v1/sketches/",
+            data=json.dumps({"name": "Public Sketch", "description": "test"}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+        sketch_id = response.json["objects"][0]["id"]
+        collaborator_url = f"/api/v1/sketches/{sketch_id}/collaborators/"
+
+        # Make the sketch public.
+        response = self.client.post(
+            collaborator_url,
+            data=json.dumps({"public": True}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertTrue(Sketch.get_by_id(sketch_id).is_public)
+
+        # Share with a user, without a "public" key (as the UI does).
+        response = self.client.post(
+            collaborator_url,
+            data=json.dumps({"users": ["test2"], "groups": []}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertTrue(Sketch.get_by_id(sketch_id).is_public)
+
+        # Revoke the user, without a "public" key (as the UI does).
+        response = self.client.post(
+            collaborator_url,
+            data=json.dumps({"remove_users": ["test2"], "remove_groups": []}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertTrue(Sketch.get_by_id(sketch_id).is_public)
+
+        # Explicitly making the sketch private still works.
+        response = self.client.post(
+            collaborator_url,
+            data=json.dumps({"public": False}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertFalse(Sketch.get_by_id(sketch_id).is_public)
