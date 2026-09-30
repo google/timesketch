@@ -546,6 +546,9 @@ class Story(resource.BaseResource):
 
     def _add_block(self, block, index):
         """Adds a block to the story's content."""
+        # Load the existing blocks first, otherwise the commit would replace
+        # the whole story with just the new block.
+        _ = self.blocks
         self._blocks.insert(index, block)
         self.commit()
         self.reset()
@@ -575,7 +578,7 @@ class Story(resource.BaseResource):
             raise TypeError("Aggregation object is not correctly formed.")
 
         if index == -1:
-            index = len(self._blocks)
+            index = len(self.blocks)
 
         agg_block = AggregationBlock(self, index)
         agg_block.feed(agg_obj)
@@ -596,7 +599,7 @@ class Story(resource.BaseResource):
             Boolean that indicates whether block was successfully added.
         """
         if index == -1:
-            index = len(self._blocks)
+            index = len(self.blocks)
         text_block = TextBlock(self, index)
         text_block.feed(text)
 
@@ -641,7 +644,7 @@ class Story(resource.BaseResource):
             raise TypeError("View object is not correctly formed.")
 
         if index == -1:
-            index = len(self._blocks)
+            index = len(self.blocks)
 
         view_block = ViewBlock(self, index)
         view_block.feed(search_obj)
