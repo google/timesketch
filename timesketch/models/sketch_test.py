@@ -99,6 +99,14 @@ class SketchModelTest(ModelBaseTest):
         )
         self._test_db_object(expected_result=expected_result, model_cls=SearchTemplate)
 
+    def test_searchtemplate_uuid_default_is_unique(self):
+        """Test that each search template gets its own default template_uuid."""
+        searchtemplate = self._create_searchtemplate(name="template 2", user=self.user1)
+        self.assertIsNotNone(searchtemplate.template_uuid)
+        self.assertNotEqual(
+            searchtemplate.template_uuid, self.searchtemplate.template_uuid
+        )
+
     def test_event_model(self):
         """
         Test that the test event has the expected data stored in the database.
