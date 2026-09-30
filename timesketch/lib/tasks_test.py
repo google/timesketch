@@ -210,6 +210,43 @@ class TestTasks(BaseTest):
         self.assertEqual(datasource.error_message, "Test error message")
         self.assertEqual(self.timeline.status[0].status, "fail")
 
+    @mock.patch("timesketch.lib.tasks.OpenSearchDataStore")
+    @mock.patch("timesketch.lib.tasks.DFIQAnalyzerManager")
+    def test_set_datasource_status_ready_with_pending_sibling(
+        self, mock_analyzer_manager_cls, _mock_opensearch_cls
+    ):
+        """Test the timeline is not ready while a sibling datasource is pending."""
+        mock_analyzer_manager = mock_analyzer_manager_cls.return_value
+        mock_analyzer_manager.trigger_analyzers_for_timelines.return_value = []
+        datasources = []
+        for file_path in ("/tmp/sibling_1.jsonl", "/tmp/sibling_2.jsonl"):
+            datasource = DataSource(
+                timeline=self.timeline,
+                user=self.user1,
+                file_on_disk=file_path,
+                original_filename=file_path,
+            )
+            datasource.set_status("queueing")
+            db_session.add(datasource)
+            datasources.append(datasource)
+        db_session.commit()
+
+        # The first datasource finishes while the second one is still queued.
+        tasks._set_datasource_status(  # pylint: disable=protected-access
+            self.timeline.id, "/tmp/sibling_1.jsonl", "ready"
+        )
+        self.assertEqual(datasources[0].get_status, "ready")
+        self.assertEqual(datasources[1].get_status, "queueing")
+        self.assertEqual(self.timeline.get_status.status, "processing")
+        mock_analyzer_manager.trigger_analyzers_for_timelines.assert_not_called()
+
+        # Once the second datasource is done the timeline becomes ready.
+        tasks._set_datasource_status(  # pylint: disable=protected-access
+            self.timeline.id, "/tmp/sibling_2.jsonl", "ready"
+        )
+        self.assertEqual(self.timeline.get_status.status, "ready")
+        mock_analyzer_manager.trigger_analyzers_for_timelines.assert_called_once()
+
     def test_set_datasource_status_missing_timeline(self):
         """Test _set_datasource_status raises KeyError when timeline is missing."""
         with self.assertRaises(KeyError):
