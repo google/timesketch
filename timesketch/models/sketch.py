@@ -184,7 +184,7 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseMode
             Full URL to the sketch as string.
         """
         url_host = current_app.config.get("EXTERNAL_HOST_URL", "https://localhost")
-        url_path = url_for("sketch_views.overview", sketch_id=self.id)
+        url_path = url_for("spa_views.overview", path=f"sketch/{self.id:d}/")
         return url_host + url_path
 
     def get_view_urls(self):
@@ -198,7 +198,9 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseMode
         for view in self.get_named_views:
             url_host = current_app.config.get("EXTERNAL_HOST_URL", "https://localhost")
             url_path = url_for(
-                "sketch_views.explore", sketch_id=self.id, view_id=view.id
+                "spa_views.overview",
+                path=f"sketch/{self.id:d}/explore",
+                view=view.id,
             )
             url = url_host + url_path
             views[url] = view.name
