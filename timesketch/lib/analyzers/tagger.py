@@ -19,6 +19,8 @@ class TaggerSketchPlugin(interface.BaseAnalyzer):
     DISPLAY_NAME = "Tagger"
     DESCRIPTION = "Tag events based on pre-defined rules"
 
+    DEPENDENCIES = frozenset(["feature_extraction"])
+
     CONFIG_FILE = "tags.yaml"
 
     MODIFIERS = {"split": lambda x: x.split(), "upper": lambda x: x.upper()}
