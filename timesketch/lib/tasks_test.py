@@ -18,11 +18,53 @@ from unittest import mock
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib import tasks
 from timesketch.models import db_session
-from timesketch.models.sketch import DataSource, SearchIndex
+from timesketch.models.sketch import Analysis, DataSource, SearchIndex
 
 
 class TestTasks(BaseTest):
     """Tests for the tasks module."""
+
+    def test_run_sketch_analyzer_init_failure_sets_error(self):
+        """Test analyzer initialization failures set analysis status to ERROR."""
+
+        class FailingAnalyzer:
+            """Analyzer that fails during initialization."""
+
+            def __init__(self, *args, **kwargs):
+                raise RuntimeError("Analyzer initialization failed")
+
+        analysis = Analysis(
+            name="failing_analyzer",
+            description="failing_analyzer",
+            analyzer_name="failing_analyzer",
+            parameters="{}",
+            user=self.user1,
+            sketch=self.sketch1,
+            timeline=self.timeline,
+        )
+        analysis.set_status("PENDING")
+        db_session.add(analysis)
+        db_session.commit()
+
+        with mock.patch.object(
+            tasks.manager.AnalysisManager,
+            "get_analyzer",
+            return_value=FailingAnalyzer,
+        ):
+            with self.assertRaisesRegex(
+                RuntimeError, "Analyzer initialization failed"
+            ):
+                tasks.run_sketch_analyzer(
+                    index_name=self.searchindex.index_name,
+                    sketch_id=self.sketch1.id,
+                    analysis_id=analysis.id,
+                    analyzer_name="failing_analyzer",
+                    timeline_id=self.timeline.id,
+                )
+
+        db_session.refresh(analysis)
+        self.assertEqual(analysis.get_status.status, "ERROR")
+        self.assertIn("Analyzer initialization failed", analysis.result)
 
     @mock.patch("timesketch.lib.tasks.plaso", None)
     def test_run_plaso_not_installed_with_sketch(self):
