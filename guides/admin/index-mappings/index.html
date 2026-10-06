@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -27,7 +27,7 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2702,6 +2702,7 @@ Timesketch instance.</p>
 If a field's value exceeds 256 characters, OpenSearch will <strong>not index it as a keyword</strong>.
 *   <strong>Impact:</strong> The event will still be searchable via full-text search, but it will <strong>not appear</strong> in filter results or exact match queries targeting the <code>.keyword</code> sub-field.
 *   <strong>Adjustment:</strong> If you have long fields (e.g., long URLs or command lines) that you need to filter on exactly, you may need to increase this limit in the mapping files. Note that increasing this significantly can increase index size and memory usage.</p>
+<p>Similarly, <code>wildcard</code> sub-fields have <code>ignore_above: 32766</code> configured to prevent Lucene <code>DocValuesField</code> limit errors (<code>&lt;= 32766</code> bytes) when indexing very large string fields.</p>
 <h3 id="wildcard-matches-in-keyword-fields">Wildcard Matches in Keyword Fields</h3>
 <p>Historically, <code>keyword</code> fields were used in Timesketch to perform wildcard
 matches (e.g., <code>message.keyword:*searchterm*</code>). While effective for short
@@ -2715,7 +2716,7 @@ OpenSearch <code>wildcard</code> field type.</p>
 sub-field for string data:</p>
 <pre><code class="language-json">&quot;fields&quot;: {
     &quot;keyword&quot;: {&quot;type&quot;: &quot;keyword&quot;, &quot;ignore_above&quot;: 256},
-    &quot;wildcard&quot;: {&quot;type&quot;: &quot;wildcard&quot;}
+    &quot;wildcard&quot;: {&quot;type&quot;: &quot;wildcard&quot;, &quot;ignore_above&quot;: 32766}
 }
 </code></pre>
 <p>The <a href="https://opensearch.org/docs/latest/field-types/supported-field-types/wildcard/">Wildcard Field Type</a>
@@ -2791,7 +2792,7 @@ Mode". When active:</p>
       <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "header.autohide"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>
