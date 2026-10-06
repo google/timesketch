@@ -209,7 +209,7 @@ class OpenSearchDataStoreTest(BaseTest):
                         "error": {
                             "type": "illegal_argument_exception",
                             "reason": (
-                                "DocValuesField \"original_proto.wildcard\" "
+                                'DocValuesField "original_proto.wildcard" '
                                 "is too large, must be <= 32766"
                             ),
                         },
@@ -241,7 +241,8 @@ class OpenSearchDataStoreTest(BaseTest):
         # doc_2 without caused_by should fall back to top-level error type and reason
         self.assertEqual(
             details_counter[
-                "illegal_argument_exception/DocValuesField \"original_proto.wildcard\" is too large,"
+                "illegal_argument_exception/DocValuesField "
+                '"original_proto.wildcard" is too large,'
             ],
             1,
         )
@@ -254,10 +255,9 @@ class OpenSearchDataStoreTest(BaseTest):
         )
         self.assertEqual(
             errors_list[1],
-            "<illegal_argument_exception> DocValuesField \"original_proto.wildcard\" "
+            '<illegal_argument_exception> DocValuesField "original_proto.wildcard" '
             "is too large, must be <= 32766",
         )
-
 
     @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
     def test_get_wildcard_fields(self, mock_client):
