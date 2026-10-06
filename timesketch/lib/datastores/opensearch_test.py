@@ -215,11 +215,19 @@ class OpenSearchDataStoreTest(BaseTest):
                         },
                     }
                 },
+                {
+                    "index": {
+                        "_index": "test_index",
+                        "_id": "doc_3",
+                        "status": 201,
+                    }
+                },
             ],
         }
 
         ds.import_event("test_index", {"msg": "event 1"})
         ds.import_event("test_index", {"msg": "event 2"})
+        ds.import_event("test_index", {"msg": "event 3"})
 
         results = ds.flush_queued_events()
         self.assertTrue(results.get("errors_in_upload"))

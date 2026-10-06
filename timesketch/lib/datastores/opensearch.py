@@ -2015,6 +2015,8 @@ class OpenSearchDataStore:
                 error_list = self._error_container[index_name]["errors"]
 
                 error = index.get("error", {})
+                if not error:
+                    continue
                 status_code = index.get("status", 0)
                 doc_id = index.get("_id", "(unable to get doc id)")
                 caused_by = error.get("caused_by") or {}
