@@ -2017,32 +2017,29 @@ class OpenSearchDataStore:
                 error = index.get("error", {})
                 status_code = index.get("status", 0)
                 doc_id = index.get("_id", "(unable to get doc id)")
-                caused_by = error.get("caused_by", {})
+                caused_by = error.get("caused_by") or {}
                 caused_type = caused_by.get("type")
                 caused_reason = caused_by.get("reason")
                 if not caused_type:
-                    caused_type = error.get("type", "Unknown Detailed Type")
+                    caused_type = error.get("type") or "Unknown Detailed Type"
                 if not caused_reason:
-                    caused_reason = error.get("reason", "Unknown Detailed Reason")
+                    caused_reason = error.get("reason") or "Unknown Detailed Reason"
 
                 error_counter[error.get("type")] += 1
-                detail_msg = "{:s}/{:s}".format(
-                    caused_type,
-                    " ".join(caused_reason.split()[:5]),
-                )
+                detail_msg = f"{caused_type}/{' '.join(caused_reason.split()[:5])}"
                 error_detail_counter[detail_msg] += 1
 
                 if caused_by:
-                    error_msg = "<{:s}> {:s} [{:s}/{:s}]".format(
-                        error.get("type", "Unknown Type"),
-                        error.get("reason", "No reason given"),
-                        caused_by.get("type", "Unknown Type"),
-                        caused_by.get("reason", "Unknown Detailed Reason"),
+                    error_msg = (
+                        f"<{error.get('type', 'Unknown Type')}> "
+                        f"{error.get('reason', 'No reason given')} "
+                        f"[{caused_by.get('type', 'Unknown Type')}/"
+                        f"{caused_by.get('reason', 'Unknown Detailed Reason')}]"
                     )
                 else:
-                    error_msg = "<{:s}> {:s}".format(
-                        error.get("type", "Unknown Type"),
-                        error.get("reason", "No reason given"),
+                    error_msg = (
+                        f"<{error.get('type', 'Unknown Type')}> "
+                        f"{error.get('reason', 'No reason given')}"
                     )
                 error_list.append(error_msg)
                 try:
