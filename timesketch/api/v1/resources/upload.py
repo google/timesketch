@@ -30,6 +30,7 @@ from flask_login import current_user
 
 from timesketch.api.v1 import resources
 from timesketch.api.v1 import utils
+from timesketch.lib import index_name as index_name_lib
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
@@ -78,13 +79,33 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             if not isinstance(index_name, str):
                 index_name = codecs.decode(index_name, "utf-8")
 
-            searchindex = SearchIndex.query.filter_by(
-                name=name, index_name=index_name
-            ).first()
+            existing_index = next(
+                (
+                    timeline.searchindex
+                    for timeline in sketch.timelines
+                    if timeline.searchindex.index_name == index_name
+                ),
+                None,
+            )
+            if existing_index:
+                if not existing_index.has_permission(
+                    permission="write", user=current_user
+                ):
+                    abort(HTTP_STATUS_CODE_FORBIDDEN)
+                return existing_index
 
-            if searchindex and searchindex.has_permission(
-                permission="write", user=current_user
-            ):
+            prefix = current_app.config.get("OPENSEARCH_INDEX_PREFIX", "")
+            if prefix:
+                index_name = index_name_lib.canonicalize_index_name(
+                    index_name, prefix=prefix
+                )
+
+            searchindex = SearchIndex.query.filter_by(index_name=index_name).first()
+            if searchindex:
+                if not searchindex.has_permission(
+                    permission="write", user=current_user
+                ):
+                    abort(HTTP_STATUS_CODE_FORBIDDEN)
                 return searchindex
 
         if extension and not data_label:
@@ -97,18 +118,33 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         if data_label in ("csv", "json", "jsonl"):
             data_label = "csv_jsonl"
 
-        indices = (
-            t.searchindex
-            for t in sketch.timelines
-            if t.get_status.status not in ("deleted", "archived")
-        )
-        for index in indices:
-            if index.has_label(data_label) and sketch.has_permission(
-                permission="write", user=current_user
-            ):
-                return index
+        prefix = current_app.config.get("OPENSEARCH_INDEX_PREFIX", "")
+        if not index_name:
+            indices = (
+                t.searchindex
+                for t in sketch.timelines
+                if t.get_status.status not in ("deleted", "archived")
+            )
+            for index in indices:
+                if (
+                    (
+                        not prefix
+                        or index_name_lib.is_canonical_index_name(
+                            index.index_name, prefix
+                        )
+                    )
+                    and index.has_label(data_label)
+                    and sketch.has_permission(permission="write", user=current_user)
+                ):
+                    return index
 
-        index_name = index_name or uuid.uuid4().hex
+        if prefix:
+            index_name = index_name_lib.canonicalize_index_name(
+                index_name, prefix=prefix
+            )
+        else:
+            index_name = index_name or uuid.uuid4().hex
+
         searchindex = SearchIndex.get_or_create(
             name=name, index_name=index_name, description=description, user=current_user
         )
@@ -514,14 +550,24 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         # For file chunks we need the correct filepath, otherwise each chunk
         # will get their own UUID as a filename.
         if index_name:
-            if not utils.is_valid_index_name(index_name):
+            prefix = current_app.config.get("OPENSEARCH_INDEX_PREFIX", "")
+            is_valid = (
+                index_name_lib.is_canonical_index_name(index_name, prefix=prefix)
+                if prefix
+                else index_name_lib.is_uuid_hex(index_name)
+            )
+            is_valid = is_valid or any(
+                timeline.searchindex.index_name == index_name
+                for timeline in sketch.timelines
+            )
+            if not is_valid:
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
                     "Unable to upload file. Index name is not valid",
                 )
             file_path = utils.format_upload_path(upload_folder, index_name)
         elif chunk_index_name:
-            if not utils.is_valid_index_name(chunk_index_name):
+            if not index_name_lib.is_uuid_hex(chunk_index_name):
                 abort(
                     HTTP_STATUS_CODE_BAD_REQUEST,
                     "Unable to upload file. Index name is not valid",
@@ -653,6 +699,22 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         utils.update_sketch_last_activity(sketch)
 
         index_name = form.get("index_name", "")
+        prefix = current_app.config.get("OPENSEARCH_INDEX_PREFIX", "")
+        if index_name and prefix:
+            existing_index = any(
+                timeline.searchindex.index_name == index_name
+                for timeline in sketch.timelines
+            )
+            if not existing_index:
+                try:
+                    index_name = index_name_lib.canonicalize_index_name(
+                        index_name, prefix=prefix
+                    )
+                except ValueError:
+                    abort(
+                        HTTP_STATUS_CODE_BAD_REQUEST,
+                        "Unable to upload data. Index name is not valid",
+                    )
         plaso_event_filter = form.get("plaso_event_filter", "")
         file_storage = request.files.get("file")
         if file_storage:

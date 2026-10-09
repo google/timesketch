@@ -39,6 +39,7 @@ from flask_login import current_user
 
 from timesketch.api.v1 import resources
 from timesketch.lib import forms
+from timesketch.lib import index_name as index_name_lib
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
@@ -183,6 +184,26 @@ class EventCreateResource(resources.ResourceMixin, Resource):
         if six.PY2:
             index_name = codecs.decode(index_name, "utf-8")
 
+        manual_timeline = next(
+            (
+                timeline
+                for timeline in sketch.timelines
+                if timeline.name == timeline_name
+                and timeline.searchindex.description
+                == "internal timeline for user-created events"
+                and timeline.get_status.status not in ("deleted", "archived")
+            ),
+            None,
+        )
+        index_name = (
+            manual_timeline.searchindex.index_name
+            if manual_timeline
+            else index_name_lib.canonicalize_index_name(
+                index_name,
+                prefix=current_app.config.get("OPENSEARCH_INDEX_PREFIX", ""),
+            )
+        )
+
         # Try to create index
         timeline = None
         try:
@@ -190,11 +211,15 @@ class EventCreateResource(resources.ResourceMixin, Resource):
             self.datastore.create_index(index_name=index_name)
 
             # Create the search index in the Timesketch database
-            searchindex = SearchIndex.get_or_create(
-                name=timeline_name,
-                description="internal timeline for user-created events",
-                user=current_user,
-                index_name=index_name,
+            searchindex = (
+                manual_timeline.searchindex
+                if manual_timeline
+                else SearchIndex.get_or_create(
+                    name=timeline_name,
+                    description="internal timeline for user-created events",
+                    user=current_user,
+                    index_name=index_name,
+                )
             )
             searchindex.grant_permission(permission="read", user=current_user)
             searchindex.grant_permission(permission="write", user=current_user)
@@ -206,7 +231,7 @@ class EventCreateResource(resources.ResourceMixin, Resource):
             if sketch and sketch.has_permission(current_user, "write"):
                 self.datastore.import_event(index_name, event, flush_interval=1)
 
-                timeline = Timeline.get_or_create(
+                timeline = manual_timeline or Timeline.get_or_create(
                     name=searchindex.name,
                     description=searchindex.description,
                     sketch=sketch,

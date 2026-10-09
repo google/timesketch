@@ -45,6 +45,7 @@ import prometheus_client
 from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import METRICS_NAMESPACE
 from timesketch.lib import errors
+from timesketch.lib import index_name as index_name_lib
 from timesketch.lib import telemetry
 
 # Setup logging
@@ -126,7 +127,11 @@ class OpenSearchDataStore:
     )
 
     def __init__(
-        self, host: Optional[str] = None, port: Optional[int] = None, **kwargs
+        self,
+        host: Optional[str] = None,
+        port: Optional[int] = None,
+        index_prefix: Optional[str] = None,
+        **kwargs,
     ):
         """Initialize the OpenSearchDataStore client.
 
@@ -140,6 +145,9 @@ class OpenSearchDataStore:
                 server. Defaults to OPENSEARCH_HOST from the timesketch.conf.
             port (int, optional): The port number for the OpenSearch server.
                 Defaults to OPENSEARCH_PORT from the config.
+            index_prefix (str, optional): The prefix required for OpenSearch
+                indices created by Timesketch. Defaults to OPENSEARCH_INDEX_PREFIX
+                from timesketch.conf or "".
             **kwargs: Additional keyword arguments that are passed directly to
                 the opensearchpy.OpenSearch client constructor. These can
                 override or supplement the default and application-configured
@@ -309,6 +317,17 @@ class OpenSearchDataStore:
         self.min_health = current_app.config.get(
             "OPENSEARCH_MINIMUM_HEALTH", self.DEFAULT_MINIMUM_HEALTH
         )
+        if index_prefix is not None:
+            self.index_prefix = index_prefix
+        else:
+            try:
+                self.index_prefix = current_app.config.get(
+                    "OPENSEARCH_INDEX_PREFIX", ""
+                )
+            except (RuntimeError, AttributeError):
+                self.index_prefix = ""
+        index_name_lib.validate_index_prefix(self.index_prefix)
+        self.index_prefix = self.index_prefix or ""
         self.sliced_export_default_page_size = current_app.config.get(
             "OPENSEARCH_SLICED_EXPORT_DEFAULT_PAGE_SIZE", 10000
         )
@@ -1703,17 +1722,23 @@ class OpenSearchDataStore:
         return None
 
     def create_index(
-        self, index_name: str = uuid4().hex, mappings: Optional[Dict] = None
+        self,
+        index_name: Optional[str] = None,
+        mappings: Optional[Dict] = None,
     ):
         """Create index with Timesketch settings.
 
         Args:
-            index_name: Name of the index. Default is a generated UUID.
+            index_name: Name of the index. If not provided, a unique index name is
+                generated.
             mappings: Optional dict with the document mapping for OpenSearch.
 
         Returns:
             Index name in string format.
-            Document type in string format.
+
+        Raises:
+            ValueError: If a new index name does not adhere to the required
+                canonical format when OPENSEARCH_INDEX_PREFIX is configured.
         """
         if mappings:
             _document_mapping = mappings
@@ -1724,6 +1749,24 @@ class OpenSearchDataStore:
                     "datetime": {"type": "date"},
                 }
             }
+
+        if self.index_prefix:
+            if not index_name:
+                index_name = index_name_lib.canonicalize_index_name(
+                    None, prefix=self.index_prefix
+                )
+            elif not index_name_lib.is_canonical_index_name(
+                index_name, prefix=self.index_prefix
+            ):
+                if self.client.indices.exists(index_name):
+                    return index_name
+                raise ValueError(
+                    f"OpenSearch index name {index_name!r} does not match required "
+                    f"canonical format for prefix {self.index_prefix!r}."
+                )
+        else:
+            if not index_name:
+                index_name = uuid4().hex
 
         if not self.client.indices.exists(index_name):
             try:

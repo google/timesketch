@@ -18,12 +18,14 @@ import logging
 import opensearchpy
 from flask import request
 from flask import abort
+from flask import current_app
 from flask_restful import Resource
 from flask_login import login_required
 from flask_login import current_user
 
 from timesketch.api.v1 import resources
 from timesketch.lib import forms
+from timesketch.lib import index_name as index_name_lib
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
@@ -63,6 +65,19 @@ class SearchIndexListResource(resources.ResourceMixin, Resource):
 
         if not form.validate_on_submit():
             abort(HTTP_STATUS_CODE_BAD_REQUEST, "Unable to validate form data")
+
+        prefix = current_app.config.get("OPENSEARCH_INDEX_PREFIX", "")
+        existing_index = SearchIndex.query.filter_by(index_name=es_index_name).first()
+        if prefix and not existing_index:
+            try:
+                es_index_name = index_name_lib.canonicalize_index_name(
+                    es_index_name, prefix=prefix
+                )
+            except ValueError:
+                abort(
+                    HTTP_STATUS_CODE_BAD_REQUEST,
+                    "Unable to create searchindex. Index name is not valid.",
+                )
 
         searchindex = SearchIndex.query.filter_by(index_name=es_index_name).first()
         metadata = {"created": True}

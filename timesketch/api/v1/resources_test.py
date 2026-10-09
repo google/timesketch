@@ -14,6 +14,7 @@
 """Tests for v1 of the Timesketch API."""
 
 import os
+import io
 import shutil
 import tempfile
 import json
@@ -29,6 +30,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_GATEWAY_TIMEOUT
 from timesketch.lib.errors import DatastoreTimeoutError
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
+from timesketch.lib import index_name as index_name_lib
 from timesketch.lib.dfiq import DFIQCatalog
 from timesketch.api.v1.resources import scenarios
 from timesketch.models.sketch import Scenario
@@ -1482,6 +1484,194 @@ class SearchIndexResourceTest(BaseTest):
         self.assertIsInstance(response.json, dict)
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
 
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_post_create_searchindex_with_prefix_arbitrary_name_rejected(self):
+        """Test that arbitrary index name is rejected when prefix is enabled."""
+        self.login()
+        self.app.config["OPENSEARCH_INDEX_PREFIX"] = "timesketch-"
+        data = {"searchindex_name": "test3", "es_index_name": "test3", "public": False}
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_post_create_searchindex_with_prefix_bare_uuid(self):
+        """Test bare UUID is canonicalized with prefix when prefix is enabled."""
+        self.login()
+        self.app.config["OPENSEARCH_INDEX_PREFIX"] = "timesketch-"
+        bare_uuid = "a89933473b2a48948beee2c7e870209f"
+        data = {
+            "searchindex_name": "test_bare",
+            "es_index_name": bare_uuid,
+            "public": False,
+        }
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+        self.assertEqual(
+            response.json["objects"][0]["index_name"],
+            f"timesketch-{bare_uuid}",
+        )
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_post_create_searchindex_with_prefix_prefixed_uuid(self):
+        """Test prefixed UUID is accepted as-is when prefix is enabled."""
+        self.login()
+        self.app.config["OPENSEARCH_INDEX_PREFIX"] = "timesketch-"
+        prefixed_uuid = "timesketch-b89933473b2a48948beee2c7e870209f"
+        data = {
+            "searchindex_name": "test_prefixed",
+            "es_index_name": prefixed_uuid,
+            "public": False,
+        }
+        response = self.client.post(
+            self.resource_url,
+            data=json.dumps(data),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+        self.assertEqual(
+            response.json["objects"][0]["index_name"],
+            prefixed_uuid,
+        )
+
+
+class PrefixTransitionResourceTest(BaseTest):
+    """One sketch can contain data created under three prefix settings."""
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch("timesketch.lib.tasks.build_index_pipeline")
+    def test_double_prefix_change(self, mock_pipeline):
+        """New timelines use the prefix; writes to old timelines keep their index."""
+        self.login()
+        self.app.config["UPLOAD_ENABLED"] = True
+        sketch_id = self.sketch1.id
+        upload_url = "/api/v1/upload/"
+        manual_url = f"/api/v1/sketches/{sketch_id}/event/create/"
+        uploaded_indices = []
+        manual_indices = []
+
+        for generation, prefix in enumerate(("", "timesketch-test-", "timesketch_")):
+            self.app.config["OPENSEARCH_INDEX_PREFIX"] = prefix
+            response = self.client.post(
+                upload_url,
+                data={
+                    "sketch_id": str(sketch_id),
+                    "name": f"generation_{generation}",
+                    "events": "[]",
+                },
+            )
+            self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+            uploaded_name = mock_pipeline.call_args.kwargs["index_name"]
+            self.assertTrue(
+                index_name_lib.is_canonical_index_name(uploaded_name, prefix)
+            )
+            uploaded_indices.append(
+                SearchIndex.query.filter_by(index_name=uploaded_name).one()
+            )
+
+            response = self.client.post(
+                manual_url,
+                json={
+                    "message": f"generation {generation}",
+                    "date_string": "2024-01-01T00:00:00Z",
+                },
+            )
+            self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+            manual_timeline = Timeline.get_by_id(response.json["objects"][0]["id"])
+            manual_name = manual_timeline.searchindex.index_name
+            manual_indices.append(manual_name)
+
+            response = self.client.post(
+                "/api/v1/sketches/",
+                json={"name": f"new sketch {generation}", "description": ""},
+            )
+            self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+            new_sketch_id = response.json["objects"][0]["id"]
+            response = self.client.post(
+                upload_url,
+                data={
+                    "sketch_id": str(new_sketch_id),
+                    "name": f"new sketch timeline {generation}",
+                    "events": "[]",
+                },
+            )
+            self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+            self.assertTrue(
+                index_name_lib.is_canonical_index_name(
+                    mock_pipeline.call_args.kwargs["index_name"], prefix
+                )
+            )
+
+        # All three generations stay attached to the same sketch.
+        self.assertEqual(len(set(manual_indices)), 1)
+        self.assertTrue(index_name_lib.is_uuid_hex(manual_indices[0]))
+        for index in uploaded_indices:
+            response = self.client.get(f"/api/v1/searchindices/{index.id}/")
+            self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+            self.assertEqual(
+                response.json["objects"][0]["index_name"], index.index_name
+            )
+
+        # Explicitly naming an older index appends to that timeline.
+        legacy_name = uploaded_indices[0].index_name
+        response = self.client.post(
+            upload_url,
+            data={
+                "sketch_id": str(sketch_id),
+                "name": "from_legacy_name",
+                "index_name": legacy_name,
+                "events": "[]",
+            },
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+        self.assertEqual(mock_pipeline.call_args.kwargs["index_name"], legacy_name)
+        self.assertEqual(SearchIndex.query.filter_by(index_name=legacy_name).count(), 1)
+
+        # Chunked appends also work after switching to another prefix or back
+        # to no prefix.
+        for prefix, old_name in (
+            ("timesketch_", uploaded_indices[1].index_name),
+            ("", uploaded_indices[2].index_name),
+        ):
+            self.app.config["OPENSEARCH_INDEX_PREFIX"] = prefix
+            with tempfile.TemporaryDirectory() as upload_dir:
+                self.app.config["UPLOAD_FOLDER"] = upload_dir
+                response = self.client.post(
+                    upload_url,
+                    data={
+                        "sketch_id": str(sketch_id),
+                        "name": "from_prior_prefix",
+                        "index_name": old_name,
+                        "file": (io.BytesIO(b"abc"), "prior-prefix.jsonl"),
+                        "total_file_size": "3",
+                        "chunk_total_chunks": "1",
+                        "chunk_index": "0",
+                        "chunk_byte_offset": "0",
+                    },
+                )
+            self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+            self.assertEqual(mock_pipeline.call_args.kwargs["index_name"], old_name)
+            self.assertEqual(
+                SearchIndex.query.filter_by(index_name=old_name).count(), 1
+            )
+
+        # A new sketch starts its manual timeline under the current prefix.
+        self.app.config["OPENSEARCH_INDEX_PREFIX"] = "timesketch_"
+        response = self.client.post(
+            f"/api/v1/sketches/{new_sketch_id}/event/create/",
+            json={"message": "new sketch", "date_string": "2024-01-01T00:00:00Z"},
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+        new_manual = Timeline.get_by_id(response.json["objects"][0]["id"])
+        self.assertTrue(new_manual.searchindex.index_name.startswith("timesketch_"))
+
 
 class TimelineListResourceTest(BaseTest):
     """Test TimelineList resource."""
@@ -2554,6 +2744,34 @@ class UploadFileResourceTest(BaseTest):
         if os.path.exists(self.upload_folder):
             shutil.rmtree(self.upload_folder)
 
+    def test_post_empty_prefix_allows_custom_index_name(self):
+        """Test empty prefix preserves custom upload index names."""
+        self.login()
+        self.app.config["OPENSEARCH_INDEX_PREFIX"] = ""
+        custom_index_name = "shared_index_a89933473b2a48948beee2c7e870209f"
+
+        with mock.patch.object(
+            upload.UploadFileResource,
+            "_upload_events",
+            return_value=({"ok": True}, HTTP_STATUS_CODE_OK),
+        ) as mock_upload_events:
+            response = self.client.post(
+                "/api/v1/upload/",
+                data={
+                    "sketch_id": "1",
+                    "name": "legacy_custom_index",
+                    "index_name": custom_index_name,
+                    "events": "[]",
+                },
+            )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        mock_upload_events.assert_called_once()
+        self.assertEqual(
+            mock_upload_events.call_args.kwargs["index_name"],
+            custom_index_name,
+        )
+
     @mock.patch("timesketch.api.v1.resources.upload.utils.format_upload_path")
     @mock.patch("timesketch.api.v1.resources.upload.current_app")
     def test_out_of_order_chunks(self, mock_current_app, mock_format_upload_path):
@@ -3026,6 +3244,60 @@ class UploadFileResourceTest(BaseTest):
             )
 
         mock_os_chmod.assert_called_once_with(file_path, 0o640)
+
+    @mock.patch("timesketch.api.v1.resources.upload.current_app")
+    def test_upload_continuation_reuses_searchindex(self, mock_current_app):
+        """Test server returns prefixed index and client reusing it references
+        the same SearchIndex."""
+        self.login()
+        self.app.config["OPENSEARCH_INDEX_PREFIX"] = "timesketch-"
+        mock_current_app.config = self.app.config
+
+        resource = upload.UploadFileResource()
+        sketch_mock = mock.MagicMock()
+        sketch_mock.timelines = []
+        sketch_mock.has_permission.return_value = True
+
+        # First upload: no index_name supplied -> generated prefixed index
+        # pylint: disable=protected-access
+        si1 = resource._get_index(
+            name="timeline_continuation",
+            description="timeline_continuation",
+            sketch=sketch_mock,
+            index_name="",
+            data_label="generic",
+        )
+        self.assertTrue(si1.index_name.startswith("timesketch-"))
+        created_index_name = si1.index_name
+
+        # Simulate timeline attached to sketch
+        timeline_mock = mock.MagicMock()
+        timeline_mock.searchindex = si1
+        timeline_mock.get_status.status = "ready"
+        sketch_mock.timelines = [timeline_mock]
+
+        # Second upload: client sends back the canonical prefixed index name
+        si2 = resource._get_index(
+            name="timeline_continuation",
+            description="timeline_continuation",
+            sketch=sketch_mock,
+            index_name=created_index_name,
+            data_label="generic",
+        )
+        self.assertEqual(si1.id, si2.id)
+        self.assertEqual(si2.index_name, created_index_name)
+
+        # Third upload: legacy client sends bare UUID of that index
+        bare_uuid = created_index_name[len("timesketch-") :]
+        si3 = resource._get_index(
+            name="timeline_continuation",
+            description="timeline_continuation",
+            sketch=sketch_mock,
+            index_name=bare_uuid,
+            data_label="generic",
+        )
+        self.assertEqual(si1.id, si3.id)
+        self.assertEqual(si3.index_name, created_index_name)
 
 
 class UserSettingsResourceTest(BaseTest):
