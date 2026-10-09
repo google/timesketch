@@ -235,8 +235,8 @@ def _set_timeline_status(timeline_id: int, status: Optional[str] = None):
     This helper function updates the status of a timeline based on the status of its
     data sources. The automatic status determination follows a specific logic:
     - If all data sources have a "fail" status, the timeline is set to "fail".
-    - If any data source is in a "processing" state, the timeline is set to
-      "processing".
+    - If any data source is in a "processing" or "queueing" state, the timeline
+      is set to "processing".
     - Otherwise, if all data sources are "ready" or a mix of "ready" and "fail", the
       timeline is set to "ready".
 
@@ -258,6 +258,10 @@ def _set_timeline_status(timeline_id: int, status: Optional[str] = None):
         logger.warning("Cannot set status: No such timeline")
         return
 
+    # Lock the timeline row so that reading the datasource statuses and writing
+    # the aggregated timeline status happen atomically across concurrent tasks.
+    db_session.query(Timeline).filter_by(id=timeline_id).with_for_update().first()
+
     list_datasources_status = [
         datasource.get_status for datasource in timeline.datasources
     ]
@@ -272,7 +276,10 @@ def _set_timeline_status(timeline_id: int, status: Optional[str] = None):
         if len(set(list_datasources_status)) == 1 and "fail" in list_datasources_status:
             status = "fail"
         else:
-            if "processing" in list_datasources_status:
+            if (
+                "processing" in list_datasources_status
+                or "queueing" in list_datasources_status
+            ):
                 status = "processing"
             else:
                 status = "ready"
@@ -363,7 +370,7 @@ def _set_datasource_status(timeline_id, file_path, status, error_message=None):
             datasource.set_status(status)
             if error_message:
                 datasource.set_error_message(error_message)
-            _set_timeline_status(timeline_id, status)
+            _set_timeline_status(timeline_id)
             return
 
     raise KeyError(
