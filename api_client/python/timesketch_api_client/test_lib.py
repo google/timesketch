@@ -984,6 +984,9 @@ def mock_response(*args, **kwargs):
         "http://127.0.0.1/api/v1/sketches/1/event/annotate/": MockResponse(
             json_data=annotate_event_data
         ),
+        "http://127.0.0.1/api/v1/sketches/1/aggregation/": MockResponse(
+            json_data=aggregation_1_data
+        ),
         "http://127.0.0.1/api/v1/sketches/1/aggregation/explore/": MockResponse(
             json_data=aggregation_chart_data
         ),
