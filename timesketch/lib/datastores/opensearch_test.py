@@ -177,6 +177,97 @@ class OpenSearchDataStoreTest(BaseTest):
         )
 
     @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
+    def test_flush_queued_events_item_errors(self, mock_client):
+        """Test flush_queued_events error handling with and without caused_by."""
+        ds = OpenSearchDataStore(host="127.0.0.1", port=9200)
+        mock_es_instance = mock_client.return_value
+        ds.client = mock_es_instance
+
+        mock_es_instance.bulk.return_value = {
+            "errors": True,
+            "items": [
+                {
+                    "index": {
+                        "_index": "test_index",
+                        "_id": "doc_1",
+                        "status": 400,
+                        "error": {
+                            "type": "mapper_parsing_exception",
+                            "reason": "failed to parse field",
+                            "caused_by": {
+                                "type": "illegal_argument_exception",
+                                "reason": "invalid value format provided",
+                            },
+                        },
+                    }
+                },
+                {
+                    "index": {
+                        "_index": "test_index",
+                        "_id": "doc_2",
+                        "status": 400,
+                        "error": {
+                            "type": "illegal_argument_exception",
+                            "reason": (
+                                'DocValuesField "original_proto.wildcard" '
+                                "is too large, must be <= 32766"
+                            ),
+                        },
+                    }
+                },
+                {
+                    "index": {
+                        "_index": "test_index",
+                        "_id": "doc_3",
+                        "status": 201,
+                    }
+                },
+            ],
+        }
+
+        ds.import_event("test_index", {"msg": "event 1"})
+        ds.import_event("test_index", {"msg": "event 2"})
+        ds.import_event("test_index", {"msg": "event 3"})
+
+        results = ds.flush_queued_events()
+        self.assertTrue(results.get("errors_in_upload"))
+        error_container = results.get("error_container")
+        self.assertIn("test_index", error_container)
+
+        types_counter = error_container["test_index"]["types"]
+        details_counter = error_container["test_index"]["details"]
+        errors_list = error_container["test_index"]["errors"]
+
+        self.assertEqual(types_counter["mapper_parsing_exception"], 1)
+        self.assertEqual(types_counter["illegal_argument_exception"], 1)
+
+        # doc_1 should use caused_by
+        self.assertEqual(
+            details_counter["illegal_argument_exception/invalid value format provided"],
+            1,
+        )
+        # doc_2 without caused_by should fall back to top-level error type and reason
+        self.assertEqual(
+            details_counter[
+                "illegal_argument_exception/DocValuesField "
+                '"original_proto.wildcard" is too large,'
+            ],
+            1,
+        )
+
+        self.assertEqual(len(errors_list), 2)
+        self.assertEqual(
+            errors_list[0],
+            "<mapper_parsing_exception> failed to parse field "
+            "[illegal_argument_exception/invalid value format provided]",
+        )
+        self.assertEqual(
+            errors_list[1],
+            '<illegal_argument_exception> DocValuesField "original_proto.wildcard" '
+            "is too large, must be <= 32766",
+        )
+
+    @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
     def test_get_wildcard_fields(self, mock_client):
         """Test get_wildcard_fields mapping parser logic."""
         ds = OpenSearchDataStore(host="127.0.0.1", port=9200)
