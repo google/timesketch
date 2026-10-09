@@ -688,6 +688,47 @@ class TimesketchApi:
         """
         return sketch.Sketch(sketch_id, api=self)
 
+    def get_sketches_by_name(
+        self, sketch_name: str, include_archived: bool = True
+    ) -> list[sketch.Sketch]:
+        """Get all sketches with an exact matching name.
+
+        The lookup runs server side with the "search" scope, i.e. it covers
+        all sketches the user can read (owned, shared and public). The server
+        search is a partial, case-insensitive match on name and description,
+        so the results are filtered here for an exact, case-sensitive name
+        match.
+
+        Args:
+            sketch_name (str): The name of the sketch to find.
+                Warning: Timesketch allows multiple sketches with the same name.
+                The caller is responsible for handling this potential conflict.
+            include_archived (bool): If archived sketches should be returned.
+                Defaults to True.
+
+        Raises:
+            KeyError: If no sketch with the specified name is found.
+
+        Returns:
+            list[sketch.Sketch]: A list of sketch objects.
+        """
+        # We still need to verify the match for the sketch name, as the search_query
+        # also matches on partial (ILIKE) matches by default
+        sketches = [
+            sketch_obj
+            for sketch_obj in self.list_sketches(
+                search_query=sketch_name,
+                scope="search",
+                include_archived=include_archived,
+            )
+            if sketch_obj.name == sketch_name
+        ]
+
+        if not sketches:
+            raise KeyError(f"Sketch with name '{sketch_name}' not found.")
+
+        return sketches
+
     def get_aggregator_info(self, name="", as_pandas=False):
         """Returns information about available aggregators.
 
@@ -734,12 +775,19 @@ class TimesketchApi:
 
         return pandas.DataFrame(lines)
 
-    def list_sketches(self, per_page=50, scope="user", include_archived=True):
+    def list_sketches(
+        self,
+        per_page=50,
+        scope=None,
+        include_archived=True,
+        search_query=None,
+    ):
         """Get a list of all open sketches that the user has access to.
 
         Args:
             per_page (int): Number of items per page when paginating. Default is 50.
-            scope (str): What scope to get sketches as. Default to user.
+            scope (str): What scope to get sketches as. Defaults to "search" if
+                search_query is specified, otherwise to "user".
                 user: sketches owned by the user
                 recent: sketches that the user has actively searched in
                 shared: sketches shared with the user (but not owned by them)
@@ -748,15 +796,33 @@ class TimesketchApi:
                 search: pass additional search query
                 all: all sketches the user has access to (owned and shared)
             include_archived (bool): If archived sketches should be returned.
+            search_query (str): A query string to search for sketches by name
+                or description. Only supported with the "search" scope. The
+                server performs a partial, case-insensitive match, so results
+                may include sketches whose name only contains the query.
+
+        Raises:
+            ValueError: If search_query is used with a scope other than "search".
 
         Yields:
             Sketch objects instances.
         """
+        if scope is None:
+            scope = "search" if search_query else "user"
+
+        if search_query and scope != "search":
+            raise ValueError(
+                f"search_query is only supported with scope 'search', not '{scope}'."
+            )
+
         url_params = {
             "per_page": per_page,
             "scope": scope,
             "include_archived": include_archived,
         }
+
+        if search_query:
+            url_params["search_query"] = search_query
         # Start with the first page
         page = 1
         has_next_page = True

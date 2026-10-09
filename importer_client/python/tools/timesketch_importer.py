@@ -352,8 +352,28 @@ def main(args=None):
         dest="sketch_name",
         default="",
         help=(
-            "String that will be used as the sketch name in case a new "
-            "sketch is created."
+            "Name of the sketch to import into. If a non-archived sketch "
+            "with this exact name exists, it will be reused, otherwise a "
+            "new sketch with this name is created. If multiple sketches "
+            "share the name, see --sketch_strategy. If neither --sketch_id "
+            "nor --sketch_name is provided, a new sketch is always created."
+        ),
+    )
+
+    config_group.add_argument(
+        "--sketch_strategy",
+        "--sketch-strategy",
+        action="store",
+        type=str,
+        choices=["ask", "newest", "oldest"],
+        dest="sketch_strategy",
+        default="ask",
+        help=(
+            "Strategy to use when a sketch name is provided and a sketch "
+            "with the same name already exists. Supported strategies are: "
+            "'ask' (default) which will ask the user for input, 'newest' "
+            "which will use the most recently created sketch, and 'oldest' "
+            "which will use the earliest created sketch."
         ),
     )
 
@@ -632,17 +652,106 @@ def main(args=None):
         )
 
     sketch_id = options.sketch_id
+    sketch_name = options.sketch_name
+    my_sketch = None
     if sketch_id:
         my_sketch = ts_client.get_sketch(sketch_id)
-    else:
-        sketch_name = options.sketch_name or "New Sketch From Importer CLI"
-        my_sketch = ts_client.create_sketch(sketch_name)
+    elif sketch_name:
+        # Only look up existing sketches when a name was explicitly provided.
+        # Archived sketches are excluded since data cannot be uploaded to them.
+        try:
+            sketches = ts_client.get_sketches_by_name(
+                sketch_name, include_archived=False
+            )
+        except KeyError:
+            sketches = []
+
+        if len(sketches) > 1:
+            # Sketch IDs are auto-incremented on creation, so the highest ID is
+            # the newest sketch. Using the ID avoids a full sketch API request
+            # per duplicate that would be needed to read created_at.
+            if options.sketch_strategy == "newest":
+                my_sketch = max(sketches, key=lambda s: s.id)
+            elif options.sketch_strategy == "oldest":
+                my_sketch = min(sketches, key=lambda s: s.id)
+            elif not sys.stdin.isatty():
+                # Never silently pick a sketch. Without a terminal we cannot
+                # prompt, so fail and tell the user how to resolve it.
+                logger.error(
+                    "Multiple sketches found with the name '%s' (IDs: %s) and "
+                    "no terminal available to ask which one to use. Use "
+                    "--sketch_id to select one, or --sketch_strategy "
+                    "newest|oldest to resolve duplicates automatically.",
+                    sketch_name,
+                    ", ".join(str(s.id) for s in sorted(sketches, key=lambda s: s.id)),
+                )
+                sys.exit(1)
+            else:
+                # ask user for clarification using cli_input
+                print(f"Multiple sketches found with the name '{sketch_name}':")
+                for s in sketches:
+                    print(f" - [{s.id:d}] created_at: {s.created_at}, by {s.creator}")
+
+                valid_ids = {s.id for s in sketches}
+                selected_option = None
+                while selected_option is None:
+                    try:
+                        ans = cli_input.ask_question(
+                            "Select the sketch to use by entering "
+                            "the corresponding number",
+                            input_type=int,
+                            default=sketches[0].id,
+                        )
+                        if ans in valid_ids:
+                            selected_option = ans
+                        else:
+                            print(
+                                "Invalid ID. Please choose from the listed IDs: "
+                                f"{sorted(valid_ids)}"
+                            )
+                    except ValueError:
+                        print(
+                            "Invalid input. Please enter a valid integer "
+                            f"(e.g. {sketches[0].id:d})."
+                        )
+                my_sketch = next(s for s in sketches if s.id == selected_option)
+        elif sketches:
+            my_sketch = sketches[0]
+
+        if my_sketch:
+            logger.info(
+                "Using existing sketch: [%d] %s",
+                my_sketch.id,
+                my_sketch.name,
+            )
+
+    if not my_sketch and not sketch_id:
+        # Either no name was given, or no sketch with that name exists. Never
+        # reuse a sketch based on the default name, always create a new one.
+        my_sketch = ts_client.create_sketch(
+            sketch_name or "New Sketch From Importer CLI"
+        )
         logger.info(
-            "New sketch created: [{0:d}] {1:s}".format(my_sketch.id, my_sketch.name)
+            "New sketch created: [%d] %s",
+            my_sketch.id,
+            my_sketch.name,
         )
 
     if not my_sketch:
         logger.error("Unable to get sketch ID: {0:d}".format(sketch_id))
+        sys.exit(1)
+
+    # Fail early with a clear message instead of a failed upload (HTTP 403)
+    # if the user is not allowed to add data to the selected sketch.
+    sketch_acl = my_sketch.my_acl
+    if sketch_acl and "write" not in sketch_acl:
+        logger.error(
+            "You do not have write access to sketch [%d] %s, unable to import "
+            "data. Ask the sketch owner for write access or choose a different "
+            "sketch with --sketch_id or --sketch_name.",
+            my_sketch.id,
+            my_sketch.name,
+        )
         sys.exit(1)
 
     filename = os.path.basename(options.path)
