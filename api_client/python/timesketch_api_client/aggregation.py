@@ -13,17 +13,28 @@
 # limitations under the License.
 """Timesketch API client library."""
 
+from __future__ import annotations
+
 import datetime
 import getpass
 import json
 import logging
+
 from typing import Any
+from typing import Dict
+from typing import Generator
+from typing import List
+from typing import Optional
+from typing import TYPE_CHECKING
 
 import altair
 import pandas
 
 from . import error
 from . import resource
+
+if TYPE_CHECKING:
+    from . import sketch as sketch_lib
 
 logger = logging.getLogger("timesketch_api.aggregation")
 
@@ -42,9 +53,14 @@ class Aggregation(resource.SketchResource):
             saved search.
     """
 
-    resource_data: dict[str, Any]
+    resource_data: Dict[str, Any]
 
-    def __init__(self, sketch):
+    def __init__(self, sketch: sketch_lib.Sketch) -> None:
+        """Initializes the Aggregation object.
+
+        Args:
+            sketch: An instance of Sketch object.
+        """
         self._created_at = ""
         self._name = ""
         self._parameters = {}
@@ -60,11 +76,13 @@ class Aggregation(resource.SketchResource):
         super().__init__(sketch=sketch, resource_uri=resource_uri)
 
     @property
-    def created_at(self):
+    def created_at(self) -> str:
         """Returns a timestamp when the aggregation was created."""
         return self._created_at
 
-    def _get_aggregation_buckets(self, entry, name=""):
+    def _get_aggregation_buckets(
+        self, entry: Dict[str, Any], name: str = ""
+    ) -> Generator[Dict[str, Any], None, None]:
         """Yields all buckets from an aggregation result object.
 
         Args:
@@ -87,16 +105,20 @@ class Aggregation(resource.SketchResource):
                 yield from self._get_aggregation_buckets(value, name=key)
 
     def _run_aggregator(
-        self, aggregator_name, parameters, search_id=None, chart_type=None
-    ):
+        self,
+        aggregator_name: str,
+        parameters: Dict[str, Any],
+        search_id: Optional[int] = None,
+        chart_type: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """Run an aggregator class.
 
         Args:
-            aggregator_name (str): the name of the aggregator class.
-            parameters (dict): a dict with the parameters for the aggregation class.
-            search_id (int): an optional integer value with a primary key to a
+            aggregator_name: the name of the aggregator class.
+            parameters: a dict with the parameters for the aggregation class.
+            search_id: an optional integer value with a primary key to a
                 saved search.
-            chart_type (str): string with the chart type.
+            chart_type: string with the chart type.
 
         Returns:
             A dict with the aggregation results.
@@ -136,11 +158,11 @@ class Aggregation(resource.SketchResource):
         return error.get_response_json(response, logger)
 
     # pylint: disable=arguments-renamed
-    def from_saved(self, aggregation_id):
+    def from_saved(self, aggregation_id: int) -> None:
         """Initialize the aggregation object from a saved aggregation.
 
         Args:
-            aggregation_id (int): integer value for the stored
+            aggregation_id: integer value for the stored
                                   aggregation (primary key).
         """
         resource_uri = "sketches/{0:d}/aggregation/{1:d}/".format(
@@ -183,11 +205,11 @@ class Aggregation(resource.SketchResource):
         )
 
     # pylint: disable=arguments-differ
-    def from_manual(self, aggregate_dsl, **kwargs):
+    def from_manual(self, aggregate_dsl: str, **kwargs: Any) -> None:
         """Initialize the aggregation object by running an aggregation DSL.
 
         Args:
-            aggregate_dsl (str): OpenSearch aggregation query DSL string.
+            aggregate_dsl: OpenSearch aggregation query DSL string.
             kwargs: Optional arguments
         """
         super().from_manual(**kwargs)
@@ -217,20 +239,20 @@ class Aggregation(resource.SketchResource):
 
     def from_aggregator_run(
         self,
-        aggregator_name,
-        aggregator_parameters,
-        search_id=None,
-        chart_type=None,
-    ):
+        aggregator_name: str,
+        aggregator_parameters: Dict[str, Any],
+        search_id: Optional[int] = None,
+        chart_type: Optional[str] = None,
+    ) -> None:
         """Initialize the aggregation object by running an aggregator class.
 
         Args:
-            aggregator_name (str): name of the aggregator class to run.
-            aggregator_parameters (dict): a dict with the parameters of the aggregator
+            aggregator_name: name of the aggregator class to run.
+            aggregator_parameters: a dict with the parameters of the aggregator
                 class.
-            search_id (int): an optional integer value with a primary key to a saved
+            search_id: an optional integer value with a primary key to a saved
                 search.
-            chart_type (str): optional string with the chart type.
+            chart_type: optional string with the chart type.
         """
         self.type = "aggregator_run"
         self._parameters = aggregator_parameters
@@ -244,7 +266,7 @@ class Aggregation(resource.SketchResource):
             aggregator_name, aggregator_parameters, search_id, chart_type
         )
 
-    def lazyload_data(self, refresh_cache=False):
+    def lazyload_data(self, refresh_cache: bool = False) -> Dict[str, Any]:
         """Load resource data once and cache the result.
 
         Args:
@@ -260,12 +282,12 @@ class Aggregation(resource.SketchResource):
         return self.resource_data
 
     @property
-    def parameters(self):
+    def parameters(self) -> Dict[str, Any]:
         """Property that returns the parameters of the aggregation."""
         return self._parameters
 
     @property
-    def is_part_of_group(self):
+    def is_part_of_group(self) -> bool:
         """Property that returns whether an agg is part of a group or not."""
         if self._group_id is None:
             return False
@@ -273,7 +295,7 @@ class Aggregation(resource.SketchResource):
         return bool(self._group_id)
 
     @property
-    def title(self):
+    def title(self) -> str:
         """Property that returns the chart title of an aggregation."""
         if self.chart_title:
             return self.chart_title
@@ -287,17 +309,21 @@ class Aggregation(resource.SketchResource):
         return self.chart_title
 
     @title.setter
-    def title(self, new_title):
-        """Set the chart title of an aggregation."""
+    def title(self, new_title: str) -> None:
+        """Set the chart title of an aggregation.
+
+        Args:
+            new_title: Chart title.
+        """
         self.chart_title = new_title
 
     @property
-    def chart(self):
+    def chart(self) -> altair.Chart:
         """Property that returns an altair Vega-lite chart."""
         return self.generate_chart()
 
     @property
-    def description(self):
+    def description(self) -> str:
         """Property that returns the description string."""
         data = self.lazyload_data()
         if not data:
@@ -306,28 +332,37 @@ class Aggregation(resource.SketchResource):
         return meta.get("description", "")
 
     @description.setter
-    def description(self, description):
-        """Set the description of an aggregation."""
-        if "meta" not in self.resource_data:
+    def description(self, description: str) -> None:
+        """Set the description of an aggregation.
+
+        Args:
+            description: Description string.
+        """
+        if not self.resource_data or "meta" not in self.resource_data:
             return
         meta = self.resource_data.get("meta", {})
         meta["description"] = description
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Property that returns the name of the aggregation."""
         return self._name
 
     @name.setter
-    def name(self, name):
-        """Set the name of the aggregation."""
-        if "meta" not in self.resource_data:
+    def name(self, name: str) -> None:
+        """Set the name of the aggregation.
+
+        Args:
+            name: Name of the aggregation.
+        """
+        if not self.resource_data or "meta" not in self.resource_data:
             return
-        meta = self.resource_data.get("meta")
+        meta = self.resource_data.get("meta") or {}
         meta["name"] = name
+        self.resource_data["meta"] = meta
 
     @property
-    def aggregator_name(self):
+    def aggregator_name(self) -> str:
         """Property that returns the aggregator name."""
         if self._aggregator_name:
             return self._aggregator_name
@@ -338,18 +373,18 @@ class Aggregation(resource.SketchResource):
 
         return self._aggregator_name
 
-    def add_label(self, label):
+    def add_label(self, label: str) -> None:
         """Add a label to the aggregation.
 
         Args:
-            label (str): string with the label information.
+            label: string with the label information.
         """
         if label in self._labels:
             return
         self._labels.append(label)
         self.save()
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         """Returns a dict."""
         entries = {}
         entry_index = 1
@@ -360,7 +395,7 @@ class Aggregation(resource.SketchResource):
                 entry_index += 1
         return entries
 
-    def to_pandas(self):
+    def to_pandas(self) -> pandas.DataFrame:
         """Returns a pandas DataFrame."""
         panda_list = []
         data = self.lazyload_data()
@@ -370,11 +405,11 @@ class Aggregation(resource.SketchResource):
         return pandas.DataFrame(panda_list)
 
     @property
-    def updated_at(self):
+    def updated_at(self) -> str:
         """Returns a timestamp when the aggregation was last updated."""
         return self._updated_at
 
-    def generate_chart(self):
+    def generate_chart(self) -> altair.Chart:
         """Returns an altair Vega-lite chart."""
         if not self.chart_type:
             raise TypeError("Unable to generate chart, missing a chart type.")
@@ -392,7 +427,7 @@ class Aggregation(resource.SketchResource):
         vega_spec_string = json.dumps(vega_spec)
         return altair.Chart.from_json(vega_spec_string)
 
-    def save(self):
+    def save(self) -> str:
         """Save the aggregation in the database."""
         data = {
             "name": self.name,
@@ -425,9 +460,9 @@ class Aggregation(resource.SketchResource):
             return "Unable to determine ID of saved object."
         agg_data = objects[0]
         self._resource_id = agg_data.get("id", 0)
-        return "Saved aggregation to ID: {0:d}".format(self._resource_id)
+        return f"Saved aggregation to ID: {self._resource_id}"
 
-    def delete(self):
+    def delete(self) -> bool:
         """Deletes the aggregation from the store."""
         if not self._resource_id:
             logger.warning(
@@ -446,9 +481,13 @@ class Aggregation(resource.SketchResource):
 class AggregationGroup(resource.SketchResource):
     """Aggregation Group object."""
 
-    def __init__(self, sketch):
-        """Initialize the aggregation group."""
-        resource_uri = "sketches/{0:d}/aggregation/group/".format(sketch.id)
+    def __init__(self, sketch: sketch_lib.Sketch) -> None:
+        """Initialize the aggregation group.
+
+        Args:
+            sketch: An instance of Sketch object.
+        """
+        resource_uri = f"sketches/{sketch.id}/aggregation/group/"
         super().__init__(resource_uri=resource_uri, sketch=sketch)
 
         self._name = "N/A"
@@ -459,84 +498,98 @@ class AggregationGroup(resource.SketchResource):
         self._aggregations = []
         self._updated_at = ""
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return a string representation of the group."""
-        return "[{0:d}] {1:s} - {2:s}".format(
-            self._resource_id, self._name, self._description
-        )
+        return f"[{self._resource_id}] {self._name} - {self._description}"
 
     @property
-    def aggregations(self):
+    def aggregations(self) -> List[Aggregation]:
         """Property that returns a list of aggregations in the group."""
         return self._aggregations
 
     @property
-    def created_at(self):
+    def created_at(self) -> str:
         """Returns a timestamp when the aggregation group was created."""
         return self._created_at
 
     @property
-    def updated_at(self):
+    def updated_at(self) -> str:
         """Returns a timestamp when the aggregation group was updated."""
         return self._updated_at
 
-    def to_dict(self):
+    def to_dict(self) -> List[Dict[str, Any]]:
         """Returns the aggregation values as a dict."""
         data_frame = self.to_pandas()
         return data_frame.to_dict(orient="records")
 
     @property
-    def chart(self):
+    def chart(self) -> altair.Chart:
         """Property that returns an altair Vega-lite chart."""
         if not self._aggregations:
             return altair.Chart()
         return self.generate_chart()
 
     @property
-    def description(self):
+    def description(self) -> str:
         """Returns the description of the aggregation group."""
         return self._description
 
     @description.setter
-    def description(self, description):
-        """Sets the description of the aggregation group."""
+    def description(self, description: str) -> None:
+        """Sets the description of the aggregation group.
+
+        Args:
+            description: Description of the aggregation group.
+        """
         self._description = description
         self.save()
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Returns the name of the aggregation group."""
         return self._name
 
     @name.setter
-    def name(self, name):
-        """Sets the name of the aggregation group."""
+    def name(self, name: str) -> None:
+        """Sets the name of the aggregation group.
+
+        Args:
+            name: Name of the aggregation group.
+        """
         self._name = name
         self.save()
 
     @property
-    def orientation(self):
+    def orientation(self) -> str:
         """Returns the chart orientation."""
         return self._orientation
 
     @orientation.setter
-    def orientation(self, orientation):
-        """Sets the chart orientation."""
+    def orientation(self, orientation: str) -> None:
+        """Sets the chart orientation.
+
+        Args:
+            orientation: Chart orientation.
+        """
         self._orientation = orientation
         self.save()
 
     @property
-    def parameters(self):
+    def parameters(self) -> Dict[str, Any]:
         """Returns a dict with the group parameters."""
         return self._parameters
 
     @parameters.setter
-    def parameters(self, parameters):
-        """Sets the group parameters."""
+    def parameters(self, parameters: Dict[str, Any]) -> None:
+        """Sets the group parameters.
+
+        Args:
+            parameters: Aggregation group parameters.
+        """
         self._parameters = parameters
         self.save()
 
-    def delete(self):
+    def delete(self) -> bool:
         """Deletes the group from the store."""
         if not self._resource_id:
             logger.warning(
@@ -551,11 +604,11 @@ class AggregationGroup(resource.SketchResource):
         response = self.api.session.delete(resource_uri)
         return error.check_return_status(response, logger)
 
-    def from_dict(self, group_dict):
+    def from_dict(self, group_dict: Dict[str, Any]) -> None:
         """Feed group data from a dictionary.
 
         Args:
-            group_dict (dict): a dictionary with the aggregation group
+            group_dict: a dictionary with the aggregation group
                 information.
 
         Raises:
@@ -601,11 +654,11 @@ class AggregationGroup(resource.SketchResource):
             self._aggregations.append(agg_obj)
 
     # pylint: disable=arguments-renamed
-    def from_saved(self, group_id):
+    def from_saved(self, group_id: int) -> None:
         """Feed group data from a group ID.
 
         Args:
-            group_id (int): the group ID to fetch from the store.
+            group_id: the group ID to fetch from the store.
 
         Raises:
             TypeError: if the group ID does not exist.
@@ -622,7 +675,7 @@ class AggregationGroup(resource.SketchResource):
         group_dict["id"] = group_id
         self.from_dict(group_dict)
 
-    def generate_chart(self):
+    def generate_chart(self) -> Optional[altair.Chart]:
         """Returns an altair Vega-lite chart."""
         if not self._aggregations:
             return altair.Chart()
@@ -640,15 +693,15 @@ class AggregationGroup(resource.SketchResource):
         vega_spec_string = json.dumps(vega_spec)
         return altair.Chart.from_json(vega_spec_string)
 
-    def get_charts(self):
+    def get_charts(self) -> List[altair.Chart]:
         """Returns a list of altair Chart objects from each aggregation."""
         return [x.chart for x in self._aggregations]
 
-    def get_tables(self):
+    def get_tables(self) -> List[pandas.DataFrame]:
         """Returns a list of pandas DataFrame from each aggregation."""
-        return [x.table for x in self._aggregations]
+        return [x.to_pandas() for x in self._aggregations]
 
-    def save(self):
+    def save(self) -> bool:
         """Save the aggregation group in the database."""
         if not self._aggregations:
             return False
@@ -674,7 +727,7 @@ class AggregationGroup(resource.SketchResource):
         _ = self.lazyload_data(refresh_cache=True)
         return error.check_return_status(response, logger)
 
-    def to_pandas(self):
+    def to_pandas(self) -> pandas.DataFrame:
         """Returns a pandas DataFrame.
 
         Aggregation groups are meant for charts, not data frames. However

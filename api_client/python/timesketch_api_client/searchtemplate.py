@@ -26,7 +26,11 @@ class SearchTemplate(resource.BaseResource):
     """Search template object. TEST e2e"""
 
     def __init__(self, api):
-        """Initialize the search template object."""
+        """Initialize the search template object.
+
+        Args:
+            api (TimesketchApi): An instance of TimesketchApi object.
+        """
         super().__init__(api, "searchtemplates/")
         self._description = ""
         self._name = ""

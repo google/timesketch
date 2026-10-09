@@ -40,8 +40,8 @@ class Scenario(resource.BaseResource):
         """Initializes the Scenario object.
 
         Args:
-            sketch_id: ID of a sketch.
-            scenario_id: Primary key ID of the scenario.
+            sketch_id (int): ID of a sketch.
+            scenario_id (int): Primary key ID of the scenario.
             uuid: UUID of the scenario.
             api: An instance of the TimesketchApi object.
         """
@@ -89,11 +89,11 @@ class Scenario(resource.BaseResource):
         True.
 
         Args:
-            refresh_cache (bool): If True, forces a refresh of the cached data
+            refresh_cache: If True, forces a refresh of the cached data
                 from the API.
 
         Returns:
-            dict: A dictionary containing the resource data from the API.
+            A dictionary containing the resource data from the API.
         """
         if not self._is_populated or refresh_cache:
             super().lazyload_data(refresh_cache=refresh_cache)
@@ -150,7 +150,7 @@ class Scenario(resource.BaseResource):
         """Lists all facets for the scenario.
 
         Returns:
-            list[dict]: A list of dictionaries, each representing a facet.
+            A list of dictionaries, each representing a facet.
         """
         resource_url = (
             f"{self.api.api_root}/sketches/{self.sketch_id}/"
@@ -206,8 +206,8 @@ class Question(resource.BaseResource):
         """Initializes the Question object.
 
         Args:
-            sketch_id: ID of a sketch.
-            question_id: Primary key ID of the question.
+            sketch_id (int): ID of a sketch.
+            question_id (int): Primary key ID of the question.
             uuid: UUID of the question.
             api: An instance of the TimesketchApi object.
         """
@@ -257,11 +257,11 @@ class Question(resource.BaseResource):
         True.
 
         Args:
-            refresh_cache (bool): If True, forces a refresh of the cached data
+            refresh_cache: If True, forces a refresh of the cached data
                 from the API.
 
         Returns:
-            dict: A dictionary containing the resource data from the API.
+            A dictionary containing the resource data from the API.
         """
         if not self._is_populated or refresh_cache:
             super().lazyload_data(refresh_cache=refresh_cache)
