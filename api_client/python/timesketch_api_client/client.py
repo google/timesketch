@@ -688,13 +688,23 @@ class TimesketchApi:
         """
         return sketch.Sketch(sketch_id, api=self)
 
-    def get_sketches_by_name(self, sketch_name: str) -> list[sketch.Sketch]:
-        """Get a sketch by name.
+    def get_sketches_by_name(
+        self, sketch_name: str, include_archived: bool = True
+    ) -> list[sketch.Sketch]:
+        """Get all sketches with an exact matching name.
+
+        The lookup runs server side with the "search" scope, i.e. it covers
+        all sketches the user can read (owned, shared and public). The server
+        search is a partial, case-insensitive match on name and description,
+        so the results are filtered here for an exact, case-sensitive name
+        match.
 
         Args:
             sketch_name (str): The name of the sketch to find.
                 Warning: Timesketch allows multiple sketches with the same name.
-                The client library should therefore handle this potential conflict.
+                The caller is responsible for handling this potential conflict.
+            include_archived (bool): If archived sketches should be returned.
+                Defaults to True.
 
         Raises:
             KeyError: If no sketch with the specified name is found.
@@ -702,13 +712,14 @@ class TimesketchApi:
         Returns:
             list[sketch.Sketch]: A list of sketch objects.
         """
-
         # We still need to verify the match for the sketch name, as the search_query
         # also matches on partial (ILIKE) matches by default
         sketches = [
             sketch_obj
             for sketch_obj in self.list_sketches(
-                search_query=sketch_name, scope="search"
+                search_query=sketch_name,
+                scope="search",
+                include_archived=include_archived,
             )
             if sketch_obj.name == sketch_name
         ]
@@ -767,7 +778,7 @@ class TimesketchApi:
     def list_sketches(
         self,
         per_page=50,
-        scope="user",
+        scope=None,
         include_archived=True,
         search_query=None,
     ):
@@ -775,8 +786,8 @@ class TimesketchApi:
 
         Args:
             per_page (int): Number of items per page when paginating. Default is 50.
-            scope (str): What scope to get sketches as. Default to user, unless
-                search_query is specified.
+            scope (str): What scope to get sketches as. Defaults to "search" if
+                search_query is specified, otherwise to "user".
                 user: sketches owned by the user
                 recent: sketches that the user has actively searched in
                 shared: sketches shared with the user (but not owned by them)
@@ -786,16 +797,23 @@ class TimesketchApi:
                 all: all sketches the user has access to (owned and shared)
             include_archived (bool): If archived sketches should be returned.
             search_query (str): A query string to search for sketches by name
-                or description. When provided, the scope is automatically set
-                to "search" so that filtering happens server-side. The results
-                are then exact-matched against the query in Python to eliminate
-                partial (ILIKE) matches.
+                or description. Only supported with the "search" scope. The
+                server performs a partial, case-insensitive match, so results
+                may include sketches whose name only contains the query.
+
+        Raises:
+            ValueError: If search_query is used with a scope other than "search".
 
         Yields:
             Sketch objects instances.
         """
-        if search_query:  # ensure coherent behaviour when giving search_query
-            scope = "search"
+        if scope is None:
+            scope = "search" if search_query else "user"
+
+        if search_query and scope != "search":
+            raise ValueError(
+                f"search_query is only supported with scope 'search', not '{scope}'."
+            )
 
         url_params = {
             "per_page": per_page,

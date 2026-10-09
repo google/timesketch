@@ -67,8 +67,10 @@ creating a new one. Since sketch names are not unique in Timesketch, you can
 control how duplicates are handled with the `--sketch-strategy` flag:
 
 - `ask` (default): prompts the user to select the correct sketch interactively.
-- `newest`: automatically picks the most recently created sketch.
-- `oldest`: automatically picks the earliest created sketch.
+  If no terminal is available (e.g. in scripts or pipelines), the importer
+  exits with an error listing the matching sketch IDs instead.
+- `newest`: automatically picks the most recently created sketch (highest ID).
+- `oldest`: automatically picks the earliest created sketch (lowest ID).
 
 Example:
 

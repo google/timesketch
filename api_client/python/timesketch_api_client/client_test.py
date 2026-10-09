@@ -120,6 +120,36 @@ class TimesketchApiTest(unittest.TestCase):
             with self.assertRaises(KeyError):
                 self.api_client.get_sketches_by_name("my sketch")
 
+    def test_get_sketches_by_name_include_archived(self):
+        """Test that get_sketches_by_name passes include_archived through."""
+        with mock.patch.object(self.api_client, "list_sketches") as mock_list:
+            mock_list.return_value = iter(
+                [sketch_lib.Sketch(sketch_id=1, api=self.api_client, sketch_name="a")]
+            )
+            self.api_client.get_sketches_by_name("a", include_archived=False)
+            mock_list.assert_called_once_with(
+                search_query="a", scope="search", include_archived=False
+            )
+
+    def test_list_sketches_scope_defaults(self):
+        """Test the scope that list_sketches sends to the server by default."""
+        with mock.patch.object(
+            self.api_client, "fetch_resource_data", return_value={}
+        ) as mock_fetch:
+            list(self.api_client.list_sketches())
+            self.assertEqual(mock_fetch.call_args.kwargs["params"]["scope"], "user")
+            self.assertNotIn("search_query", mock_fetch.call_args.kwargs["params"])
+
+            list(self.api_client.list_sketches(search_query="foo"))
+            params = mock_fetch.call_args.kwargs["params"]
+            self.assertEqual(params["scope"], "search")
+            self.assertEqual(params["search_query"], "foo")
+
+    def test_list_sketches_search_query_with_wrong_scope(self):
+        """Test that search_query cannot be combined with a non-search scope."""
+        with self.assertRaises(ValueError):
+            list(self.api_client.list_sketches(scope="user", search_query="foo"))
+
 
 class TimesketchApiRetryTest(unittest.TestCase):
     """Test TimesketchApi client retry logic."""
