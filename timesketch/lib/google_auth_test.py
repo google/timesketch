@@ -23,6 +23,7 @@ from timesketch.lib.testlib import BaseTest
 from timesketch.lib.google_auth import decode_jwt
 from timesketch.lib.google_auth import validate_jwt
 from timesketch.lib.google_auth import get_public_key_for_jwt
+from timesketch.lib.google_auth import get_groups_from_jwt
 from timesketch.lib.google_auth import JwtValidationError
 from timesketch.lib.google_auth import JwtKeyError
 
@@ -431,3 +432,86 @@ class TestGoogleCloudOpenIdConnect(BaseTest):
 
         self.assertIsInstance(test_decoded_jwt, dict)
         self.assertEqual(test_decoded_jwt.get("email"), "test@example.com")
+
+
+class TestGetGroupsFromJwt(BaseTest):
+    """Tests for the google_auth.get_groups_from_jwt function."""
+
+    def test_get_groups_from_jwt(self):
+        """Test extracting groups from a decoded JWT for various configs."""
+        cases = [
+            (
+                "no claim name configured returns an empty list",
+                {"groups": ["Admins"]},
+                None,
+                None,
+                None,
+                [],
+            ),
+            (
+                "missing claim in the token returns an empty list",
+                {"email": "test@example.com"},
+                "groups",
+                None,
+                None,
+                [],
+            ),
+            (
+                "empty claim value returns an empty list",
+                {"groups": []},
+                "groups",
+                None,
+                None,
+                [],
+            ),
+            (
+                "list claim is stripped and empty entries are dropped",
+                {"groups": ["Admins", " Users ", ""]},
+                "groups",
+                None,
+                None,
+                ["Admins", "Users"],
+            ),
+            (
+                "string claim is split using the configured separator",
+                {"roles": "a;b; c ;"},
+                "roles",
+                ";",
+                None,
+                ["a", "b", "c"],
+            ),
+            (
+                "regex extracts the group name from each raw value",
+                {"groups": "CN=Admins,OU=X;CN=Users,OU=Y"},
+                "groups",
+                ";",
+                r"CN=([^,]+)",
+                ["Admins", "Users"],
+            ),
+            (
+                "values that don't match the regex are dropped",
+                {"groups": "no-match-here"},
+                "groups",
+                None,
+                r"CN=([^,]+)",
+                [],
+            ),
+        ]
+        for (
+            description,
+            decoded_jwt,
+            claim_name,
+            separator,
+            regex_pattern,
+            expected,
+        ) in cases:
+            with self.subTest(description):
+                self.assertEqual(
+                    get_groups_from_jwt(
+                        decoded_jwt,
+                        claim_name=claim_name,
+                        separator=separator,
+                        regex_pattern=regex_pattern,
+                    ),
+                    expected,
+                )
