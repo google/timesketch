@@ -340,6 +340,23 @@ class GoogleOpenIdConnectViewTest(BaseTest):
         user = User.query.filter_by(username="existing-admin@example.com").first()
         self.assertTrue(user.admin)
 
+    def test_sync_failure_does_not_log_the_user_in(self):
+        """Test a failing group sync leaves no authenticated session."""
+        self.app.config["GOOGLE_OIDC_GROUPS_CLAIM"] = "groups"
+        self.app.config["GOOGLE_OIDC_GROUPS_SYNC_ENABLED"] = True
+
+        with mock.patch(
+            "timesketch.views.auth._sync_oidc_groups",
+            side_effect=RuntimeError("sync failed"),
+        ):
+            with self.assertRaises(RuntimeError):
+                self._login_via_oidc(
+                    {"email": "newuser@example.com", "groups": ["Analysts"]}
+                )
+
+        with self.client.session_transaction() as sess:
+            self.assertNotIn("_user_id", sess)
+
     def test_login_extracts_groups_using_separator_and_regex(self):
         """Test the groups claim is parsed using the separator/regex config."""
         self.app.config["GOOGLE_OIDC_GROUPS_CLAIM"] = "groups"

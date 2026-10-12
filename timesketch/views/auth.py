@@ -663,12 +663,14 @@ def google_openid_connect():
     )
 
     user = User.get_or_create(username=validated_email, name=validated_email)
-    login_user(user)
-
     _sync_oidc_groups(user, groups_claim, token_groups, allowed_groups, validated_email)
 
     db_session.add(user)
     db_session.commit()
+
+    # Only log the user in once the sync succeeded, so a failure can't leave a
+    # session behind with a pending admin revocation.
+    login_user(user)
 
     # Log the user in and setup the session.
     if current_user.is_authenticated:
