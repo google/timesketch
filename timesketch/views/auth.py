@@ -627,11 +627,15 @@ def _sync_oidc_groups(
     groups_to_sync = _resolve_oidc_groups_to_sync(token_groups, allowed_groups)
     _sync_user_groups(user, groups_to_sync)
 
-    admin_group = current_app.config.get("GOOGLE_OIDC_ADMIN_GROUP", "")
-    is_admin_group_member = admin_group in token_groups
     remove_stale = bool(current_app.config.get("GOOGLE_OIDC_GROUPS_REMOVE_STALE"))
 
-    _sync_admin_privileges(user, is_admin_group_member, remove_stale, validated_email)
+    # Never touch admin status unless an admin group is configured, otherwise
+    # REMOVE_STALE would revoke admins created via tsctl.
+    admin_group = current_app.config.get("GOOGLE_OIDC_ADMIN_GROUP")
+    if admin_group:
+        _sync_admin_privileges(
+            user, admin_group in token_groups, remove_stale, validated_email
+        )
 
     if remove_stale:
         _remove_stale_user_groups(user, groups_to_sync)

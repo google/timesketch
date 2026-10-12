@@ -324,6 +324,22 @@ class GoogleOpenIdConnectViewTest(BaseTest):
             [group.name for group in user.groups], ["Admins", "Analysts"]
         )
 
+    def test_remove_stale_without_admin_group_keeps_admin(self):
+        """Test REMOVE_STALE doesn't revoke admin when no ADMIN_GROUP is set."""
+        self._create_user("existing-admin@example.com", set_admin=True)
+        self.app.config["GOOGLE_OIDC_GROUPS_CLAIM"] = "groups"
+        self.app.config["GOOGLE_OIDC_GROUPS_SYNC_ENABLED"] = True
+        self.app.config["GOOGLE_OIDC_GROUPS_REMOVE_STALE"] = True
+        self.app.config["GOOGLE_OIDC_ADMIN_GROUP"] = ""
+
+        response = self._login_via_oidc(
+            {"email": "existing-admin@example.com", "groups": ["Analysts"]}
+        )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+        user = User.query.filter_by(username="existing-admin@example.com").first()
+        self.assertTrue(user.admin)
+
     def test_login_extracts_groups_using_separator_and_regex(self):
         """Test the groups claim is parsed using the separator/regex config."""
         self.app.config["GOOGLE_OIDC_GROUPS_CLAIM"] = "groups"
