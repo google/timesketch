@@ -31,10 +31,10 @@ jobs:
       - name: Run e2e tests
         run: |
           docker compose -f docker/e2e/docker-compose.yml exec -T timesketch git config --global --add safe.directory /usr/local/src/timesketch
-          docker compose -f docker/e2e/docker-compose.yml exec -T -e TEST_PLASO_FILE=evtx_20260512.plaso timesketch python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py
+          docker compose -f docker/e2e/docker-compose.yml exec -T -e TEST_PLASO_FILE=evtx_20260720.plaso timesketch python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py
       - name: Dump docker logs on failure
         if: failure()
-        uses: jwalton/gh-docker-logs@v2
+        uses: jwalton/gh-docker-logs@2741064ab9d7af54b0b1ffb6076cf64c16f0220e  # v2.2.2
   PyPi-plaso-staging-opensearch-v2-ubuntu2604:
     continue-on-error: true
     runs-on: ubuntu-latest
@@ -55,7 +55,7 @@ jobs:
           docker compose -f docker/e2e/docker-compose.yml exec -T -e TEST_PLASO_FILE=evtx_20260720.plaso timesketch python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py
       - name: Dump docker logs on failure
         if: failure()
-        uses: jwalton/gh-docker-logs@v2
+        uses: jwalton/gh-docker-logs@2741064ab9d7af54b0b1ffb6076cf64c16f0220e  # v2.2.2
   PyPi-plaso-stable-opensearch-v2-ubuntu2604-telemetry:
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -73,7 +73,7 @@ jobs:
       - name: Run e2e tests
         run: |
           docker compose -f docker/e2e/docker-compose.yml exec -T timesketch git config --global --add safe.directory /usr/local/src/timesketch
-          docker compose -f docker/e2e/docker-compose.yml exec -T -e TEST_PLASO_FILE=evtx_20260512.plaso timesketch python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py telemetry_test
+          docker compose -f docker/e2e/docker-compose.yml exec -T -e TEST_PLASO_FILE=evtx_20260720.plaso timesketch python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py telemetry_test
       - name: Dump docker logs on failure
         if: failure()
-        uses: jwalton/gh-docker-logs@v2
+        uses: jwalton/gh-docker-logs@2741064ab9d7af54b0b1ffb6076cf64c16f0220e  # v2.2.2
