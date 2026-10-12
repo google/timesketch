@@ -29,6 +29,7 @@ from typing import Generator, List, Dict, Optional, Any, Union
 from dateutil import parser, relativedelta
 from packaging import version
 from opensearchpy import OpenSearch
+from opensearchpy.exceptions import AuthorizationException
 from opensearchpy.exceptions import ConnectionTimeout
 from opensearchpy.exceptions import NotFoundError
 from opensearchpy.exceptions import RequestError
@@ -1702,6 +1703,31 @@ class OpenSearchDataStore:
 
         return None
 
+    def _authorization_error(self, index_name: str):
+        """Logs and returns an error for denied access to an index.
+
+        Args:
+            index_name: Name of the index that access was denied to.
+
+        Returns:
+            A DatastoreAuthorizationError with a descriptive message.
+        """
+        index_prefix = current_app.config.get("OPENSEARCH_INDEX_PREFIX") or ""
+        message = (
+            f"OpenSearch denied access to index [{index_name}] (HTTP 403). "
+            "Check the OpenSearch permissions of the Timesketch service account"
+        )
+        if index_prefix:
+            message += (
+                f". They need to cover the configured OPENSEARCH_INDEX_PREFIX "
+                f"'{index_prefix}'. Indices created before the prefix was set "
+                "are not covered by it, the prefix is only supported on new "
+                "installations"
+            )
+        message += "."
+        os_logger.error(message)
+        return errors.DatastoreAuthorizationError(message)
+
     def create_index(
         self, index_name: str = uuid4().hex, mappings: Optional[Dict] = None
     ):
@@ -1714,6 +1740,10 @@ class OpenSearchDataStore:
         Returns:
             Index name in string format.
             Document type in string format.
+
+        Raises:
+            DatastoreAuthorizationError: If OpenSearch denies access to the
+                index (HTTP 403).
         """
         if mappings:
             _document_mapping = mappings
@@ -1725,11 +1755,18 @@ class OpenSearchDataStore:
                 }
             }
 
-        if not self.client.indices.exists(index_name):
+        try:
+            index_exists = self.client.indices.exists(index_name)
+        except AuthorizationException as e:
+            raise self._authorization_error(index_name) from e
+
+        if not index_exists:
             try:
                 self.client.indices.create(
                     index=index_name, body={"mappings": _document_mapping}
                 )
+            except AuthorizationException as e:
+                raise self._authorization_error(index_name) from e
             except ConnectionError as e:
                 raise errors.DatastoreConnectionError(
                     "Unable to connect to Timesketch backend when creating "

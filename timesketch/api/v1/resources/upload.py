@@ -30,6 +30,7 @@ from flask_login import current_user
 
 from timesketch.api.v1 import resources
 from timesketch.api.v1 import utils
+from timesketch.lib import utils as lib_utils
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
@@ -108,7 +109,7 @@ class UploadFileResource(resources.ResourceMixin, Resource):
             ):
                 return index
 
-        index_name = index_name or uuid.uuid4().hex
+        index_name = index_name or lib_utils.generate_index_name()
         searchindex = SearchIndex.get_or_create(
             name=name, index_name=index_name, description=description, user=current_user
         )

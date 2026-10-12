@@ -31,6 +31,7 @@ import altair as alt
 import pandas as pd
 
 from timesketch.lib import ontology
+from timesketch.lib import utils as lib_utils
 from timesketch.lib.aggregators import manager as aggregator_manager
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
 from timesketch.models import db_session
@@ -319,12 +320,14 @@ def is_valid_index_name(index_name):
     """Validate index name.
 
     Args:
-        index_name: string with the index name in uuid.uuid4.hex format.
+        index_name: string with the index name in uuid.uuid4.hex format,
+            optionally prefixed with the configured OPENSEARCH_INDEX_PREFIX.
 
     Returns:
         A boolean indicating whether the index name is valid or not.
     """
-    regex = re.compile(r"[0-9a-f]{32}$", re.I)
+    prefix = re.escape(lib_utils.get_index_prefix())
+    regex = re.compile(rf"(?:{prefix})?[0-9a-f]{{32}}", re.I)
     match = regex.fullmatch(index_name)
     return bool(match)
 

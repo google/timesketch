@@ -13,15 +13,12 @@
 # limitations under the License.
 """Event resources for version 1 of the Timesketch API."""
 
-import codecs
 import datetime
-import hashlib
 import json
 import logging
 import math
 import time
 from typing import Optional
-import six
 
 import dateutil
 from opensearchpy.exceptions import RequestError
@@ -39,6 +36,8 @@ from flask_login import current_user
 
 from timesketch.api.v1 import resources
 from timesketch.lib import forms
+from timesketch.lib import utils as lib_utils
+from timesketch.lib.errors import DatastoreAuthorizationError
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
@@ -126,7 +125,7 @@ class EventCreateResource(resources.ResourceMixin, Resource):
             form = request.data
 
         timeline_name = "Manual events"
-        index_name_seed = f"timesketch_{sketch_id:d}"
+        manual_events_description = "internal timeline for user-created events"
 
         date_string = form.get("date_string")
         if not date_string:
@@ -177,11 +176,19 @@ class EventCreateResource(resources.ResourceMixin, Resource):
 
         event["tag"] = tag
 
-        # We do not need a human readable filename or
-        # datastore index name, so we use UUIDs here.
-        index_name = hashlib.md5(index_name_seed.encode()).hexdigest()
-        if six.PY2:
-            index_name = codecs.decode(index_name, "utf-8")
+        # Reuse the existing manual events index of this sketch. The database
+        # is the ground truth, this also covers indices that were created with
+        # older naming schemes. If the sketch has none, create a new index.
+        index_name = next(
+            (
+                sketch_timeline.searchindex.index_name
+                for sketch_timeline in sketch.timelines
+                if sketch_timeline.searchindex.description == manual_events_description
+            ),
+            None,
+        )
+        if not index_name:
+            index_name = lib_utils.generate_index_name()
 
         # Try to create index
         timeline = None
@@ -192,7 +199,7 @@ class EventCreateResource(resources.ResourceMixin, Resource):
             # Create the search index in the Timesketch database
             searchindex = SearchIndex.get_or_create(
                 name=timeline_name,
-                description="internal timeline for user-created events",
+                description=manual_events_description,
                 user=current_user,
                 index_name=index_name,
             )
@@ -221,6 +228,8 @@ class EventCreateResource(resources.ResourceMixin, Resource):
                 db_session.add(timeline)
                 db_session.commit()
 
+        except DatastoreAuthorizationError as e:
+            abort(HTTP_STATUS_CODE_FORBIDDEN, f"Failed to add event ({e!s})")
         # TODO: Can this be narrowed down, both in terms of the scope it
         # applies to, as well as not to catch a generic exception.
         except Exception as e:  # pylint: disable=broad-except

@@ -38,6 +38,7 @@ from timesketch.lib import telemetry
 
 from timesketch.api.v1.routes import API_ROUTES as V1_API_ROUTES
 from timesketch.lib.errors import ApiHTTPError
+from timesketch.lib.utils import is_valid_index_prefix
 from timesketch.models import configure_engine
 from timesketch.models import init_db
 from timesketch.models.user import User
@@ -148,6 +149,17 @@ def create_app(
             "Please update your configuration.\n"
             "To generate a key you can use openssl:\n\n"
             "$ openssl rand -base64 32\n\n"
+        )
+        sys.exit()
+
+    # Make sure that the optional OpenSearch index prefix is valid.
+    index_prefix = app.config.get("OPENSEARCH_INDEX_PREFIX")
+    if not is_valid_index_prefix(index_prefix):
+        sys.stderr.write(
+            f"ERROR: Invalid OPENSEARCH_INDEX_PREFIX {index_prefix!r}. "
+            "The prefix must be lowercase, start with a letter or digit, "
+            "only contain [a-z0-9_-] and be at most 63 characters long. "
+            "Leave it empty to disable the prefix.\n"
         )
         sys.exit()
 

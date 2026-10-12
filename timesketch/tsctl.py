@@ -1136,6 +1136,8 @@ def info():
           "-dirty" suffix if there are uncommitted changes).
         - Versions of essential tools like psort (from Plaso), Node.js, npm, yarn,
           Python, and pip.
+        - The configured OpenSearch index prefix and a warning if existing
+          search indices do not use it.
     """
     print(f"Timesketch version: {version.get_version()}")  # Displays Timesketch version
 
@@ -1230,6 +1232,25 @@ def info():
         print(f"OpenSearch version: {es.version}")
     except Exception as e:  # pylint: disable=broad-except
         print(f"OpenSearch: Not running or not configured ({e})")
+
+    # Get OpenSearch index prefix and check that all indices use it.
+    index_prefix = current_app.config.get("OPENSEARCH_INDEX_PREFIX") or ""
+    print(f"OpenSearch index prefix: {index_prefix!r}")
+    if index_prefix:
+        try:
+            total_indices = SearchIndex.query.count()
+            unprefixed_indices = SearchIndex.query.filter(
+                ~SearchIndex.index_name.startswith(index_prefix, autoescape=True)
+            ).count()
+            if unprefixed_indices:
+                print(
+                    f"WARNING: {unprefixed_indices} of {total_indices} search "
+                    "indices do not use the configured OpenSearch index prefix "
+                    f"{index_prefix!r}. The index prefix is only supported on "
+                    "new installations, see the admin documentation."
+                )
+        except Exception as e:  # pylint: disable=broad-except
+            print(f"Unable to check search index prefixes ({e})")
 
     # Get Redis version
     try:

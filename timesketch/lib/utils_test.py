@@ -25,6 +25,9 @@ from timesketch.lib.utils import check_mapping_errors
 from timesketch.lib.utils import _convert_timestamp_to_datetime
 from timesketch.lib.utils import _validate_csv_fields
 from timesketch.lib.utils import rename_jsonl_headers
+from timesketch.lib.utils import generate_index_name
+from timesketch.lib.utils import get_index_prefix
+from timesketch.lib.utils import is_valid_index_prefix
 
 TEST_CSV = "tests/test_events/sigma_events.csv"
 ISO8601_REGEX = (
@@ -530,3 +533,60 @@ class TestUtils(BaseTest):
         # Test NaN
         dt_nan = _convert_timestamp_to_datetime(float("nan"))
         self.assertTrue(pd.isna(dt_nan))
+
+
+class TestIndexPrefixUtils(BaseTest):
+    """Tests for the OpenSearch index prefix helpers."""
+
+    def tearDown(self):
+        self.app.config["OPENSEARCH_INDEX_PREFIX"] = ""
+        super().tearDown()
+
+    def test_get_index_prefix(self):
+        """Test that unset or empty prefixes are returned as empty string."""
+        self.app.config.pop("OPENSEARCH_INDEX_PREFIX", None)
+        self.assertEqual(get_index_prefix(), "")
+        self.app.config["OPENSEARCH_INDEX_PREFIX"] = None
+        self.assertEqual(get_index_prefix(), "")
+        self.app.config["OPENSEARCH_INDEX_PREFIX"] = ""
+        self.assertEqual(get_index_prefix(), "")
+        self.app.config["OPENSEARCH_INDEX_PREFIX"] = "timesketch-"
+        self.assertEqual(get_index_prefix(), "timesketch-")
+
+    def test_is_valid_index_prefix(self):
+        """Test validation of index prefixes."""
+        for prefix in (None, "", "a", "ts-", "timesketch_", "ts1-prod-", "a" * 63):
+            self.assertTrue(is_valid_index_prefix(prefix), prefix)
+
+        invalid_prefixes = (
+            "Timesketch-",
+            "-timesketch",
+            "_timesketch",
+            "+timesketch",
+            "time sketch",
+            "timesketch*",
+            "timesketch/",
+            "timesketch.",
+            "a" * 64,
+            123,
+            True,
+            ["timesketch-"],
+        )
+        for prefix in invalid_prefixes:
+            self.assertFalse(is_valid_index_prefix(prefix), prefix)
+
+    def test_generate_index_name_without_prefix(self):
+        """Test that names are bare UUIDs when no prefix is configured."""
+        self.app.config["OPENSEARCH_INDEX_PREFIX"] = ""
+        first_name = generate_index_name()
+        second_name = generate_index_name()
+        self.assertRegex(first_name, r"^[0-9a-f]{32}$")
+        self.assertNotEqual(first_name, second_name)
+
+    def test_generate_index_name_with_prefix(self):
+        """Test that names start with the configured prefix."""
+        self.app.config["OPENSEARCH_INDEX_PREFIX"] = "timesketch-"
+        first_name = generate_index_name()
+        second_name = generate_index_name()
+        self.assertRegex(first_name, r"^timesketch-[0-9a-f]{32}$")
+        self.assertNotEqual(first_name, second_name)

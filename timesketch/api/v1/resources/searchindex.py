@@ -24,6 +24,7 @@ from flask_login import current_user
 
 from timesketch.api.v1 import resources
 from timesketch.lib import forms
+from timesketch.lib.errors import DatastoreAuthorizationError
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
@@ -85,10 +86,17 @@ class SearchIndexListResource(resources.ResourceMixin, Resource):
             if public:
                 searchindex.grant_permission(permission="read", user=None)
 
-            datastore = self.datastore
-
-            if not datastore.client.indices.exists(index=es_index_name):
+            # create_index() only creates the index if it does not exist yet.
+            try:
                 self.datastore.create_index(index_name=es_index_name)
+            except DatastoreAuthorizationError as e:
+                searchindex.set_status("fail")
+                db_session.add(searchindex)
+                db_session.commit()
+                abort(
+                    HTTP_STATUS_CODE_FORBIDDEN,
+                    f"Unable to create searchindex ({e!s})",
+                )
 
             db_session.add(searchindex)
             db_session.commit()
