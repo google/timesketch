@@ -36,6 +36,8 @@ from timesketch.models.sketch import InvestigativeQuestion
 from timesketch.models.sketch import InvestigativeQuestionApproach
 from timesketch.models.sketch import Facet
 from timesketch.models.sketch import Timeline
+from timesketch.models.sketch import DataSource
+from timesketch.models.sketch import View
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import SearchTemplate
@@ -668,6 +670,47 @@ class SketchResourceTest(BaseTest):
         response = self.client.delete(resource_url)
         self.assertEqual(HTTP_STATUS_CODE_OK, response.status_code)
 
+    def test_export_archived_sketch_with_read_access(self):
+        """Test that a read-only user cannot export an archived sketch.
+
+        Exporting an archived sketch temporarily unarchives it, which needs the
+        same access rights as unarchiving it.
+        """
+        self.login()
+        data = {"name": "test_export_archived", "description": "test"}
+        response = self.client.post(
+            "/api/v1/sketches/",
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+        self.assertEqual(HTTP_STATUS_CODE_CREATED, response.status_code)
+        created_id = response.json["objects"][0]["id"]
+
+        resource_url = f"/api/v1/sketches/{created_id}/archive/"
+        response = self.client.post(
+            resource_url,
+            data=json.dumps({"action": "archive"}),
+            content_type="application/json",
+        )
+        self.assert200(response)
+
+        sketch = Sketch.get_by_id(created_id)
+        sketch.grant_permission(permission="read", user=self.user2)
+        db_session.commit()
+
+        self.login(username="test2")
+        for action in ("unarchive", "export"):
+            response = self.client.post(
+                resource_url,
+                data=json.dumps({"action": action}),
+                content_type="application/json",
+            )
+            self.assertEqual(HTTP_STATUS_CODE_FORBIDDEN, response.status_code)
+
+        db_session.expire_all()
+        sketch = Sketch.get_by_id(created_id)
+        self.assertEqual(sketch.get_status.status, "archived")
+
 
 class ViewListResourceTest(BaseTest):
     """Test ViewListResource."""
@@ -736,6 +779,89 @@ class ViewResourceTest(BaseTest):
         self.login()
         response = self.client.get("/api/v1/sketches/1/views/2/")
         self.assert404(response)
+
+    def test_get_view_stores_validated_filter(self):
+        """Test that getting a view with write access stores the filter."""
+        self.login()
+        response = self.client.get(self.resource_url)
+        self.assert200(response)
+
+        db_session.expire_all()
+        view = View.get_by_id(1)
+        self.assertEqual(view.query_filter, response.json["objects"][0]["query_filter"])
+        self.assertNotEqual(view.query_filter, json.dumps({}))
+
+    def test_get_view_with_read_access(self):
+        """Test that getting a view with read access does not change it."""
+        self.sketch1.grant_permission(permission="read", user=self.user2)
+        db_session.commit()
+
+        self.login(username="test2")
+        response = self.client.get(self.resource_url)
+        self.assert200(response)
+        self.assertEqual(response.json["objects"][0]["name"], "View 1")
+        self.assertNotEqual(response.json["objects"][0]["query_filter"], "{}")
+
+        db_session.expire_all()
+        view = View.get_by_id(1)
+        self.assertEqual(view.query_filter, json.dumps({}))
+
+
+class DataSourceResourceTest(BaseTest):
+    """Test DataSourceResource."""
+
+    resource_url = "/api/v1/sketches/1/datasource/1/"
+
+    def setUp(self):
+        """Set up the tests."""
+        super().setUp()
+        datasource = DataSource(
+            timeline=self.timeline,
+            user=self.user1,
+            provider="test_provider",
+            context="test_context",
+            file_on_disk="",
+            file_size=0,
+            original_filename="",
+            data_label="data",
+        )
+        db_session.add(datasource)
+        self.sketch1.grant_permission(permission="read", user=self.user2)
+        db_session.commit()
+
+    def _update_datasource(self):
+        """Sends a request to update the data source."""
+        data = {"provider": "new_provider", "context": "new_context"}
+        return self.client.post(
+            self.resource_url,
+            data=json.dumps(data, ensure_ascii=False),
+            content_type="application/json",
+        )
+
+    def test_update_datasource(self):
+        """Test that a user with write access can update a data source."""
+        self.login()
+        response = self._update_datasource()
+        self.assert200(response)
+
+        db_session.expire_all()
+        datasource = DataSource.get_by_id(1)
+        self.assertEqual(datasource.provider, "new_provider")
+        self.assertEqual(datasource.context, "new_context")
+
+    def test_update_datasource_with_read_access(self):
+        """Test that a user with read access cannot update a data source."""
+        self.login(username="test2")
+        response = self.client.get(self.resource_url)
+        self.assert200(response)
+
+        response = self._update_datasource()
+        self.assertEqual(HTTP_STATUS_CODE_FORBIDDEN, response.status_code)
+
+        db_session.expire_all()
+        datasource = DataSource.get_by_id(1)
+        self.assertEqual(datasource.provider, "test_provider")
+        self.assertEqual(datasource.context, "test_context")
 
 
 class SearchTemplateResourceTest(BaseTest):
