@@ -162,6 +162,42 @@ class Sketch(resource.BaseResource):
         return meta.get("last_activity", "")
 
     @property
+    def created_at(self):
+        """Property that returns sketch creation time.
+
+        Returns:
+            str: Sketch creation time as string.
+        """
+        data = self.lazyload_data()
+        objects = data.get("objects")
+        if not objects:
+            return ""
+        data_object = objects[0]
+        created_at_string = data_object.get("created_at", "")
+        return created_at_string
+
+    @property
+    def creator(self):
+        """Property that returns sketch creator.
+
+        Returns:
+            str: Sketch creator as string.
+        """
+        data = self.lazyload_data()
+        objects = data.get("objects")
+        if not objects:
+            return ""
+        data_object = objects[0]
+        try:
+            username_string = data_object.get("user").get("username")
+            if not username_string:
+                return ""
+            return username_string
+        except (AttributeError, TypeError) as e:
+            logger.error("Error getting sketch creator: %s", e)
+            return ""
+
+    @property
     def my_acl(self):
         """Property that returns back the ACL for the current user."""
         data = self.lazyload_data(refresh_cache=True)
@@ -1374,49 +1410,6 @@ class Sketch(resource.BaseResource):
         )
 
         return aggregation_obj
-
-    def store_aggregation(
-        self,
-        name,
-        description,
-        aggregator_name,
-        aggregator_parameters,
-        chart_type="",
-    ):
-        """Store an aggregation in the sketch.
-
-        Args:
-            name (str): a name that will be associated with the aggregation.
-            description (str): description of the aggregation, visible in the UI.
-            aggregator_name (str): name of the aggregator class.
-            aggregator_parameters (dict): parameters of the aggregator.
-            chart_type (str): string representing the chart type.
-
-        Raises:
-            RuntimeError: if the client is unable to store the aggregation.
-
-        Returns:
-          A stored aggregation object or None if not stored.
-        """
-        if self.is_archived():
-            raise RuntimeError("Unable to store an aggregator on an archived sketch.")
-
-        # TODO: Deprecate this function.
-        logger.warning(
-            "This function is about to be deprecated, please use the "
-            "`.save()` function of an aggregation object instead"
-        )
-
-        aggregator_obj = self.run_aggregator(aggregator_name, aggregator_parameters)
-        aggregator_obj.name = name
-        aggregator_obj.description = description
-        if chart_type:
-            aggregator_obj.chart_type = chart_type
-        if aggregator_obj.save():
-            _ = self.lazyload_data(refresh_cache=True)
-            return aggregator_obj
-
-        return None
 
     def comment_event(self, event_id, index, comment_text):
         """Adds a comment to a single event.
