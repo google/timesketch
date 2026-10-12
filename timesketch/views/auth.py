@@ -13,7 +13,9 @@
 # limitations under the License.
 """This module implements HTTP request handlers for the user views."""
 
+import functools
 import logging
+import re
 from typing import Optional
 from urllib.parse import urlparse
 
@@ -37,6 +39,7 @@ from flask_login import logout_user
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_UNAUTHORIZED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
+from timesketch.lib.definitions import HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.forms import UsernamePasswordForm
 from timesketch.lib.google_auth import get_public_key_for_jwt
@@ -514,63 +517,113 @@ def _fetch_validated_oidc_jwt(code):
     return decoded_jwt
 
 
-def _check_oidc_user_allowed(validated_email):
-    """Abort if GOOGLE_OIDC_ALLOWED_USERS is set and the user isn't in it."""
-    allowed_users = current_app.config.get("GOOGLE_OIDC_ALLOWED_USERS")
-    if allowed_users and validated_email not in allowed_users:
-        return abort(
-            HTTP_STATUS_CODE_UNAUTHORIZED, "Unauthorized request, user not allowed"
+@functools.lru_cache(maxsize=None)
+def _compile_groups_regex(pattern):
+    """Compile GOOGLE_OIDC_GROUPS_REGEX once; abort on an invalid pattern.
+
+    Failures are not cached by lru_cache, so a bad pattern is reported on every
+    login attempt until the configuration is fixed.
+    """
+    try:
+        return re.compile(pattern)
+    except re.error as e:
+        current_app.logger.error(
+            "Invalid GOOGLE_OIDC_GROUPS_REGEX configuration [%s]: %s", pattern, e
         )
-    return None
+        return abort(
+            HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
+            "OIDC groups configuration error, please contact an administrator",
+        )
 
 
-def _get_oidc_token_groups(decoded_jwt):
+def _get_oidc_token_groups(decoded_jwt, validated_email):
     """Extract the configured groups claim and the token's group names.
+
+    Aborts if the provider flags the claim as incomplete (e.g. Entra ID group
+    overage), since syncing from a partial list could strip memberships.
 
     Returns:
         Tuple of (groups_claim, token_groups).
     """
     groups_claim = current_app.config.get("GOOGLE_OIDC_GROUPS_CLAIM")
+    if not groups_claim:
+        return None, []
+
+    claim_names = decoded_jwt.get("_claim_names")
+    if isinstance(claim_names, dict) and groups_claim in claim_names:
+        current_app.logger.error(
+            "OIDC groups claim [%s] is incomplete for user [%s] (listed in "
+            "_claim_names, e.g. group overage). Rejecting login.",
+            groups_claim,
+            validated_email,
+        )
+        return abort(
+            HTTP_STATUS_CODE_UNAUTHORIZED,
+            f"The identity provider did not return the full '{groups_claim}' "
+            "claim (too many groups). Contact an administrator.",
+        )
+
+    if groups_claim not in decoded_jwt:
+        current_app.logger.warning(
+            "Configured OIDC groups claim [%s] is missing from the token of "
+            "user [%s]. Check the provider claim mapping and requested scopes.",
+            groups_claim,
+            validated_email,
+        )
+
     groups_regex = current_app.config.get("GOOGLE_OIDC_GROUPS_REGEX")
     token_groups = get_groups_from_jwt(
         decoded_jwt,
         claim_name=groups_claim,
         separator=current_app.config.get("GOOGLE_OIDC_GROUPS_SEPARATOR"),
-        regex_pattern=rf"{groups_regex}" if groups_regex else None,
+        regex_pattern=_compile_groups_regex(groups_regex) if groups_regex else None,
     )
     return groups_claim, token_groups
 
 
-def _enforce_oidc_allowed_groups(groups_claim, token_groups, validated_email):
-    """Abort if GOOGLE_OIDC_ALLOWED_GROUPS is set and the user isn't a member.
+def _enforce_oidc_access(decoded_jwt, validated_email, groups_claim, token_groups):
+    """Abort unless the user is in the allowed users or allowed groups.
+
+    The two lists add up: a user is allowed if listed explicitly or a member of
+    an allowed group. If neither is configured, every user is allowed.
 
     Returns:
         The configured allowed groups list, or None if not configured.
     """
+    allowed_users = current_app.config.get("GOOGLE_OIDC_ALLOWED_USERS")
     allowed_groups = current_app.config.get("GOOGLE_OIDC_ALLOWED_GROUPS")
-    if not allowed_groups:
+    if not (allowed_users or allowed_groups):
         return None
 
-    if not groups_claim:
+    if allowed_users and validated_email in allowed_users:
+        return allowed_groups or None
+
+    if allowed_groups and set(token_groups) & set(allowed_groups):
+        return allowed_groups
+
+    if allowed_groups and not groups_claim:
         current_app.logger.warning(
             "GOOGLE_OIDC_ALLOWED_GROUPS is set but GOOGLE_OIDC_GROUPS_CLAIM "
             "is not configured. Access control will reject all users."
         )
 
-    if not set(token_groups) & set(allowed_groups):
-        current_app.logger.warning(
-            "Unauthorized OIDC login attempt for user [%s]: not a member "
-            "of any allowed group %s (token groups: %s)",
-            validated_email,
-            allowed_groups,
-            token_groups,
+    current_app.logger.warning(
+        "Unauthorized OIDC login attempt for user [%s]: not in allowed users "
+        "and not in any allowed group (groups claim present: %s, token "
+        "groups: %d, allowed groups: %d)",
+        validated_email,
+        bool(groups_claim) and groups_claim in decoded_jwt,
+        len(token_groups),
+        len(allowed_groups or []),
+    )
+    if allowed_groups:
+        message = (
+            "Unauthorized request, user is not allowed or not a member of an "
+            "allowed group"
         )
-        return abort(
-            HTTP_STATUS_CODE_UNAUTHORIZED,
-            "Unauthorized request, user is not a member of an allowed group",
-        )
-
-    return allowed_groups
+    else:
+        message = "Unauthorized request, user not allowed"
+    return abort(HTTP_STATUS_CODE_UNAUTHORIZED, message)
 
 
 def _resolve_oidc_groups_to_sync(token_groups, allowed_groups):
@@ -688,11 +741,10 @@ def google_openid_connect():
     decoded_jwt = _fetch_validated_oidc_jwt(code)
 
     validated_email = decoded_jwt.get("email")
-    _check_oidc_user_allowed(validated_email)
 
-    groups_claim, token_groups = _get_oidc_token_groups(decoded_jwt)
-    allowed_groups = _enforce_oidc_allowed_groups(
-        groups_claim, token_groups, validated_email
+    groups_claim, token_groups = _get_oidc_token_groups(decoded_jwt, validated_email)
+    allowed_groups = _enforce_oidc_access(
+        decoded_jwt, validated_email, groups_claim, token_groups
     )
 
     user = User.get_or_create(username=validated_email, name=validated_email)
