@@ -15,3 +15,4 @@
 
 SUPPORTED_OUTPUT_FORMATS = ["text", "csv", "tabular", "json"]
 DEFAULT_OUTPUT_FORMAT = "tabular"
+DEFAULT_CONFIG_SECTION = "timesketch"
