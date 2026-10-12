@@ -17,7 +17,7 @@
     "cytoscape-dagre": "^3.0.0",
     "cytoscape-spread": "^3.0.0",
     "dayjs": "^1.11.13",
-    "dompurify": "^3.4.11",
+    "dompurify": "^3.4.12",
     "jspdf": "^4.2.1",
     "marked": "^15.0.11",
     "roboto-fontface": "*",
