@@ -1592,6 +1592,20 @@ class EventCreateResourceTest(BaseTest):
         )
 
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_manual_events_timeline_without_searchindex(self):
+        """Test that timelines without a search index are skipped."""
+        self._create_timeline(
+            name="No searchindex",
+            sketch=self.sketch1,
+            searchindex=None,
+            user=self.user1,
+        )
+        self.login()
+        response = self._add_manual_event()
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+        self.assertRegex(self._manual_index_name(response), r"^[0-9a-f]{32}$")
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
     def test_manual_events_authorization_error(self):
         """Test that a denied index creation returns a clear 403."""
         self.login()

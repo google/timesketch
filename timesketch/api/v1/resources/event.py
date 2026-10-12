@@ -183,7 +183,8 @@ class EventCreateResource(resources.ResourceMixin, Resource):
             (
                 sketch_timeline.searchindex.index_name
                 for sketch_timeline in sketch.timelines
-                if sketch_timeline.searchindex.description == manual_events_description
+                if sketch_timeline.searchindex
+                and sketch_timeline.searchindex.description == manual_events_description
             ),
             None,
         )
