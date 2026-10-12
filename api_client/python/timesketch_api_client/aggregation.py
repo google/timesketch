@@ -308,8 +308,10 @@ class Aggregation(resource.SketchResource):
     @description.setter
     def description(self, description):
         """Set the description of an aggregation."""
+        if not self.resource_data:
+            self.resource_data = {"meta": {}}
         if "meta" not in self.resource_data:
-            return
+            self.resource_data["meta"] = {}
         meta = self.resource_data.get("meta", {})
         meta["description"] = description
 
@@ -321,10 +323,10 @@ class Aggregation(resource.SketchResource):
     @name.setter
     def name(self, name):
         """Set the name of the aggregation."""
-        if "meta" not in self.resource_data:
-            return
-        meta = self.resource_data.get("meta")
-        meta["name"] = name
+        self._name = name
+        if self.resource_data and "meta" in self.resource_data:
+            meta = self.resource_data.get("meta")
+            meta["name"] = name
 
     @property
     def aggregator_name(self):
