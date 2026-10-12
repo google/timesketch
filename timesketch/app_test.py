@@ -39,8 +39,9 @@ class CreateAppTest(BaseTest):
     def test_invalid_index_prefix(self):
         """Test that the app refuses to start with an invalid index prefix."""
         with mock.patch("timesketch.app.sys.stderr") as mock_stderr:
-            with self.assertRaises(SystemExit):
+            with self.assertRaises(SystemExit) as cm:
                 create_app(InvalidIndexPrefixConfig)
+        self.assertEqual(cm.exception.code, 1)
         self.assertIn("OPENSEARCH_INDEX_PREFIX", mock_stderr.write.call_args.args[0])
 
     def test_valid_index_prefix(self):

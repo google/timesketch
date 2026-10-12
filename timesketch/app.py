@@ -162,7 +162,7 @@ def create_app(
             "only contain [a-z0-9_-] and be at most 63 characters long. "
             "Leave it empty to disable the prefix.\n"
         )
-        sys.exit()
+        sys.exit(1)
 
     # Plaso version that we support
     if app.config["UPLOAD_ENABLED"]:
