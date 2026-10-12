@@ -22,6 +22,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_UNAUTHORIZED
 from timesketch.lib.google_auth import CSRF_KEY
 from timesketch.lib.testlib import BaseTest
+from timesketch.models.user import Group
 from timesketch.models.user import User
 
 
@@ -356,6 +357,34 @@ class GoogleOpenIdConnectViewTest(BaseTest):
 
         with self.client.session_transaction() as sess:
             self.assertNotIn("_user_id", sess)
+
+    def test_sync_skips_group_names_that_are_too_long(self):
+        """Test group names exceeding the database column length are skipped."""
+        self.app.config["GOOGLE_OIDC_GROUPS_CLAIM"] = "groups"
+        self.app.config["GOOGLE_OIDC_GROUPS_SYNC_ENABLED"] = True
+
+        response = self._login_via_oidc(
+            {"email": "newuser@example.com", "groups": ["x" * 300, "Analysts"]}
+        )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+        user = User.query.filter_by(username="newuser@example.com").first()
+        self.assertEqual([group.name for group in user.groups], ["Analysts"])
+
+    def test_sync_reuses_group_created_with_other_display_name(self):
+        """Test a locally created group is reused instead of re-inserted."""
+        local_group = Group(name="Analysts", display_name="Local Analysts")
+        self._commit_to_database(local_group)
+        self.app.config["GOOGLE_OIDC_GROUPS_CLAIM"] = "groups"
+        self.app.config["GOOGLE_OIDC_GROUPS_SYNC_ENABLED"] = True
+
+        response = self._login_via_oidc(
+            {"email": "newuser@example.com", "groups": ["Analysts"]}
+        )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+        user = User.query.filter_by(username="newuser@example.com").first()
+        self.assertEqual([group.id for group in user.groups], [local_group.id])
 
     def test_login_extracts_groups_using_separator_and_regex(self):
         """Test the groups claim is parsed using the separator/regex config."""

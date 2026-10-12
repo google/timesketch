@@ -29,6 +29,7 @@ from flask import session
 from flask import url_for
 
 from oauthlib import oauth2
+from sqlalchemy.exc import IntegrityError
 
 from flask_login import current_user
 from flask_login import login_user
@@ -60,6 +61,8 @@ logger = logging.getLogger("timesketch.views.auth")
 auth_views = Blueprint("user_views", __name__)
 
 TOKEN_URI = "https://www.googleapis.com/oauth2/v3/tokeninfo"
+# Matches the Unicode(255) length of Group.name.
+GROUP_NAME_MAX_LENGTH = 255
 SCOPES = [
     "https://www.googleapis.com/auth/userinfo.email",
     "openid",
@@ -581,10 +584,40 @@ def _resolve_oidc_groups_to_sync(token_groups, allowed_groups):
     return [group for group in token_groups if group in allowed_groups]
 
 
+def _get_or_create_group(group_name):
+    """Return the Timesketch group with this name, creating it if needed."""
+    group = Group.query.filter_by(name=group_name).first()
+    if group:
+        return group
+
+    try:
+        group = Group(name=group_name, display_name=group_name)
+        db_session.add(group)
+        db_session.commit()
+    except IntegrityError:
+        # A concurrent first login created the same group.
+        db_session.rollback()
+        group = Group.query.filter_by(name=group_name).first()
+    return group
+
+
 def _sync_user_groups(user, groups_to_sync):
     """Add the user to any Timesketch groups in `groups_to_sync`."""
+    # Resolve (and commit) all groups before touching the user's memberships so
+    # an IntegrityError rollback can't discard pending membership changes.
+    groups = []
     for group_name in groups_to_sync:
-        group = Group.get_or_create(name=group_name, display_name=group_name)
+        if len(group_name) > GROUP_NAME_MAX_LENGTH:
+            current_app.logger.warning(
+                "Skipping OIDC group with name longer than %d characters "
+                "(length: %d). Consider using GOOGLE_OIDC_GROUPS_REGEX.",
+                GROUP_NAME_MAX_LENGTH,
+                len(group_name),
+            )
+            continue
+        groups.append(_get_or_create_group(group_name))
+
+    for group in groups:
         if group not in user.groups:
             user.groups.append(group)
 
