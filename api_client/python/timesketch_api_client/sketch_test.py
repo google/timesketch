@@ -79,6 +79,16 @@ class SketchTest(unittest.TestCase):
         response = self.sketch.add_event_attributes(events)
         self.assertEqual(response, expected_response)
 
+    def test_created_at(self):
+        """Test the created_at property."""
+        created_at = self.sketch.created_at
+        self.assertEqual(created_at, "2025-12-11T07:39:20.000000")
+
+    def test_creator(self):
+        """Test the creator property."""
+        creator = self.sketch.creator
+        self.assertEqual(creator, "testuser")
+
     def test_add_event_attributes_invalid(self):
         """Confirm an exception is raised when events isn't a list."""
         events = {"_id": "1", "_type": "_doc", "index": "1", "attributes": []}

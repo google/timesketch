@@ -77,6 +77,79 @@ class TimesketchApiTest(unittest.TestCase):
         self.assertEqual(len(sketches), 1)
         self.assertIsInstance(sketches[0], sketch_lib.Sketch)
 
+    def test_get_sketches_by_name(self):
+        """Test to get sketches by name."""
+        sketches = self.api_client.get_sketches_by_name("test")
+        self.assertIsInstance(sketches, list)
+        self.assertEqual(len(sketches), 1)
+        self.assertIsInstance(sketches[0], sketch_lib.Sketch)
+        self.assertEqual(sketches[0].name, "test")
+
+    def test_get_sketches_by_name_not_found(self):
+        """Test that get_sketches_by_name raises KeyError for unknown name."""
+        with self.assertRaises(KeyError):
+            self.api_client.get_sketches_by_name("nonexistent_sketch")
+
+    @mock.patch("requests.Session", test_lib.mock_session)
+    def test_get_sketches_by_name_duplicates(self):
+        """Test get_sketches_by_name returns multiple sketches with same name."""
+        with mock.patch.object(self.api_client, "list_sketches") as mock_list:
+            sketch_1 = sketch_lib.Sketch(
+                sketch_id=1, api=self.api_client, sketch_name="duplicate"
+            )
+            sketch_2 = sketch_lib.Sketch(
+                sketch_id=2, api=self.api_client, sketch_name="duplicate"
+            )
+            mock_list.return_value = iter([sketch_1, sketch_2])
+
+            sketches = self.api_client.get_sketches_by_name("duplicate")
+            self.assertIsInstance(sketches, list)
+            self.assertEqual(len(sketches), 2)
+            self.assertEqual(sketches[0].id, 1)
+            self.assertEqual(sketches[1].id, 2)
+
+    @mock.patch("requests.Session", test_lib.mock_session)
+    def test_get_sketches_by_name_case_sensitive(self):
+        """Test that get_sketches_by_name matching is case-sensitive."""
+        with mock.patch.object(self.api_client, "list_sketches") as mock_list:
+            sketch_1 = sketch_lib.Sketch(
+                sketch_id=1, api=self.api_client, sketch_name="My Sketch"
+            )
+            mock_list.return_value = iter([sketch_1])
+
+            with self.assertRaises(KeyError):
+                self.api_client.get_sketches_by_name("my sketch")
+
+    def test_get_sketches_by_name_include_archived(self):
+        """Test that get_sketches_by_name passes include_archived through."""
+        with mock.patch.object(self.api_client, "list_sketches") as mock_list:
+            mock_list.return_value = iter(
+                [sketch_lib.Sketch(sketch_id=1, api=self.api_client, sketch_name="a")]
+            )
+            self.api_client.get_sketches_by_name("a", include_archived=False)
+            mock_list.assert_called_once_with(
+                search_query="a", scope="search", include_archived=False
+            )
+
+    def test_list_sketches_scope_defaults(self):
+        """Test the scope that list_sketches sends to the server by default."""
+        with mock.patch.object(
+            self.api_client, "fetch_resource_data", return_value={}
+        ) as mock_fetch:
+            list(self.api_client.list_sketches())
+            self.assertEqual(mock_fetch.call_args.kwargs["params"]["scope"], "user")
+            self.assertNotIn("search_query", mock_fetch.call_args.kwargs["params"])
+
+            list(self.api_client.list_sketches(search_query="foo"))
+            params = mock_fetch.call_args.kwargs["params"]
+            self.assertEqual(params["scope"], "search")
+            self.assertEqual(params["search_query"], "foo")
+
+    def test_list_sketches_search_query_with_wrong_scope(self):
+        """Test that search_query cannot be combined with a non-search scope."""
+        with self.assertRaises(ValueError):
+            list(self.api_client.list_sketches(scope="user", search_query="foo"))
+
 
 class TimesketchApiRetryTest(unittest.TestCase):
     """Test TimesketchApi client retry logic."""
