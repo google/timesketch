@@ -36,14 +36,19 @@ def sigma_group():
     help="Comma separated list of columns to show. (default: rule_uuid,title)",
 )
 @click.pass_context
-def list_sigmarules(ctx, header, columns):
-    """List all sigma rules."""
+def list_sigmarules(ctx: click.Context, header: bool, columns: str):
+    """List all sigma rules.
+
+    Args:
+        header: Boolean indicating if header should be included.
+        columns: Comma separated list of columns.
+    """
     api_client = ctx.obj.api
 
     if not columns:
         columns = "rule_uuid,title"
 
-    columns = columns.split(",")
+    columns_list = columns.split(",")
 
     output = ctx.obj.output_format
     try:
@@ -60,10 +65,10 @@ def list_sigmarules(ctx, header, columns):
         click.echo(sigma_rules.to_csv(header=header))
     elif output == "text":
         click.echo(
-            sigma_rules.to_string(index=header, columns=columns),
+            sigma_rules.to_string(index=header, columns=columns_list),
         )
     else:
-        click.echo(sigma_rules.to_string(index=header, columns=columns))
+        click.echo(sigma_rules.to_string(index=header, columns=columns_list))
 
 
 @sigma_group.command("describe")
@@ -74,8 +79,12 @@ def list_sigmarules(ctx, header, columns):
     help="UUID of the sigma rule.",
 )
 @click.pass_context
-def describe_sigmarule(ctx, rule_uuid):
-    """Describe a sigma rule."""
+def describe_sigmarule(ctx: click.Context, rule_uuid: str):
+    """Describe a sigma rule.
+
+    Args:
+        rule_uuid: UUID of the sigma rule.
+    """
     api_client = ctx.obj.api
     output = ctx.obj.output_format
     try:

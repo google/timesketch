@@ -107,16 +107,23 @@ class TimesketchLogStore(ls.LogStore):
         self.api = api
         self.sketch_id = sketch_id
 
-    async def describe_logs(self) -> ls.LogDescriptions:
+    async def describe_logs(self, **kwargs: Any) -> ls.LogDescriptions:
         """Discovers Timesketch data types and computes daily histograms."""
-        return await asyncio.to_thread(self._describe_logs_sync)
+        return await asyncio.to_thread(self._describe_logs_sync, **kwargs)
 
-    def _describe_logs_sync(self) -> ls.LogDescriptions:
+    def _describe_logs_sync(self, **kwargs: Any) -> ls.LogDescriptions:
         """Synchronously discovers log types and aggregates histograms.
 
         Returns:
             LogDescriptions: Discovered data types and volume information.
         """
+        error_msgs = []
+        if kwargs:
+            keys = ", ".join(sorted(kwargs.keys()))
+            msg = f"Warning: Unsupported describe argument(s) ignored: {keys}"
+            logger.warning("[%d] %s", self.sketch_id, msg)
+            error_msgs.append(msg)
+
         logger.info("[%d] Discovering sketch log types...", self.sketch_id)
         try:
             sketch = self.api.get_sketch(self.sketch_id)
@@ -125,7 +132,8 @@ class TimesketchLogStore(ls.LogStore):
             return ls.LogDescriptions(
                 status=ls.ResultStatus.ERROR,
                 descriptions=[],
-                error_messages=[f"Failed to get sketch {self.sketch_id}: {str(e)}"],
+                error_messages=error_msgs
+                + [f"Failed to get sketch {self.sketch_id}: {str(e)}"],
             )
 
         # Discover unique data types using run_aggregator
@@ -145,16 +153,18 @@ class TimesketchLogStore(ls.LogStore):
             return ls.LogDescriptions(
                 status=ls.ResultStatus.ERROR,
                 descriptions=[],
-                error_messages=[f"Failed to discover unique log types: {str(e)}"],
+                error_messages=error_msgs
+                + [f"Failed to discover unique log types: {str(e)}"],
             )
 
         descriptions = []
         for b in buckets:
             dt = b["data_type"]
+            escaped_dt = _escape_opensearch_query(str(dt))
 
             # Query for the earliest event (min time) for this data type
             min_search = search.Search(sketch=sketch)
-            min_search.query_string = f'data_type:"{dt}"'
+            min_search.query_string = f'data_type:"{escaped_dt}"'
             min_search.max_entries = 1
             min_search.return_fields = "datetime"
             min_search.order_ascending()
@@ -172,7 +182,7 @@ class TimesketchLogStore(ls.LogStore):
 
             # Query for the latest event (max time) for this data type
             max_search = search.Search(sketch=sketch)
-            max_search.query_string = f'data_type:"{dt}"'
+            max_search.query_string = f'data_type:"{escaped_dt}"'
             max_search.max_entries = 1
             max_search.return_fields = "datetime"
             max_search.order_descending()
@@ -189,7 +199,7 @@ class TimesketchLogStore(ls.LogStore):
                     end_str = max_bounded.strftime("%Y-%m-%dT%H:%M:%SZ")
 
             search_obj = search.Search(sketch=sketch)
-            search_obj.query_string = f'data_type:"{dt}"'
+            search_obj.query_string = f'data_type:"{escaped_dt}"'
             search_obj.max_entries = 5
             search_obj.return_fields = (
                 "datetime,message,_id,timestamp_desc,tag,yara_match"
@@ -243,7 +253,7 @@ class TimesketchLogStore(ls.LogStore):
             try:
                 aggregator_params = {
                     "field": "data_type",
-                    "field_query_string": dt,
+                    "field_query_string": escaped_dt,
                     "supported_intervals": "day",
                     "supported_charts": "table",
                     "start_time": start_str,
@@ -300,9 +310,12 @@ class TimesketchLogStore(ls.LogStore):
             )
 
         return ls.LogDescriptions(
-            status=ls.ResultStatus.SUCCESS, descriptions=descriptions
+            status=ls.ResultStatus.SUCCESS,
+            descriptions=descriptions,
+            error_messages=error_msgs if error_msgs else None,
         )
 
+    # pylint: disable=too-many-arguments
     async def search_logs(
         self,
         log_type: Optional[Any],
@@ -313,9 +326,28 @@ class TimesketchLogStore(ls.LogStore):
         must_contain_all_of: Optional[Iterable[str]] = None,
         must_not_contain_any_of: Optional[Iterable[str]] = None,
         order_by: ls.Order = ls.Order.CHRONOLOGICAL,
-        exclude_log_type: Optional[Any] = None,  # pylint: disable=unused-argument
+        exclude_log_type: Optional[Any] = None,
+        has_enrichment: Optional[bool] = None,
+        **kwargs: Any,
     ) -> ls.SearchResult:
-        """Executes a search mapped directly to OpenSearch query strings."""
+        """Executes a search mapped directly to OpenSearch query strings.
+
+        Args:
+            log_type: The log source type string.
+            limit: Maximum count of results.
+            at_or_after: Lower bound timestamp.
+            at_or_before: Upper bound timestamp.
+            contains_at_least_one_of: Match any of these keywords.
+            must_contain_all_of: Match all of these keywords.
+            must_not_contain_any_of: Exclude these keywords.
+            order_by: Order enum value.
+            exclude_log_type: Log source type string or collection of types to exclude.
+            has_enrichment: Filter for events with tags or yara matches.
+            **kwargs: Additional unexpected keyword arguments passed by callers.
+
+        Returns:
+            SearchResult: Result object matching search criteria.
+        """
         return await asyncio.to_thread(
             self._search_logs_sync,
             log_type=log_type,
@@ -326,8 +358,12 @@ class TimesketchLogStore(ls.LogStore):
             must_contain_all_of=must_contain_all_of,
             must_not_contain_any_of=must_not_contain_any_of,
             order_by=order_by,
+            exclude_log_type=exclude_log_type,
+            has_enrichment=has_enrichment,
+            **kwargs,
         )
 
+    # pylint: disable=too-many-arguments
     def _search_logs_sync(
         self,
         log_type: Optional[str],
@@ -338,6 +374,9 @@ class TimesketchLogStore(ls.LogStore):
         must_contain_all_of: Optional[Iterable[str]] = None,
         must_not_contain_any_of: Optional[Iterable[str]] = None,
         order_by: ls.Order = ls.Order.CHRONOLOGICAL,
+        exclude_log_type: Optional[Any] = None,
+        has_enrichment: Optional[bool] = None,
+        **kwargs: Any,
     ) -> ls.SearchResult:
         """Synchronously searches logs in Timesketch using specific filters.
 
@@ -350,15 +389,40 @@ class TimesketchLogStore(ls.LogStore):
             must_contain_all_of: Match all of these keywords.
             must_not_contain_any_of: Exclude these keywords.
             order_by: Order enum value.
+            exclude_log_type: Log source type string or collection of types to exclude.
+            has_enrichment: Filter for events with tags or yara matches.
+            **kwargs: Additional unexpected keyword arguments passed by callers.
 
         Returns:
             SearchResult: Result object matching search criteria.
         """
+        error_msgs = []
+        if kwargs:
+            keys = ", ".join(sorted(kwargs.keys()))
+            msg = f"Warning: Unsupported search argument(s) ignored: {keys}"
+            logger.warning("[%d] %s", self.sketch_id, msg)
+            error_msgs.append(msg)
         sketch = self.api.get_sketch(self.sketch_id)
 
         terms = []
         if log_type:
-            terms.append(f'data_type:"{log_type}"')
+            escaped_log_type = _escape_opensearch_query(str(log_type))
+            terms.append(f'data_type:"{escaped_log_type}"')
+
+        if exclude_log_type:
+            if isinstance(exclude_log_type, str):
+                escaped_elt = _escape_opensearch_query(exclude_log_type)
+                terms.append(f'NOT data_type:"{escaped_elt}"')
+            else:
+                for et in exclude_log_type:
+                    escaped_et = _escape_opensearch_query(str(et))
+                    terms.append(f'NOT data_type:"{escaped_et}"')
+
+        if has_enrichment is not None:
+            if has_enrichment:
+                terms.append("(_exists_:tag OR _exists_:yara_match)")
+            else:
+                terms.append("NOT (_exists_:tag OR _exists_:yara_match)")
 
         if must_contain_all_of:
             for keyword in must_contain_all_of:
@@ -462,7 +526,11 @@ class TimesketchLogStore(ls.LogStore):
                 )
             )
 
-        return ls.SearchResult(status=ls.ResultStatus.SUCCESS, results=res)
+        return ls.SearchResult(
+            status=ls.ResultStatus.SUCCESS,
+            results=res,
+            error_messages=error_msgs if error_msgs else None,
+        )
 
 
 class DynamicLogStoreMap(dict):

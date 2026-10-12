@@ -26,7 +26,7 @@ class GraphTest(interface.BaseEndToEndTest):
     """End to end tests for query functionality."""
 
     NAME = "graph_test"
-    TEST_PLASO_FILE = "evtx_20250918.plaso"
+    TEST_PLASO_FILE = interface.get_plaso_filename()
     TEST_PLASO_FILE_NAME = f"{TEST_PLASO_FILE}_{NAME}.plaso"
 
     def __init__(self):

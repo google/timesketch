@@ -21,7 +21,7 @@ class ExportStreamTest(interface.BaseEndToEndTest):
     """End to end tests for export stream functionality."""
 
     NAME = "export_stream_test"
-    TEST_PLASO_FILE = "evtx_20250918.plaso"
+    TEST_PLASO_FILE = interface.get_plaso_filename()
 
     def setup(self):
         """Import test timeline."""
@@ -35,7 +35,7 @@ class ExportStreamTest(interface.BaseEndToEndTest):
         # Consume the generator to count events
         count = len(list(events))
 
-        # 3205 is the known event count for evtx_20250918.plaso
+        # 3205 is the known event count for the plaso test file
         self.assertions.assertEqual(count, 3205)
 
     def test_export_subset(self):
@@ -46,7 +46,7 @@ class ExportStreamTest(interface.BaseEndToEndTest):
         # Consume the generator to count events
         count = len(list(events))
 
-        # 3 is the known event count for data_type:"fs:stat" in evtx_20250918.plaso
+        # 3 is the known event count for data_type:"fs:stat" for the plaso test file
         self.assertions.assertEqual(count, 3)
 
     def test_export_fields(self):

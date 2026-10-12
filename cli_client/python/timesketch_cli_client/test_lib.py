@@ -17,7 +17,7 @@ import tempfile
 
 from timesketch_api_client import client
 
-from .cli import TimesketchCli
+from timesketch_cli_client.cli import TimesketchCli
 
 TEST_CONFIG = """
 [timesketch]
