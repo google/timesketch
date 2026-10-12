@@ -23,7 +23,6 @@ import socket
 import time
 import queue
 import threading
-from uuid import uuid4
 from typing import Generator, List, Dict, Optional, Any, Union
 
 from dateutil import parser, relativedelta
@@ -47,6 +46,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import METRICS_NAMESPACE
 from timesketch.lib import errors
 from timesketch.lib import telemetry
+from timesketch.lib import utils
 
 # Setup logging
 os_logger = logging.getLogger("timesketch.opensearch")
@@ -1729,12 +1729,13 @@ class OpenSearchDataStore:
         return errors.DatastoreAuthorizationError(message)
 
     def create_index(
-        self, index_name: str = uuid4().hex, mappings: Optional[Dict] = None
+        self, index_name: Optional[str] = None, mappings: Optional[Dict] = None
     ):
         """Create index with Timesketch settings.
 
         Args:
-            index_name: Name of the index. Default is a generated UUID.
+            index_name: Optional name of the index. If not set, a new name is
+                generated that uses the configured OPENSEARCH_INDEX_PREFIX.
             mappings: Optional dict with the document mapping for OpenSearch.
 
         Returns:
@@ -1745,6 +1746,9 @@ class OpenSearchDataStore:
             DatastoreAuthorizationError: If OpenSearch denies access to the
                 index (HTTP 403).
         """
+        if index_name is None:
+            index_name = utils.generate_index_name()
+
         if mappings:
             _document_mapping = mappings
         else:

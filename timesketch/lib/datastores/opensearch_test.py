@@ -559,3 +559,21 @@ class OpenSearchDataStoreTest(BaseTest):
 
         self.assertEqual(ds.create_index(index_name="existing"), "existing")
         mock_es_instance.indices.create.assert_not_called()
+
+    @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
+    def test_create_index_without_name(self, mock_client):
+        """Test that a new prefixed index name is generated for every call."""
+        self.app.config["OPENSEARCH_INDEX_PREFIX"] = "timesketch-"
+        mock_es_instance = mock_client.return_value
+        mock_es_instance.indices.exists.return_value = False
+        ds = OpenSearchDataStore(host="127.0.0.1", port=9200)
+
+        first_index_name = ds.create_index()
+        second_index_name = ds.create_index()
+
+        self.assertRegex(first_index_name, r"^timesketch-[0-9a-f]{32}$")
+        self.assertRegex(second_index_name, r"^timesketch-[0-9a-f]{32}$")
+        self.assertNotEqual(first_index_name, second_index_name)
+        mock_es_instance.indices.create.assert_any_call(
+            index=first_index_name, body=mock.ANY
+        )

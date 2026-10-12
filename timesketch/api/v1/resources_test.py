@@ -1493,15 +1493,15 @@ class SearchIndexResourceTest(BaseTest):
             "create_index",
             side_effect=DatastoreAuthorizationError("OpenSearch denied access"),
         ):
-            response = self.client.post(
-                self.resource_url,
-                data=json.dumps(data),
-                content_type="application/json",
-            )
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_FORBIDDEN)
-        self.assertIn("OpenSearch denied access", response.json["message"])
-        searchindex = SearchIndex.query.filter_by(index_name="denied").first()
-        self.assertEqual(searchindex.get_status.status, "fail")
+            for _ in range(2):
+                response = self.client.post(
+                    self.resource_url,
+                    data=json.dumps(data),
+                    content_type="application/json",
+                )
+                self.assertEqual(response.status_code, HTTP_STATUS_CODE_FORBIDDEN)
+                self.assertIn("OpenSearch denied access", response.json["message"])
+        self.assertIsNone(SearchIndex.query.filter_by(index_name="denied").first())
 
 
 class EventCreateResourceTest(BaseTest):

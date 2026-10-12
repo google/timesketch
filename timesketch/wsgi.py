@@ -36,6 +36,7 @@ import logging
 from prometheus_flask_exporter.multiprocess import GunicornPrometheusMetrics
 from timesketch.app import configure_logger
 from timesketch.app import create_app
+from timesketch.app import get_index_prefix_warning
 from timesketch.models import db_session
 
 logger = logging.getLogger("timesketch.wsgi_server")
@@ -54,6 +55,20 @@ elif ui_mode == "v3":
 else:
     application = create_app()
     logger.info("Starting Timesketch with NG UI")
+
+# The OpenSearch index prefix is only supported on new installations. This is
+# checked here and not in create_app(), so the warning is only logged once on
+# server start. The check must never prevent the server from starting.
+try:
+    index_prefix_warning = get_index_prefix_warning(
+        application.config.get("OPENSEARCH_INDEX_PREFIX")
+    )
+    if index_prefix_warning:
+        logger.warning(index_prefix_warning)
+except Exception as e:  # pylint: disable=broad-exception-caught
+    logger.warning("Unable to check the OpenSearch index prefix: %s", e)
+finally:
+    db_session.remove()
 
 # Setup metrics endpoint.
 if os.environ.get("PROMETHEUS_MULTIPROC_DIR"):

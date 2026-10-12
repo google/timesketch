@@ -16,6 +16,7 @@
 from unittest import mock
 
 from timesketch.app import create_app
+from timesketch.app import get_index_prefix_warning
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import TestConfig
 
@@ -46,3 +47,28 @@ class CreateAppTest(BaseTest):
         """Test that the app starts with a valid index prefix."""
         app = create_app(ValidIndexPrefixConfig)
         self.assertEqual(app.config["OPENSEARCH_INDEX_PREFIX"], "timesketch-")
+
+
+class IndexPrefixWarningTest(BaseTest):
+    """Tests for get_index_prefix_warning."""
+
+    def test_no_index_prefix(self):
+        """Test that there is no warning and no query without a prefix."""
+        with mock.patch("timesketch.app.SearchIndex") as mock_searchindex:
+            self.assertEqual(get_index_prefix_warning(""), "")
+            self.assertEqual(get_index_prefix_warning(None), "")
+        mock_searchindex.query.filter.assert_not_called()
+
+    def test_unprefixed_indices(self):
+        """Test that search indices without the prefix are reported."""
+        # The test database has the unprefixed indices "test" and "test2".
+        self._create_searchindex(name="timesketch-0123", user=self.user1)
+        warning = get_index_prefix_warning("timesketch-")
+        self.assertIn("2 of 3 search indices", warning)
+        self.assertIn("OPENSEARCH_INDEX_PREFIX 'timesketch-'", warning)
+
+    def test_failed_indices_are_ignored(self):
+        """Test that search indices that failed to be created are ignored."""
+        self.searchindex.set_status("fail")
+        self.searchindex2.set_status("fail")
+        self.assertEqual(get_index_prefix_warning("timesketch-"), "")
