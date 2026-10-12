@@ -21,7 +21,7 @@ import json
 import hashlib
 import os
 import re
-from typing import Optional
+from typing import Optional, Union
 
 # six.moves is a dynamically-created namespace that doesn't actually
 # exist and therefore pylint can't statically analyze it.
@@ -129,6 +129,10 @@ def get_oauth2_authorize_url(hosted_domain: str = ""):
     redirect_uri = url_for(
         "user_views.google_openid_connect", _scheme="https", _external=True
     )
+    # Google's own OIDC provider does not put a groups claim in its ID tokens,
+    # so the GOOGLE_OIDC_GROUPS_* features only work with other providers
+    # configured via GOOGLE_OIDC_AUTH_URL / GOOGLE_OIDC_DISCOVERY_URL. Such
+    # providers may require extra scopes (e.g. "groups") to emit the claim.
     scopes = current_app.config.get(
         "GOOGLE_OIDC_SCOPES", ["openid", "email", "profile"]
     )
@@ -284,12 +288,15 @@ def validate_jwt(decoded_jwt: str, expected_issuer: str, expected_domain: str = 
             raise JwtValidationError(f"Missing domain: {e}") from e
 
 
-def _extract_group_name(group_name: str, regex_pattern: Optional[str]):
+def _extract_group_name(
+    group_name: str, regex_pattern: Optional[Union[str, re.Pattern]]
+):
     """Apply an optional regex to a single raw group name.
 
     Args:
         group_name: Raw, already-stripped group name.
-        regex_pattern: Optional regex to extract the group name. The first
+        regex_pattern: Optional regex (string or compiled) to extract the group
+            name. The first
             capture group is used if present, otherwise the whole match.
 
     Returns:
@@ -323,7 +330,7 @@ def get_groups_from_jwt(
     decoded_jwt: dict,
     claim_name: Optional[str] = None,
     separator: Optional[str] = None,
-    regex_pattern: Optional[str] = None,
+    regex_pattern: Optional[Union[str, re.Pattern]] = None,
 ):
     """Extract and normalize group/role names from a decoded token claim.
 
@@ -332,8 +339,8 @@ def get_groups_from_jwt(
         claim_name: Claim name holding groups/roles (e.g. "groups", "roles").
             None returns empty list.
         separator: Optional separator for string claims (e.g. semicolon).
-        regex_pattern: Optional regex to extract group names. First capture
-            group is used if present.
+        regex_pattern: Optional regex (string or compiled) to extract group
+            names. First capture group is used if present.
 
     Returns:
         List of extracted group/role names; empty list if claim missing/empty.
