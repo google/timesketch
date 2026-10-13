@@ -13,11 +13,18 @@
 # limitations under the License.
 """Timesketch API search template object."""
 
+from __future__ import annotations
+
 import logging
+from typing import Optional, TYPE_CHECKING
 
 from . import error
 from . import resource
 from . import search
+
+if TYPE_CHECKING:
+    from .client import TimesketchApi
+    from .sketch import Sketch
 
 logger = logging.getLogger("timesketch_api.searchtemplate")
 
@@ -25,8 +32,12 @@ logger = logging.getLogger("timesketch_api.searchtemplate")
 class SearchTemplate(resource.BaseResource):
     """Search template object. TEST e2e"""
 
-    def __init__(self, api):
-        """Initialize the search template object."""
+    def __init__(self, api: TimesketchApi) -> None:
+        """Initialize the search template object.
+
+        Args:
+            api: An instance of TimesketchApi object.
+        """
         super().__init__(api, "searchtemplates/")
         self._description = ""
         self._name = ""
@@ -35,7 +46,7 @@ class SearchTemplate(resource.BaseResource):
         self._sketch_id = None
 
     @property
-    def description(self):
+    def description(self) -> str:
         """Property that returns the template description."""
         if self._description:
             return self._description
@@ -52,7 +63,7 @@ class SearchTemplate(resource.BaseResource):
         self._description = objects[0].get("description", "N/A")
         return self._description
 
-    def delete(self):
+    def delete(self) -> bool:
         """Deletes the saved graph from the store."""
         if not self._resource_id:
             raise ValueError(
@@ -64,12 +75,12 @@ class SearchTemplate(resource.BaseResource):
         response = self.api.session.delete(resource_url)
         return error.check_return_status(response, logger)
 
-    def from_saved(self, template_id, sketch_id=0):
+    def from_saved(self, template_id: int, sketch_id: int = 0) -> None:
         """Initialize the search template from a saved template, by ID value.
 
         Args:
-            template_id (int): integer value for the saved search template.
-            sketch_id (int): optional integer value for a sketch ID. If not
+            template_id: integer value for the saved search template.
+            sketch_id: optional integer value for a sketch ID. If not
                 provided, an attempt is made to figure it out.
 
         Raises:
@@ -92,11 +103,11 @@ class SearchTemplate(resource.BaseResource):
                 )
             self._sketch_id = sketch_ids[0]
 
-    def from_search_object(self, search_obj):
+    def from_search_object(self, search_obj: search.Search) -> None:
         """Initialize template from a search object.
 
         Args:
-            search_obj (search.Search): a search object.
+            search_obj: a search object.
         """
         self._search_id = search_obj.id
         self._sketch_id = search_obj.sketch.id
@@ -115,12 +126,12 @@ class SearchTemplate(resource.BaseResource):
         self.resource_uri = f"searchtemplates/{self._resource_id}/"
 
     @property
-    def id(self):
+    def id(self) -> Optional[int]:
         """Property that returns back the search template ID."""
         return self._resource_id
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Property that returns the template name."""
         if self._name:
             return self._name
@@ -137,13 +148,15 @@ class SearchTemplate(resource.BaseResource):
         self._name = objects[0].get("name", "N/A")
         return self._name
 
-    def set_sketch(self, sketch=None, sketch_id=None):
+    def set_sketch(
+        self, sketch: Optional[Sketch] = None, sketch_id: Optional[int] = None
+    ) -> None:
         """Set the sketch for the search template.
 
         Args:
-            sketch (sketch.Sketch): an optional sketch object to use as the
+            sketch: an optional sketch object to use as the
                 sketch object for the search template.
-            sketch_id (int): an optional sketch ID to use as the sketch ID
+            sketch_id: an optional sketch ID to use as the sketch ID
                 for the search template.
 
         Raises:
@@ -161,7 +174,7 @@ class SearchTemplate(resource.BaseResource):
                 "Sketch needs to be set, or an integer value for a sketch ID."
             )
 
-    def save(self):
+    def save(self) -> str:
         """Save the search template."""
         if self._resource_id:
             raise ValueError(
@@ -195,7 +208,7 @@ class SearchTemplate(resource.BaseResource):
         self.resource_uri = f"searchtemplates/{self._resource_id}/"
         return f"Saved search as a template to ID: {self.id}"
 
-    def to_search(self):
+    def to_search(self) -> search.Search:
         """Returns a search object from a template."""
         if not self._resource_id:
             raise ValueError(

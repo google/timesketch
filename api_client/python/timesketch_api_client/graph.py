@@ -13,10 +13,13 @@
 # limitations under the License.
 """Timesketch API graph object."""
 
+from __future__ import annotations
+
 import copy
 import datetime
 import json
 import logging
+from typing import Any, Dict, List, Optional, Tuple, Union, TYPE_CHECKING
 
 import dateutil.parser
 import pandas
@@ -25,6 +28,10 @@ import networkx as nx
 
 from . import error
 from . import resource
+
+if TYPE_CHECKING:
+    from .sketch import Sketch
+    from .timeline import Timeline
 
 logger = logging.getLogger("timesketch_api.graph")
 
@@ -48,8 +55,12 @@ class Graph(resource.SketchResource):
         "spring": nx.spring_layout,
     }
 
-    def __init__(self, sketch):
-        """Initialize the graph object."""
+    def __init__(self, sketch: Sketch) -> None:
+        """Initialize the graph object.
+
+        Args:
+            sketch: The sketch that the graph belongs to.
+        """
         resource_uri = f"sketches/{sketch.id}/graphs/"
         super().__init__(sketch=sketch, resource_uri=resource_uri)
 
@@ -62,11 +73,11 @@ class Graph(resource.SketchResource):
         self._updated_at = None
         self._graph_config = {}
 
-    def _parse_graph_dict(self, graph_dict):
+    def _parse_graph_dict(self, graph_dict: Dict[str, Any]) -> None:
         """Takes a dict object and constructs graph data from it.
 
         Args:
-            graph_dict (dict): a dict that contains graph elements, as
+            graph_dict: a dict that contains graph elements, as
                 return back by the API.
         """
         graph_string = graph_dict.get("graph_elements")
@@ -88,7 +99,7 @@ class Graph(resource.SketchResource):
         self._created_at = dateutil.parser.parse(graph_dict.get("created_at", ""))
         self._updated_at = dateutil.parser.parse(graph_dict.get("updated_at", ""))
 
-    def _serialize(self, config_dict):
+    def _serialize(self, config_dict: Dict[str, Any]) -> str:
         """Serialize a graph config dictionary as JSON.
 
         Due to networkx's use of numpy.ndarray to describe
@@ -97,7 +108,7 @@ class Graph(resource.SketchResource):
         so that they can be serialized by JSON.
 
         Args:
-            config_dict (dict): the graph config dictionary.
+            config_dict: the graph config dictionary.
 
         Returns:
             A JSON serialized string with the dictionary's content.
@@ -110,13 +121,13 @@ class Graph(resource.SketchResource):
         return json.dumps(config_dict)
 
     @property
-    def created_at(self):
+    def created_at(self) -> Optional[str]:
         """Property that returns back the creation time of a graph."""
         if self._created_at:
             return self._created_at.isoformat()
         return self._created_at
 
-    def delete(self):
+    def delete(self) -> bool:
         """Deletes the saved graph from the store."""
         if not self._resource_id:
             logger.warning(
@@ -134,18 +145,22 @@ class Graph(resource.SketchResource):
         return error.check_return_status(response, logger)
 
     @property
-    def description(self):
+    def description(self) -> str:
         """Property that returns back the description of the saved search."""
         return self._description
 
     @description.setter
-    def description(self, description):
-        """Make changes to the saved search description field."""
+    def description(self, description: str) -> None:
+        """Make changes to the saved search description field.
+
+        Args:
+            description: The description of the graph.
+        """
         self._description = description
         self.commit()
 
     @property
-    def draw(self):
+    def draw(self) -> Any:
         """Property that returns back a drawing with the graph."""
         if not self.graph:
             return None
@@ -178,7 +193,7 @@ class Graph(resource.SketchResource):
         )
 
     @property
-    def graph(self):
+    def graph(self) -> nx.Graph:
         """Property that returns back a graph object."""
         if self._graph:
             return self._graph
@@ -193,7 +208,7 @@ class Graph(resource.SketchResource):
         return self._graph
 
     @property
-    def graph_config(self):
+    def graph_config(self) -> Dict[str, Any]:
         """Property that returns the graph config."""
         if self._graph_config:
             return self._graph_config
@@ -207,18 +222,22 @@ class Graph(resource.SketchResource):
         return self._graph_config
 
     @graph_config.setter
-    def graph_config(self, graph_config):
-        """Change the graph config."""
+    def graph_config(self, graph_config: Dict[str, Any]) -> None:
+        """Change the graph config.
+
+        Args:
+            graph_config: The configuration for the graph.
+        """
         if not isinstance(graph_config, dict):
             raise ValueError("Graph config needs to be a dict.")
 
         self._graph_config = graph_config
 
-    def from_graph(self, graph_obj):
+    def from_graph(self, graph_obj: nx.Graph) -> None:
         """Initialize from a networkx graph object.
 
         Args:
-            graph_obj (nx.Graph): a graph object.
+            graph_obj: a graph object.
         """
         if not graph_obj.size():
             logger.warning("Unable to load graph from an empty graph object.")
@@ -232,13 +251,13 @@ class Graph(resource.SketchResource):
         self._updated_at = time
 
     def from_manual(
-        self, data=None, **kwargs
-    ):  # pylint: disable=arguments-differ; pytype: disable=signature-mismatch
+        self, data: Optional[Dict[str, Any]] = None, **kwargs: Any
+    ) -> None:  # pylint: disable=arguments-differ; pytype: disable=signature-mismatch
         """Generate a new graph using a dictionary.
 
         Args:
-            data (dict): A dictionary of dictionaries adjacency representation.
-            **kwargs (dict[str, object]): Depending on the resource they may
+            data: A dictionary of dictionaries adjacency representation.
+            **kwargs: Depending on the resource they may
                 require different sets of arguments to be able to run a raw
                 API request.
 
@@ -256,13 +275,18 @@ class Graph(resource.SketchResource):
 
         self.from_graph(graph)
 
-    def from_plugin(self, plugin_name, plugin_config=None, refresh=False):
+    def from_plugin(
+        self,
+        plugin_name: str,
+        plugin_config: Optional[Dict[str, Any]] = None,
+        refresh: bool = False,
+    ) -> None:
         """Initialize the graph from a cached plugin graph.
 
         Args:
-            plugin_name (str): the name of the graph plugin to use.
-            plugin_config (dict): optional dictionary to configure the plugin.
-            refresh (bool): optional bool that if set refreshes the graph,
+            plugin_name: the name of the graph plugin to use.
+            plugin_config: optional dictionary to configure the plugin.
+            refresh: optional bool that if set refreshes the graph,
                 otherwise the graph is pulled from the cache, if it exists.
                 Defaults to False, meaning it pulls from the cache if it
                 exists.
@@ -308,11 +332,11 @@ class Graph(resource.SketchResource):
         self._parse_graph_dict(cache_dict)
         self._description = f"Graph created from the {plugin_name} plugin."
 
-    def from_saved(self, graph_id):  # pylint: disable=arguments-renamed
+    def from_saved(self, graph_id: int) -> None:  # pylint: disable=arguments-renamed
         """Initialize the graph object from a saved graph.
 
         Args:
-            graph_id (int): integer value for the saved graph (primary key).
+            graph_id: integer value for the saved graph (primary key).
 
         Raises:
             ValueError: If issues came up during processing.
@@ -337,7 +361,7 @@ class Graph(resource.SketchResource):
         self._updated_at = dateutil.parser.parse(graph_dict.get("updated_at", ""))
 
     @property
-    def layout(self):
+    def layout(self) -> Any:
         """Property that returns back the layout of the graph."""
         if self._layout:
             return self._layout
@@ -347,40 +371,48 @@ class Graph(resource.SketchResource):
         return self._layout
 
     @layout.setter
-    def layout(self, layout):
-        """Change the layout manually."""
+    def layout(self, layout: Dict[str, Any]) -> None:
+        """Change the layout manually.
+
+        Args:
+            layout: The layout for the graph.
+        """
         if not isinstance(layout, dict):
             raise ValueError("Layout needs to be a dict.")
         self._layout = layout
 
     @property
-    def layout_strings(self):
+    def layout_strings(self) -> List[str]:
         """Property that returns a list of potential layouts to use."""
         return list(self._GRAPH_LAYOUTS.keys())
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Property that returns the query name."""
         return self._name
 
     @name.setter
-    def name(self, name):
-        """Make changes to the saved search name."""
+    def name(self, name: str) -> None:
+        """Make changes to the saved search name.
+
+        Args:
+            name: The name of the graph.
+        """
         self._name = name
         self.commit()
 
     @property
-    def plugins(self):
+    def plugins(self) -> Dict[str, Any]:
         """Property that returns back the supported plugins."""
         plugin_dict = self.api.fetch_resource_data("graphs/")
         return plugin_dict
 
     @property
-    def plugins_table(self):
+    def plugins_table(self) -> pandas.DataFrame:
         """Property that returns a dataframe with the available plugins."""
         return pandas.DataFrame(self.plugins)
 
-    def save(self):
+    def save(self) -> str:
         """Save the search in the database.
 
         Raises:
@@ -426,20 +458,31 @@ class Graph(resource.SketchResource):
         self._resource_id = graph_dict.get("id", 0)
         return f"Saved graph to ID: {self._resource_id}"
 
-    def set_layout_type(self, layout_string):
-        """Use a layout from the layout strings."""
+    def set_layout_type(self, layout_string: str) -> None:
+        """Use a layout from the layout strings.
+
+        Args:
+            layout_string: The layout to use.
+        """
         layout = self._GRAPH_LAYOUTS.get(layout_string)
         if layout:
             self.layout = layout(self.graph)
 
     @property
-    def timelines(self):
+    def timelines(self) -> List[int]:
         """Property that returns the set of timelines this graph uses."""
         return self._timelines
 
     @timelines.setter
-    def timelines(self, timelines):
-        """Sets the timelines."""
+    def timelines(
+        self,
+        timelines: Union[List[Union[int, Timeline]], Tuple[Union[int, Timeline], ...]],
+    ) -> None:
+        """Sets the timelines.
+
+        Args:
+            timelines: A list of timelines to use.
+        """
         if not isinstance(timelines, (list, tuple)):
             logger.error("Unable to add timelines, this needs to be a list")
 
@@ -451,11 +494,11 @@ class Graph(resource.SketchResource):
             if hasattr(timeline, "id") and hasattr(timeline, "index_name"):
                 self._timelines.append(timeline.id)
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         """Returns a dict with the graph content."""
         return self.resource_data
 
-    def to_pandas(self):
+    def to_pandas(self) -> pandas.DataFrame:
         """Returns a pandas dataframe with the graph content."""
         if not self.resource_data:
             return pandas.DataFrame()
@@ -474,7 +517,7 @@ class Graph(resource.SketchResource):
         return pandas.concat([node_df, edge_df])
 
     @property
-    def updated_at(self):
+    def updated_at(self) -> Optional[str]:
         """Property that returns back the last updated time of a graph."""
         if self._updated_at:
             return self._updated_at.isoformat()

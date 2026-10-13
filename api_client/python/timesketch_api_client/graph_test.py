@@ -14,7 +14,7 @@
 """Tests for the Timesketch API client"""
 
 import unittest
-import mock
+from unittest import mock
 
 from . import client
 from . import graph
