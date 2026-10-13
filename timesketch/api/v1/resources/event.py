@@ -125,7 +125,7 @@ class EventCreateResource(resources.ResourceMixin, Resource):
             form = request.data
 
         timeline_name = "Manual events"
-        manual_events_description = "internal timeline for user-created events"
+        timeline_description = "internal timeline for user-created events"
 
         date_string = form.get("date_string")
         if not date_string:
@@ -184,7 +184,7 @@ class EventCreateResource(resources.ResourceMixin, Resource):
                 sketch_timeline.searchindex.index_name
                 for sketch_timeline in sketch.timelines
                 if sketch_timeline.searchindex
-                and sketch_timeline.searchindex.description == manual_events_description
+                and sketch_timeline.searchindex.description == timeline_description
             ),
             None,
         )
@@ -200,7 +200,7 @@ class EventCreateResource(resources.ResourceMixin, Resource):
             # Create the search index in the Timesketch database
             searchindex = SearchIndex.get_or_create(
                 name=timeline_name,
-                description=manual_events_description,
+                description=timeline_description,
                 user=current_user,
                 index_name=index_name,
             )
@@ -230,7 +230,10 @@ class EventCreateResource(resources.ResourceMixin, Resource):
                 db_session.commit()
 
         except DatastoreAuthorizationError as e:
-            abort(HTTP_STATUS_CODE_FORBIDDEN, f"Failed to add event ({e!s})")
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                f"Failed to add event to sketch {sketch_id} ({e!s})",
+            )
         # TODO: Can this be narrowed down, both in terms of the scope it
         # applies to, as well as not to catch a generic exception.
         except Exception as e:  # pylint: disable=broad-except

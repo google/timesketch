@@ -1508,7 +1508,7 @@ class EventCreateResourceTest(BaseTest):
     """Test EventCreateResource (manual events)."""
 
     resource_url = "/api/v1/sketches/1/event/create/"
-    manual_events_description = "internal timeline for user-created events"
+    timeline_description = "internal timeline for user-created events"
 
     def _add_manual_event(self, message="manual event"):
         """Adds a manual event and returns the response."""
@@ -1552,9 +1552,7 @@ class EventCreateResourceTest(BaseTest):
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
         self.assertEqual(self._manual_index_name(response), index_name)
         self.assertEqual(
-            SearchIndex.query.filter_by(
-                description=self.manual_events_description
-            ).count(),
+            SearchIndex.query.filter_by(description=self.timeline_description).count(),
             1,
         )
 
@@ -1564,13 +1562,13 @@ class EventCreateResourceTest(BaseTest):
         legacy_index_name = "0cc175b9c0f1b6a831c399e269772661"
         searchindex = SearchIndex.get_or_create(
             name="Manual events",
-            description=self.manual_events_description,
+            description=self.timeline_description,
             user=self.user1,
             index_name=legacy_index_name,
         )
         timeline = Timeline(
             name="Manual events",
-            description=self.manual_events_description,
+            description=self.timeline_description,
             user=self.user1,
             sketch=self.sketch1,
             searchindex=searchindex,
@@ -1616,6 +1614,7 @@ class EventCreateResourceTest(BaseTest):
         ):
             response = self._add_manual_event()
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_FORBIDDEN)
+        self.assertIn("Failed to add event to sketch 1", response.json["message"])
         self.assertIn("OpenSearch denied access", response.json["message"])
 
 
