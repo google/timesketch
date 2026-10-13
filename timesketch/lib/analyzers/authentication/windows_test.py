@@ -13,7 +13,7 @@
 # limitations under the License.
 """Unit tests for Windows authentication analyzer."""
 
-from typing import List
+from typing import List, Tuple
 
 import json
 import logging
@@ -53,6 +53,44 @@ class TestWindowsLoginBruteForceAnalyzer(BaseTest):
         self.assertDictEqual(json.loads(expected_output), json.loads(output))
 
     @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
+    def test_bruteforce_run_hostname_fields(self) -> None:
+        """Tests run method with legacy, new and mixed Plaso hostname fields.
+
+        Plaso 20260720 renamed the "computer_name" attribute of Windows
+        EventLog records to "hostname". A sketch can contain timelines created
+        with different Plaso versions.
+        """
+        for hostname_fields in (
+            ("computer_name",),
+            ("hostname",),
+            ("computer_name", "hostname"),
+        ):
+            with self.subTest(hostname_fields=hostname_fields):
+                analyzer = windows.WindowsLoginBruteForceAnalyzer(
+                    index_name="test_index", sketch_id=1, timeline_id=1
+                )
+
+                analyzer.datastore.client = mock.Mock()
+                datastore = analyzer.datastore
+
+                self._create_mock_events(datastore, hostname_fields=hostname_fields)
+
+                brute_force_analyzer = analyzer.brute_force_analyzer
+                with mock.patch.object(
+                    brute_force_analyzer,
+                    "set_dataframe",
+                    wraps=brute_force_analyzer.set_dataframe,
+                ) as mock_set_dataframe:
+                    output = analyzer.run()
+
+                expected_output = self._create_mock_run_output()
+                self.assertDictEqual(json.loads(expected_output), json.loads(output))
+
+                mock_set_dataframe.assert_called_once()
+                df = mock_set_dataframe.call_args.args[0]
+                self.assertEqual(list(df["hostname"].unique()), ["WIN-EFPSBTQIU5K"])
+
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
     def test_benign_run(self) -> None:
         """Tests run method."""
 
@@ -70,8 +108,18 @@ class TestWindowsLoginBruteForceAnalyzer(BaseTest):
 
         self.assertDictEqual(json.loads(expected_output), json.loads(output))
 
-    def _create_mock_events(self, datastore) -> None:
-        """Creates mock Windows authentication events."""
+    def _create_mock_events(
+        self, datastore, hostname_fields: Tuple[str, ...] = ("computer_name",)
+    ) -> None:
+        """Creates mock Windows authentication events.
+
+        Args:
+            datastore (MockDataStore): Mock datastore.
+            hostname_fields (tuple[str]): Names of the hostname field to use,
+                "computer_name" for Plaso < 20260720 or "hostname" for
+                Plaso >= 20260720. Multiple names are assigned to the events
+                in turn.
+        """
 
         config = {
             "computer_name": "WIN-EFPSBTQIU5K",
@@ -95,6 +143,10 @@ class TestWindowsLoginBruteForceAnalyzer(BaseTest):
         events.extend(self._create_failed_events(config=config, count=200))
         events.extend(self._create_success_events(config=config, count=1))
         events.extend(self._create_logout_events(config=config, count=1))
+
+        for index, event in enumerate(events):
+            hostname_field = hostname_fields[index % len(hostname_fields)]
+            event[hostname_field] = event.pop("computer_name")
 
         log.debug("Total number of mock events %d", len(events))
 

@@ -20,6 +20,7 @@ import textwrap
 
 import pandas as pd
 
+from timesketch.lib import plaso_compat
 from timesketch.lib.analyzers import manager
 from timesketch.lib.analyzers.authentication.utils import BruteForceUtils
 from timesketch.lib.analyzers.interface import AnalyzerOutput, BaseAnalyzer
@@ -116,21 +117,25 @@ class WindowsLoginBruteForceAnalyzer(BaseAnalyzer):
         " event_identifier:4634)"
     )
 
-    EVENT_FIELDS = [
-        "event_id",
-        "timestamp",
-        "event_identifier",
-        "computer_name",
-        "ip_address",
-        "port",
-        "process_id",
-        "username",
-        "domain",
-        "logon_type",
-        "logon_id",
-        "workstation_name",
-        "process_name",
-    ]
+    # The "computer_name" field was renamed to "hostname" in Plaso 20260720,
+    # plaso_compat also returns the legacy field name.
+    EVENT_FIELDS = plaso_compat.expand_field_names(
+        [
+            "event_id",
+            "timestamp",
+            "event_identifier",
+            "hostname",
+            "ip_address",
+            "port",
+            "process_id",
+            "username",
+            "domain",
+            "logon_type",
+            "logon_id",
+            "workstation_name",
+            "process_name",
+        ]
+    )
 
     def __init__(
         self, index_name: str, sketch_id: int, timeline_id: int = None
@@ -177,7 +182,7 @@ class WindowsLoginBruteForceAnalyzer(BaseAnalyzer):
             # Set the event data
             event_data.event_id = event.event_id
             event_data.timestamp = int(event.source.get("timestamp") / 1000000)
-            event_data.hostname = event.source.get("computer_name")
+            event_data.hostname = plaso_compat.get_field_value(event.source, "hostname")
             event_data.username = event.source.get("username")
             event_data.domain = event.source.get("domain")
             event_data.source_ip = event.source.get("ip_address")

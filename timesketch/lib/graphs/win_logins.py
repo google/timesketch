@@ -13,6 +13,7 @@
 # limitations under the License.
 """Graph plugin for Windows logins."""
 
+from timesketch.lib import plaso_compat
 from timesketch.lib.graphs.interface import BaseGraphPlugin
 from timesketch.lib.graphs import manager
 
@@ -30,12 +31,14 @@ class WinLoginsGraph(BaseGraphPlugin):
             Graph object instance.
         """
         query = "tag:logon-event"
-        return_fields = ["computer_name", "username", "logon_type", "logon_process"]
+        return_fields = plaso_compat.expand_field_names(
+            ["hostname", "username", "logon_type", "logon_process"]
+        )
 
         events = self.event_stream(query_string=query, return_fields=return_fields)
 
         for event in events:
-            computer_name = event["_source"].get("computer_name")
+            computer_name = plaso_compat.get_field_value(event["_source"], "hostname")
             username = event["_source"].get("username")
             logon_type = event["_source"].get("logon_type")
 
