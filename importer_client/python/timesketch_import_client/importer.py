@@ -15,7 +15,6 @@
 
 from __future__ import unicode_literals
 
-import codecs
 import io
 import json
 import logging
@@ -822,7 +821,7 @@ class ImportStreamer(object):
             if self._csv_delimiter:
                 delimiter = self._csv_delimiter
 
-            with codecs.open(
+            with open(
                 filepath, "r", encoding=self._text_encoding, errors="replace"
             ) as fh:
                 for chunk_frame in pandas.read_csv(
@@ -833,7 +832,7 @@ class ImportStreamer(object):
             self._upload_binary_file(filepath)
 
         elif file_ending == "jsonl":
-            with codecs.open(
+            with open(
                 filepath, "r", encoding=self._text_encoding, errors="replace"
             ) as fh:
                 for line in fh:

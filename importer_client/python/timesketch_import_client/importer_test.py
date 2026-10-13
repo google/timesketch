@@ -407,7 +407,9 @@ class TestUploadLogic(unittest.TestCase):
         self.importer.set_plaso_event_filter("parser is syslog")
 
         # Mock open()
-        with mock.patch("codecs.open", mock.mock_open(read_data='{"message": "test"}')):
+        with mock.patch(
+            "builtins.open", mock.mock_open(read_data='{"message": "test"}')
+        ):
             with mock.patch("os.path.isfile", return_value=True):
                 self.importer.add_file("/tmp/test.jsonl")
 

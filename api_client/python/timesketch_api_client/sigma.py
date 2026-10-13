@@ -124,7 +124,10 @@ class SigmaRule(resource.BaseResource):
     @property
     def references(self) -> List[str]:
         """Returns the rule references."""
-        return self.get_attribute("references")
+        references = self.get_attribute("references")
+        if not isinstance(references, list):
+            return []
+        return references
 
     @property
     def status(self) -> str:

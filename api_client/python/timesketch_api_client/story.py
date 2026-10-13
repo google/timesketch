@@ -831,8 +831,8 @@ class Story(resource.BaseResource):
         self.reset()
         string_list: List[str] = []
         for block in self.blocks:
-            if block.TYPE == "text":
-                string_list.append(str(block.data))
+            if isinstance(block, TextBlock):
+                string_list.append(block.text)
             elif block.TYPE == "view":
                 # Type casting for search_obj as it is expected to be search.Search
                 search_obj: Optional[search.Search] = block.view

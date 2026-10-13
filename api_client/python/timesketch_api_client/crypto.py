@@ -171,7 +171,7 @@ class CredentialStorage:
         if not os.path.isfile(file_path):
             return None
 
-        password_bytes: bytes
+        password_bytes: bytes = b""
         if password:
             if isinstance(password, str):
                 password_bytes = bytes(password, "utf-8")
