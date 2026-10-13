@@ -56,9 +56,9 @@ else:
     application = create_app()
     logger.info("Starting Timesketch with NG UI")
 
-# The OpenSearch index prefix is only supported on new installations. This is
-# checked here and not in create_app(), so the warning is only logged once on
-# server start. The check must never prevent the server from starting.
+# Warn if search indices do not use the configured OpenSearch index prefix.
+# This is checked here and not in create_app(), so the warning is only logged
+# once on server start. The check must never prevent the server from starting.
 try:
     index_prefix_warning = get_index_prefix_warning(
         application.config.get("OPENSEARCH_INDEX_PREFIX")

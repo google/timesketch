@@ -272,10 +272,11 @@ def create_app(
 def get_index_prefix_warning(index_prefix: Optional[str]) -> str:
     """Checks whether the search indices in the database use the index prefix.
 
-    The OpenSearch index prefix is only supported on new installations. This
-    is used by "tsctl info" and on server start (wsgi.py). It is not part of
-    create_app(), since that also runs for every tsctl command and for some
-    API requests. Search indices that failed to be created are ignored.
+    The OpenSearch index prefix only applies to indices that are created after
+    it was set, existing indices are not renamed. This is used by "tsctl info"
+    and on server start (wsgi.py). It is not part of create_app(), since that
+    also runs for every tsctl command and for some API requests. Search indices
+    that failed to be created are ignored.
 
     Args:
         index_prefix: The configured OPENSEARCH_INDEX_PREFIX.
@@ -297,8 +298,10 @@ def get_index_prefix_warning(index_prefix: Optional[str]) -> str:
 
     return (
         f"{unprefixed_indices} of {total_indices} search indices do not use the "
-        f"configured OPENSEARCH_INDEX_PREFIX {index_prefix!r}. The index prefix "
-        "is only supported on new installations, see the admin documentation."
+        f"configured OPENSEARCH_INDEX_PREFIX {index_prefix!r}. The prefix only "
+        "applies to new indices, existing indices keep their names. Make sure "
+        "the OpenSearch service account can still access them, see the admin "
+        "documentation."
     )
 
 

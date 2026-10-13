@@ -38,7 +38,7 @@ Timesketch version: 20210602
 
 #### `info`
 
-Displays detailed version information for Timesketch and its key dependencies, including the Git commit hash if available. It also shows the configured `OPENSEARCH_INDEX_PREFIX` and warns if existing search indices do not use it (the prefix is only supported on new installations).
+Displays detailed version information for Timesketch and its key dependencies, including the Git commit hash if available. It also shows the configured `OPENSEARCH_INDEX_PREFIX` and warns if existing search indices do not use it (the prefix only applies to indices created after it was set).
 
 **Example:**
 ```shell

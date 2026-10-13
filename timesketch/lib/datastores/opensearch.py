@@ -1720,9 +1720,8 @@ class OpenSearchDataStore:
         if index_prefix:
             message += (
                 f". They need to cover the configured OPENSEARCH_INDEX_PREFIX "
-                f"'{index_prefix}'. Indices created before the prefix was set "
-                "are not covered by it, the prefix is only supported on new "
-                "installations"
+                f"'{index_prefix}' and any indices that were created before "
+                "the prefix was set"
             )
         message += "."
         os_logger.error(message)
