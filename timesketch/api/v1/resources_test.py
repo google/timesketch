@@ -2710,11 +2710,40 @@ class UploadFileResourceTest(BaseTest):
         self.login()
         self.assertRegex(self._upload_events(), r"^timesketch-[0-9a-f]{32}$")
 
-    def test_upload_supplied_index_name_with_prefix(self):
-        """Test that client supplied index names are used as they are."""
-        self.app.config["OPENSEARCH_INDEX_PREFIX"] = "timesketch-"
+    def test_upload_supplied_index_name_without_prefix(self):
+        """Test that client supplied index names are used without a prefix."""
         self.login()
         self.assertEqual(self._upload_events("customindex"), "customindex")
+
+    def test_upload_supplied_index_name_with_prefix(self):
+        """Test that client supplied names with the prefix are used as is."""
+        self.app.config["OPENSEARCH_INDEX_PREFIX"] = "timesketch-"
+        self.login()
+        self.assertEqual(self._upload_events("timesketch-custom"), "timesketch-custom")
+
+    def test_upload_existing_index_name_with_prefix(self):
+        """Test that names of existing search indices don't need the prefix."""
+        self.app.config["OPENSEARCH_INDEX_PREFIX"] = "timesketch-"
+        self.login()
+        # The search index "test" is created in BaseTest.setUp().
+        self.assertEqual(self._upload_events("test"), "test")
+
+    def test_upload_new_index_name_without_prefix_rejected(self):
+        """Test that new index names without the prefix are rejected."""
+        self.app.config["OPENSEARCH_INDEX_PREFIX"] = "timesketch-"
+        self.login()
+        data = {
+            "sketch_id": "3",
+            "name": "prefix test timeline",
+            "events": "[]",
+            "index_name": "customindex",
+        }
+        with mock.patch("timesketch.lib.tasks.build_index_pipeline") as pipeline:
+            response = self.client.post("/api/v1/upload/", data=data)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+        self.assertIn("OPENSEARCH_INDEX_PREFIX 'timesketch-'", response.json["message"])
+        pipeline.assert_not_called()
+        self.assertIsNone(SearchIndex.query.filter_by(index_name="customindex").first())
 
     @mock.patch("timesketch.api.v1.resources.upload.utils.format_upload_path")
     @mock.patch("timesketch.api.v1.resources.upload.current_app")

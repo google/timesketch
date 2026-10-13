@@ -86,8 +86,10 @@ New indices are then named `timesketch-<32 hex characters>`.
   and `tsctl info` warns if search indices without the prefix exist.
 * Use a unique prefix for every Timesketch instance that shares an OpenSearch
   cluster.
-* Timesketch never adds the prefix to index names that clients explicitly
-  supply (e.g. via the API or importer).
+* Index names that clients supply for new indices in uploads (e.g. with the
+  importer's `--index-name`) must start with the prefix, otherwise the upload
+  is rejected. Timesketch never adds the prefix to them, and names of existing
+  indices keep working.
 * Setting up the OpenSearch permissions (roles, index patterns, index templates
   and policies) is done in OpenSearch and is not managed by Timesketch. Give
   the Timesketch service account full access to indices that match the prefix.

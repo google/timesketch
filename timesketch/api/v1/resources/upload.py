@@ -654,6 +654,21 @@ class UploadFileResource(resources.ResourceMixin, Resource):
         utils.update_sketch_last_activity(sketch)
 
         index_name = form.get("index_name", "")
+        # With a prefix, new indices have to use it. Names of existing search
+        # indices (e.g. to add data to an existing timeline) stay allowed.
+        index_prefix = lib_utils.get_index_prefix()
+        if (
+            index_name
+            and index_prefix
+            and not index_name.startswith(index_prefix)
+            and not SearchIndex.query.filter_by(index_name=index_name).first()
+        ):
+            abort(
+                HTTP_STATUS_CODE_BAD_REQUEST,
+                "Unable to upload data, new index names must start with the "
+                f"configured OPENSEARCH_INDEX_PREFIX '{index_prefix}'.",
+            )
+
         plaso_event_filter = form.get("plaso_event_filter", "")
         file_storage = request.files.get("file")
         if file_storage:
