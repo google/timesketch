@@ -556,7 +556,7 @@ class Story(resource.BaseResource):
             objects = story_data.get("objects")
             content = "[]"
             if objects:
-                content = objects[0].get("content", "[]")
+                content = objects[0].get("content") or "[]"
             index = 0
             for content_block in json.loads(content):
                 name = content_block.get("componentName", "")

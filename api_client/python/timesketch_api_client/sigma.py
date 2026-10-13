@@ -64,32 +64,32 @@ class SigmaRule(resource.BaseResource):
     @property
     def search_query(self) -> str:
         """Returns the Search query."""
-        return str(self.get_attribute("search_query"))
+        return self.get_attribute("search_query")
 
     @property
     def title(self) -> str:
         """Returns the Sigma rule title."""
-        return str(self.get_attribute("title"))
+        return self.get_attribute("title")
 
     @property
     def id(self) -> str:
         """Returns the Sigma rule id."""
-        return str(self.get_attribute("id"))
+        return self.get_attribute("id")
 
     @property
     def rule_uuid(self) -> str:
         """Returns the rule id."""
-        return str(self.get_attribute("id"))
+        return self.get_attribute("id")
 
     @property
     def description(self) -> str:
         """Returns the rule description."""
-        return str(self.get_attribute("description"))
+        return self.get_attribute("description")
 
     @property
     def level(self) -> str:
         """Returns the rule confidence level."""
-        return str(self.get_attribute("level"))
+        return self.get_attribute("level")
 
     @property
     def falsepositives(self) -> Any:
@@ -99,17 +99,17 @@ class SigmaRule(resource.BaseResource):
     @property
     def author(self) -> str:
         """Returns the rule author."""
-        return str(self.get_attribute("author"))
+        return self.get_attribute("author")
 
     @property
     def date(self) -> str:
         """Returns the rule date."""
-        return str(self.get_attribute("date"))
+        return self.get_attribute("date")
 
     @property
     def modified(self) -> str:
         """Returns the rule modified date."""
-        return str(self.get_attribute("modified"))
+        return self.get_attribute("modified")
 
     @property
     def logsource(self) -> Any:
@@ -132,7 +132,7 @@ class SigmaRule(resource.BaseResource):
     @property
     def status(self) -> str:
         """Returns the rule status."""
-        return str(self.get_attribute("status"))
+        return self.get_attribute("status")
 
     def set_value(self, key: str, value: Any) -> None:
         """Sets the value for a given key

@@ -45,7 +45,7 @@ def _get_message(response: Optional[requests.Response]) -> str:
         return "n/a"
 
     soup = bs4.BeautifulSoup(response_text_raw, features="html.parser")
-    if soup.p:
+    if soup.p and soup.p.string:
         return str(soup.p.string)  # pytype: disable=attribute-error
 
     if isinstance(response_text_raw, bytes):
@@ -61,7 +61,10 @@ def _get_message(response: Optional[requests.Response]) -> str:
     if not isinstance(response_dict, dict):
         return str(response_dict)
 
-    return str(response_dict.get("message", str(response_dict)))
+    message = response_dict.get("message")
+    if message is None:
+        return str(response_dict)
+    return str(message)
 
 
 def _get_reason(response: Optional[requests.Response]) -> str:

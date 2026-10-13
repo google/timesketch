@@ -51,9 +51,11 @@ class Sketch(resource.BaseResource):
     """Timesketch sketch object.
 
     A sketch in Timesketch is a collection of one or more timelines. It has
+    access control and its own namespace for things like labels and comments.
+
     Attributes:
-        id (int): The ID of the sketch.
-        api (TimesketchApi): An instance of TimesketchApi object.
+        id: The ID of the sketch.
+        api: An instance of TimesketchApi object.
     """
 
     # Add in necessary fields in data ingested via a different mechanism.
@@ -1116,7 +1118,7 @@ class Sketch(resource.BaseResource):
         file_name: str = "",
         as_object: bool = False,
         use_wildcard_fields: bool = False,
-    ) -> Union[Dict[str, Any], pandas.DataFrame, search.Search, None]:
+    ) -> Union[Dict[str, Any], pandas.DataFrame, search.Search, bool]:
         """Explore the sketch.
 
         Args:
@@ -1187,8 +1189,7 @@ class Sketch(resource.BaseResource):
             return search_obj
 
         if file_name:
-            search_obj.to_file(file_name)
-            return None
+            return search_obj.to_file(file_name)
 
         if as_pandas:
             return search_obj.to_pandas()
@@ -1711,7 +1712,7 @@ class Sketch(resource.BaseResource):
         return_fields: Optional[str] = None,
         max_entries: Optional[int] = None,
         as_pandas: bool = False,
-    ) -> Union[Dict[str, Any], pandas.DataFrame, search.Search, None]:
+    ) -> Union[Dict[str, Any], pandas.DataFrame, search.Search, bool]:
         """Searches for all events containing a given label.
 
         Args:

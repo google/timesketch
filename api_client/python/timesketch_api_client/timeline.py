@@ -211,7 +211,7 @@ class Timeline(resource.BaseResource):
         analyzer_name: str,
         analyzer_kwargs: Optional[Dict[str, Any]] = None,
         ignore_previous: bool = False,
-    ) -> List[analyzer.AnalyzerResult]:
+    ) -> Optional[List[analyzer.AnalyzerResult]]:
         """Run an analyzer on a timeline.
 
         Args:
@@ -260,7 +260,7 @@ class Timeline(resource.BaseResource):
         analyzer_names: List[str],
         analyzer_kwargs: Optional[Dict[str, Any]] = None,
         ignore_previous: bool = False,
-    ) -> List[analyzer.AnalyzerResult]:
+    ) -> Optional[List[analyzer.AnalyzerResult]]:
         """Run an analyzer on a timeline.
 
         Args:
@@ -314,7 +314,7 @@ class Timeline(resource.BaseResource):
                 "'ignore_previous=True' to overwrite.",
                 analyzer_names,
             )
-            return []
+            return None
 
         analyzer_results = []
         for session_dict in objects[0]:

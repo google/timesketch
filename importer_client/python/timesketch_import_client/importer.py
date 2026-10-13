@@ -13,8 +13,6 @@
 # limitations under the License.
 """Timesketch data importer."""
 
-from __future__ import unicode_literals
-
 import io
 import json
 import logging

@@ -13,11 +13,16 @@
 # limitations under the License.
 """Timesketch API client library for working with scenarios."""
 
+from __future__ import annotations
+
 import logging
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, TYPE_CHECKING
 
 from . import error
 from . import resource
+
+if TYPE_CHECKING:
+    from .client import TimesketchApi
 
 logger = logging.getLogger("timesketch_api.scenario")
 
@@ -36,15 +41,16 @@ class Scenario(resource.BaseResource):
         api: An instance of TimesketchApi object.
     """
 
-    def __init__(self, sketch_id, scenario_id, uuid, api):
+    def __init__(
+        self, sketch_id: int, scenario_id: int, uuid: str, api: TimesketchApi
+    ) -> None:
         """Initializes the Scenario object.
 
         Args:
-            sketch_id (int): ID of a sketch.
-            scenario_id (int): Primary key ID of the scenario.
-            uuid (str): UUID of the scenario.
-            api (timesketch_api_client.client.TimesketchApi): An instance of the
-                TimesketchApi object.
+            sketch_id: ID of a sketch.
+            scenario_id: Primary key ID of the scenario.
+            uuid: UUID of the scenario.
+            api: An instance of the TimesketchApi object.
         """
         self.id = scenario_id
         self.uuid = uuid
@@ -203,15 +209,16 @@ class Question(resource.BaseResource):
         api: An instance of TimesketchApi object.
     """
 
-    def __init__(self, sketch_id, question_id, uuid, api):
+    def __init__(
+        self, sketch_id: int, question_id: int, uuid: str, api: TimesketchApi
+    ) -> None:
         """Initializes the Question object.
 
         Args:
-            sketch_id (int): ID of a sketch.
-            question_id (int): Primary key ID of the question.
-            uuid (str): UUID of the question.
-            api (timesketch_api_client.client.TimesketchApi): An instance of the
-                TimesketchApi object.
+            sketch_id: ID of a sketch.
+            question_id: Primary key ID of the question.
+            uuid: UUID of the question.
+            api: An instance of the TimesketchApi object.
         """
         self.id = question_id
         self.uuid = uuid
@@ -465,12 +472,11 @@ class Question(resource.BaseResource):
         return self.lazyload_data()
 
 
-def getScenarioTemplateList(api) -> List[Dict[str, Any]]:
+def getScenarioTemplateList(api: TimesketchApi) -> List[Dict[str, Any]]:
     """Retrieves a list of all available scenario templates.
 
     Args:
-        api (timesketch_api_client.client.TimesketchApi): An instance of the
-            TimesketchApi object.
+        api: An instance of the TimesketchApi object.
 
     Returns:
         A list of dictionaries, where each represents a Scenario template.
@@ -482,12 +488,11 @@ def getScenarioTemplateList(api) -> List[Dict[str, Any]]:
     return scenario_objects
 
 
-def getQuestionTemplateList(api) -> List[Dict[str, Any]]:
+def getQuestionTemplateList(api: TimesketchApi) -> List[Dict[str, Any]]:
     """Retrieves a list of all available question templates.
 
     Args:
-        api (timesketch_api_client.client.TimesketchApi): An instance of the
-            TimesketchApi object.
+        api: An instance of the TimesketchApi object.
 
     Returns:
         A list of dictionaries, where each represents a Question template.

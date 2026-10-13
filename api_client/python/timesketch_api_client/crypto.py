@@ -180,10 +180,11 @@ class CredentialStorage:
         elif config_assistant:
             try:
                 password_raw = config_assistant.get_config("cred_key")
-                if not isinstance(password_raw, bytes):
-                    password_bytes = bytes(password_raw, "utf-8")
-                else:
-                    password_bytes = password_raw
+                if password_raw:
+                    if not isinstance(password_raw, bytes):
+                        password_bytes = bytes(password_raw, "utf-8")
+                    else:
+                        password_bytes = password_raw
             except KeyError as exc:
                 raise IOError(
                     "Not able to determine encryption key from config."
@@ -193,6 +194,9 @@ class CredentialStorage:
                 "Neither password nor a configuration assistant passed to "
                 "tool, unable to determine password."
             )
+
+        if not password_bytes:
+            raise IOError("Not able to determine encryption key from config.")
 
         with open(file_path, "rb") as fh:
             salt = fh.read(self.SALT_LENGTH)
