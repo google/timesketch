@@ -42,8 +42,9 @@ class Scenario(resource.BaseResource):
         Args:
             sketch_id (int): ID of a sketch.
             scenario_id (int): Primary key ID of the scenario.
-            uuid: UUID of the scenario.
-            api: An instance of the TimesketchApi object.
+            uuid (str): UUID of the scenario.
+            api (timesketch_api_client.client.TimesketchApi): An instance of the
+                TimesketchApi object.
         """
         self.id = scenario_id
         self.uuid = uuid
@@ -208,8 +209,9 @@ class Question(resource.BaseResource):
         Args:
             sketch_id (int): ID of a sketch.
             question_id (int): Primary key ID of the question.
-            uuid: UUID of the question.
-            api: An instance of the TimesketchApi object.
+            uuid (str): UUID of the question.
+            api (timesketch_api_client.client.TimesketchApi): An instance of the
+                TimesketchApi object.
         """
         self.id = question_id
         self.uuid = uuid
@@ -467,7 +469,8 @@ def getScenarioTemplateList(api) -> List[Dict[str, Any]]:
     """Retrieves a list of all available scenario templates.
 
     Args:
-        api: An instance of the TimesketchApi object.
+        api (timesketch_api_client.client.TimesketchApi): An instance of the
+            TimesketchApi object.
 
     Returns:
         A list of dictionaries, where each represents a Scenario template.
@@ -483,7 +486,8 @@ def getQuestionTemplateList(api) -> List[Dict[str, Any]]:
     """Retrieves a list of all available question templates.
 
     Args:
-        api: An instance of the TimesketchApi object.
+        api (timesketch_api_client.client.TimesketchApi): An instance of the
+            TimesketchApi object.
 
     Returns:
         A list of dictionaries, where each represents a Question template.

@@ -34,3 +34,4 @@ from . import export_sketch_test
 from . import wildcard_query_test
 from . import status_race_test
 from . import telemetry_test
+from . import acl_test

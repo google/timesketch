@@ -338,8 +338,10 @@ class Aggregation(resource.SketchResource):
         Args:
             description: Description string.
         """
-        if not self.resource_data or "meta" not in self.resource_data:
-            return
+        if not self.resource_data:
+            self.resource_data = {"meta": {}}
+        if "meta" not in self.resource_data:
+            self.resource_data["meta"] = {}
         meta = self.resource_data.get("meta", {})
         meta["description"] = description
 
@@ -355,11 +357,10 @@ class Aggregation(resource.SketchResource):
         Args:
             name: Name of the aggregation.
         """
-        if not self.resource_data or "meta" not in self.resource_data:
-            return
-        meta = self.resource_data.get("meta") or {}
-        meta["name"] = name
-        self.resource_data["meta"] = meta
+        self._name = name
+        if self.resource_data and "meta" in self.resource_data:
+            meta = self.resource_data.get("meta")
+            meta["name"] = name
 
     @property
     def aggregator_name(self) -> str:

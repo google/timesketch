@@ -190,6 +190,8 @@ def mock_response(*args, **kwargs):
                 "id": 1,
                 "name": "test",
                 "description": "test",
+                "created_at": "2025-12-11T07:39:20.000000",
+                "user": {"username": "testuser"},
                 "timelines": [
                     {
                         "id": 1,
@@ -979,6 +981,9 @@ def mock_response(*args, **kwargs):
         ),
         "http://127.0.0.1/api/v1/sketches/1/event/annotate/": MockResponse(
             json_data=annotate_event_data
+        ),
+        "http://127.0.0.1/api/v1/sketches/1/aggregation/": MockResponse(
+            json_data=aggregation_1_data
         ),
         "http://127.0.0.1/api/v1/sketches/1/aggregation/explore/": MockResponse(
             json_data=aggregation_chart_data

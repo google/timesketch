@@ -8,7 +8,7 @@
                     "type": "text",
                     "fields": {
                         "keyword": {"type": "keyword", "ignore_above": 256},
-                        "wildcard": {"type": "wildcard"}
+                        "wildcard": {"type": "wildcard", "ignore_above": 32766}
                     }
                 }
             }

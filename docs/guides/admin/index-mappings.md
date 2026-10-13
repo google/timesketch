@@ -43,6 +43,8 @@ If a field's value exceeds 256 characters, OpenSearch will **not index it as a k
 *   **Impact:** The event will still be searchable via full-text search, but it will **not appear** in filter results or exact match queries targeting the `.keyword` sub-field.
 *   **Adjustment:** If you have long fields (e.g., long URLs or command lines) that you need to filter on exactly, you may need to increase this limit in the mapping files. Note that increasing this significantly can increase index size and memory usage.
 
+Similarly, `wildcard` sub-fields have `ignore_above: 32766` configured to prevent Lucene `DocValuesField` limit errors (`<= 32766` bytes) when indexing very large string fields.
+
 ### Wildcard Matches in Keyword Fields
 
 Historically, `keyword` fields were used in Timesketch to perform wildcard
@@ -62,7 +64,7 @@ sub-field for string data:
 ```json
 "fields": {
     "keyword": {"type": "keyword", "ignore_above": 256},
-    "wildcard": {"type": "wildcard"}
+    "wildcard": {"type": "wildcard", "ignore_above": 32766}
 }
 ```
 

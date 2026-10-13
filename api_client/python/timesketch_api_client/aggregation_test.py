@@ -134,6 +134,9 @@ class AggregationTest(unittest.TestCase):
 
     def test_description_setter(self):
         """Tests the description property setter."""
+        aggregation_obj = aggregation.Aggregation(self.sketch)
+        aggregation_obj.description = "new description"
+        self.assertEqual(aggregation_obj.description, "new description")
 
     def test_name(self):
         """Tests the name property."""
@@ -143,13 +146,46 @@ class AggregationTest(unittest.TestCase):
         aggregation_obj.from_saved(1)
         self.assertEqual(aggregation_obj.name, "ip barchart")
 
+    def test_name_setter(self):
+        """Tests the name property setter."""
+        aggregation_obj = aggregation.Aggregation(self.sketch)
+        aggregation_obj.name = "new aggregation name"
+        self.assertEqual(aggregation_obj.name, "new aggregation name")
+
+        aggregation_obj.from_aggregator_run(
+            aggregator_name="field_bucket",
+            aggregator_parameters={"field": "ip"},
+        )
+        aggregation_obj.name = "Top IPs"
+        self.assertEqual(aggregation_obj.name, "Top IPs")
+
     def test_aggregator_name(self):
         """Tests the aggregator_name property."""
         aggregation_obj = aggregation.Aggregation(self.sketch)
-        self.assertEqual(aggregation_obj.name, "")
+        self.assertEqual(aggregation_obj._aggregator_name, "")
 
         aggregation_obj.from_saved(1)
-        self.assertEqual(aggregation_obj.name, "ip barchart")
+        self.assertEqual(aggregation_obj.aggregator_name, "field_bucket")
+
+    def test_save(self):
+        """Tests saving an aggregation preserves user-defined name and description."""
+        aggregation_obj = self.sketch.run_aggregator(
+            aggregator_name="field_bucket",
+            aggregator_parameters={"field": "ip"},
+        )
+        aggregation_obj.name = "Top IPs"
+        aggregation_obj.description = "Top queried IP addresses"
+
+        with mock.patch.object(
+            self.api_client.session, "post", wraps=self.api_client.session.post
+        ) as mock_post:
+            result = aggregation_obj.save()
+
+        self.assertEqual(result, "Saved aggregation to ID: 1")
+        mock_post.assert_called_once()
+        _, kwargs = mock_post.call_args
+        self.assertEqual(kwargs["json"]["name"], "Top IPs")
+        self.assertEqual(kwargs["json"]["description"], "Top queried IP addresses")
 
     def test_add_label(self):
         """Test the add_label function."""

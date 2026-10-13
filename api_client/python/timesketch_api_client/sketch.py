@@ -172,6 +172,42 @@ class Sketch(resource.BaseResource):
         return meta.get("last_activity", "")
 
     @property
+    def created_at(self) -> str:
+        """Property that returns sketch creation time.
+
+        Returns:
+            Sketch creation time as string.
+        """
+        data = self.lazyload_data()
+        objects = data.get("objects")
+        if not objects:
+            return ""
+        data_object = objects[0]
+        created_at_string = data_object.get("created_at", "")
+        return created_at_string
+
+    @property
+    def creator(self) -> str:
+        """Property that returns sketch creator.
+
+        Returns:
+            Sketch creator as string.
+        """
+        data = self.lazyload_data()
+        objects = data.get("objects")
+        if not objects:
+            return ""
+        data_object = objects[0]
+        try:
+            username_string = data_object.get("user").get("username")
+            if not username_string:
+                return ""
+            return username_string
+        except (AttributeError, TypeError) as e:
+            logger.error("Error getting sketch creator: %s", e)
+            return ""
+
+    @property
     def my_acl(self) -> List[str]:
         """Property that returns back the ACL for the current user."""
         data = self.lazyload_data(refresh_cache=True)
@@ -526,13 +562,17 @@ class Sketch(resource.BaseResource):
         # Check the return status. If it's not a success (20x),
         # error_message will raise a RuntimeError.
         if not error.check_return_status(response, logger):
+            if response.status_code == definitions.HTTP_STATUS_CODE_NOT_FOUND:
+                error.error_message(
+                    response,
+                    message=f"Failed to delete sketch {self.id}",
+                    error=error.NotFoundError,
+                )
             error.error_message(
                 response,
                 message=f"Failed to delete sketch {self.id}",
-                error=RuntimeError,
             )
-        else:
-            return error.check_return_status(response, logger)
+
         return True
 
     def add_to_acl(
@@ -1031,12 +1071,16 @@ class Sketch(resource.BaseResource):
             return timelines
 
         for timeline_dict in objects[0].get("timelines", []):
+            searchindex = timeline_dict.get("searchindex")
+            searchindex_name = ""
+            if isinstance(searchindex, dict):
+                searchindex_name = searchindex.get("index_name") or ""
             timeline_obj = timeline.Timeline(
-                timeline_id=timeline_dict["id"],
+                timeline_id=timeline_dict.get("id"),
                 sketch_id=self.id,
                 api=self.api,
-                name=timeline_dict["name"],
-                searchindex=timeline_dict["searchindex"]["index_name"],
+                name=timeline_dict.get("name"),
+                searchindex=searchindex_name,
             )
             timelines.append(timeline_obj)
         return timelines
@@ -1409,49 +1453,6 @@ class Sketch(resource.BaseResource):
         )
 
         return aggregation_obj
-
-    def store_aggregation(
-        self,
-        name: str,
-        description: str,
-        aggregator_name: str,
-        aggregator_parameters: Dict[str, Any],
-        chart_type: str = "",
-    ) -> Optional[aggregation.Aggregation]:
-        """Store an aggregation in the sketch.
-
-        Args:
-            name: a name that will be associated with the aggregation.
-            description: description of the aggregation, visible in the UI.
-            aggregator_name: name of the aggregator class.
-            aggregator_parameters: parameters of the aggregator.
-            chart_type: string representing the chart type.
-
-        Raises:
-            RuntimeError: if the client is unable to store the aggregation.
-
-        Returns:
-          A stored aggregation object or None if not stored.
-        """
-        if self.is_archived():
-            raise RuntimeError("Unable to store an aggregator on an archived sketch.")
-
-        # TODO: Deprecate this function.
-        logger.warning(
-            "This function is about to be deprecated, please use the "
-            "`.save()` function of an aggregation object instead"
-        )
-
-        aggregator_obj = self.run_aggregator(aggregator_name, aggregator_parameters)
-        aggregator_obj.name = name
-        aggregator_obj.description = description
-        if chart_type:
-            aggregator_obj.chart_type = chart_type
-        if aggregator_obj.save():
-            _ = self.lazyload_data(refresh_cache=True)
-            return aggregator_obj
-
-        return None
 
     def comment_event(
         self, event_id: str, index: str, comment_text: str

@@ -55,17 +55,17 @@ Similar to a CSV file, you can upload the JSONL file even if it does not have th
 
 ## Handling Large String Fields
 
-OpenSearch has a hard limit of **32766 bytes** for "keyword" fields. Keyword fields are used for exact matching, sorting, aggregations (charts) and regex searches.
+OpenSearch has a hard limit of **32766 bytes** for binary `DocValuesField` values, which are used by both "keyword" and "wildcard" sub-fields.
 
-If an imported file contains a field that exceeds this limit (e.g., a very long feature vector or a massive blob of text), OpenSearch would normally reject the entire event with a `max_bytes_length_exceeded_exception`.
+If an imported file contains a field that exceeds this limit (e.g., a very long feature vector, serialized protobuf, or massive blob of text), OpenSearch would normally reject the entire event with an `illegal_argument_exception` or `max_bytes_length_exceeded_exception`.
 
-Timesketch handles this by using a `dynamic_template` with an `ignore_above: 32766` setting. This means:
-*   Fields larger than 32766 bytes are still indexed as **text** type (and are therefore searchable).
-*   However, the **keyword** sub-field is not created for those specific long values.
+Timesketch handles this by using a `dynamic_template` with `ignore_above: 32766` on the `wildcard` sub-field (and `ignore_above: 256` on `keyword`). This means:
+*   Fields larger than 32766 bytes are still indexed as **text** type (and are therefore searchable via full-text search).
+*   However, the **keyword** and **wildcard** sub-fields are not created for those specific long values.
 *   **Impact:**
     *   You can search for the content of these large fields based on the **text** type.
     *   You cannot use them in aggregations (charts) or sort by them if they exceed the limit.
-    *   You cannot search the keyword specific field type anymore (e.g. `message.keyword:/.*<regex>.*/`)
+    *   You cannot search the keyword or wildcard specific field types anymore (e.g. `message.keyword:/.*<regex>.*/` or native wildcard queries).
 
 ## Upload the file to Timesketch
 
