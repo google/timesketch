@@ -48,11 +48,11 @@ from . import version
 from . import sigma
 
 if TYPE_CHECKING:
-    from .credentials import AuthCredentials
+    from .credentials import TimesketchCredentials
     from .sketch import Sketch
     from .user import User
     from .index import SearchIndex
-    from .sigma import SigmaRule, Sigma
+    from .sigma import SigmaRule
 
 
 logger = logging.getLogger("timesketch_api.client")
@@ -193,7 +193,7 @@ class TimesketchApi:
             raise ValueError("Session is not set.")
         return self._session
 
-    def set_credentials(self, credential_object: AuthCredentials) -> None:
+    def set_credentials(self, credential_object: TimesketchCredentials) -> None:
         """Sets the credential object.
 
         Args:
@@ -1073,7 +1073,7 @@ class TimesketchApi:
 
         return sigma_obj
 
-    def parse_sigmarule_by_text(self, rule_text: str) -> Sigma:
+    def parse_sigmarule_by_text(self, rule_text: str) -> SigmaRule:
         """Obtain a parsed Sigma rule by providing text.
 
         Will parse a provided text `rule_yaml`, parse it and return as SigmaRule
