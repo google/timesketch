@@ -571,6 +571,9 @@ class TestIndexPrefixUtils(BaseTest):
             123,
             True,
             ["timesketch-"],
+            False,
+            0,
+            [],
         )
         for prefix in invalid_prefixes:
             self.assertFalse(is_valid_index_prefix(prefix), prefix)

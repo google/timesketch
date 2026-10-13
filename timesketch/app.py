@@ -276,7 +276,7 @@ def get_index_prefix_warning(index_prefix: Optional[str]) -> str:
     it was set, existing indices are not renamed. This is used by "tsctl info"
     and on server start (wsgi.py). It is not part of create_app(), since that
     also runs for every tsctl command and for some API requests. Search indices
-    that failed to be created are ignored.
+    with the status "fail" are ignored.
 
     Args:
         index_prefix: The configured OPENSEARCH_INDEX_PREFIX.

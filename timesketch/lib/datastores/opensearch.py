@@ -1703,7 +1703,9 @@ class OpenSearchDataStore:
 
         return None
 
-    def _authorization_error(self, index_name: str):
+    def _authorization_error(
+        self, index_name: str
+    ) -> errors.DatastoreAuthorizationError:
         """Logs and returns an error for denied access to an index.
 
         Args:

@@ -55,6 +55,9 @@ class TestApiUtils(BaseTest):
         self.assertFalse(utils.is_valid_index_name("timesketch-"))
         self.assertFalse(utils.is_valid_index_name(f"timesketch-../{uuid_hex}"))
         self.assertFalse(utils.is_valid_index_name(f"timesketch-{uuid_hex}/x"))
+        # The prefix is case-sensitive, the UUID part is not (as before).
+        self.assertFalse(utils.is_valid_index_name(f"TIMESKETCH-{uuid_hex}"))
+        self.assertTrue(utils.is_valid_index_name(f"timesketch-{uuid_hex.upper()}"))
 
     def test_invalid_upload_path(self):
         """Test invalid upload path.

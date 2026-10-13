@@ -327,7 +327,9 @@ def is_valid_index_name(index_name):
         A boolean indicating whether the index name is valid or not.
     """
     prefix = re.escape(lib_utils.get_index_prefix())
-    regex = re.compile(rf"(?:{prefix})?[0-9a-f]{{32}}", re.I)
+    # The prefix has to match exactly (it is always lowercase), only the UUID
+    # part is case-insensitive as before.
+    regex = re.compile(rf"(?:{prefix})?(?i:[0-9a-f]{{32}})")
     match = regex.fullmatch(index_name)
     return bool(match)
 

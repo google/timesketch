@@ -56,7 +56,7 @@ REDLINE_FIELDS = frozenset({"Alert", "Tag", "Timestamp", "Field", "Summary"})
 INDEX_PREFIX_REGEX = re.compile(r"^[a-z0-9][a-z0-9_-]{0,62}$")
 
 
-def get_index_prefix():
+def get_index_prefix() -> str:
     """Returns the configured OpenSearch index prefix.
 
     Returns:
@@ -65,21 +65,21 @@ def get_index_prefix():
     return current_app.config.get("OPENSEARCH_INDEX_PREFIX") or ""
 
 
-def is_valid_index_prefix(prefix):
+def is_valid_index_prefix(prefix: Optional[str]) -> bool:
     """Checks whether a value is a valid OpenSearch index prefix.
 
     Args:
-        prefix: The configured prefix. Empty values mean no prefix.
+        prefix: The configured prefix. None or an empty string mean no prefix.
 
     Returns:
-        True if the prefix is empty or valid, False otherwise.
+        True if the prefix is unset or valid, False otherwise.
     """
-    if not prefix:
+    if prefix is None or prefix == "":
         return True
     return isinstance(prefix, str) and bool(INDEX_PREFIX_REGEX.fullmatch(prefix))
 
 
-def generate_index_name():
+def generate_index_name() -> str:
     """Generates a name for a new OpenSearch index.
 
     Only used when Timesketch itself creates a new index. Names of existing
