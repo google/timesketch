@@ -27,7 +27,7 @@ Commit your changes to your personal fork and then use the GitHub Web UI to crea
 
 #### Note for AI / LLM Contributions and Automated Agents
 
-We value transparency and maintainability in our codebase. Due to a high volume of AI/LLM-generated pull requests, we ask that AI-assisted contributors and automated agents follow these rules:
+We value transparency and maintainability in our codebase. We ask that AI-assisted contributors and automated agents follow these rules:
 
 1. **Create an Issue Instead of a Code PR:** Do **not** open pull requests with AI/LLM-generated production code or fixes directly. Instead, open a GitHub Issue describing the bug, root cause analysis, or feature request.
 2. **Test-Only Pull Requests:** If you want to submit a pull request alongside the issue, **only include unit tests or end-to-end (e2e) tests** that reproduce and demonstrate the issue. Do not include the implementation or fix—our maintainers will write the production code based on the issue and tests.
