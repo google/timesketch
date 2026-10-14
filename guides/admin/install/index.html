@@ -1089,6 +1089,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#configure-an-opensearch-index-prefix-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configure an OpenSearch index prefix (optional)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2601,6 +2612,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#configure-an-opensearch-index-prefix-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configure an OpenSearch index prefix (optional)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2719,6 +2741,40 @@ chmod 755 deploy_timesketch.sh
 <h4 id="run-deployment-script">Run deployment script</h4>
 <pre><code class="language-shell">sudo ./deploy_timesketch.sh
 </code></pre>
+<h4 id="configure-an-opensearch-index-prefix-optional">Configure an OpenSearch index prefix (optional)</h4>
+<p>By default Timesketch names its OpenSearch indices with a random UUID. If
+Timesketch shares an OpenSearch cluster with other applications, you can set a
+prefix for all indices that Timesketch creates. This makes it possible to
+restrict the OpenSearch service account of Timesketch to an index pattern such
+as <code>timesketch-*</code>.</p>
+<p>Set the prefix in <code>timesketch/etc/timesketch/timesketch.conf</code>, ideally <strong>before
+you start the system for the first time</strong>:</p>
+<pre><code class="language-python">OPENSEARCH_INDEX_PREFIX = &quot;timesketch-&quot;
+</code></pre>
+<p>New indices are then named <code>timesketch-&lt;32 hex characters&gt;</code>.</p>
+<ul>
+<li>The prefix must be lowercase, start with a letter or digit, only contain
+  <code>[a-z0-9_-]</code> and be at most 63 characters long. Timesketch refuses to start
+  with an invalid prefix.</li>
+<li><strong>The prefix only applies to indices that are created after it is set.</strong>
+  Timesketch does not rename or migrate existing indices. If you set the prefix
+  on an existing instance, the existing indices keep their names and keep
+  working, as long as the OpenSearch service account can still access them. If
+  you restrict the service account to the prefix (e.g. <code>timesketch-*</code>), these
+  older indices become inaccessible. The web server logs a warning on startup
+  and <code>tsctl info</code> warns if search indices without the prefix exist.</li>
+<li>Use a unique prefix for every Timesketch instance that shares an OpenSearch
+  cluster.</li>
+<li>Index names that clients supply for new indices in uploads (e.g. with the
+  importer's <code>--index-name</code>) must start with the prefix, otherwise the upload
+  is rejected. Timesketch never adds the prefix to them, and names of existing
+  indices keep working.</li>
+<li>Setting up the OpenSearch permissions (roles, index patterns, index templates
+  and policies) is done in OpenSearch and is not managed by Timesketch. Give
+  the Timesketch service account full access to indices that match the prefix.
+  If OpenSearch denies creating an index, Timesketch logs an error and marks
+  the upload as failed, or returns a 403 from the API.</li>
+</ul>
 <h3 id="3-start-the-system">3. Start the system</h3>
 <pre><code class="language-shell">cd timesketch
 sudo docker compose up -d

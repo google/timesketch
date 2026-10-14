@@ -3834,7 +3834,7 @@
 Timesketch version: 20210602
 </code></pre>
 <h4 id="info"><code>info</code></h4>
-<p>Displays detailed version information for Timesketch and its key dependencies, including the Git commit hash if available.</p>
+<p>Displays detailed version information for Timesketch and its key dependencies, including the Git commit hash if available. It also shows the configured <code>OPENSEARCH_INDEX_PREFIX</code> and warns if existing search indices do not use it (the prefix only applies to indices created after it was set).</p>
 <p><strong>Example:</strong></p>
 <pre><code class="language-shell">tsctl info
 Timesketch version: 20250708
