@@ -87,6 +87,8 @@ class TestPlasoCompat(BaseTest):
         self.assertEqual(get_field_value({"pid": 0}, "pid", default=-1), 0)
 
         # Default values.
+        self.assertIsNone(get_field_value(None, "hostname"))
+        self.assertEqual(get_field_value(None, "hostname", "UNKNOWN"), "UNKNOWN")
         self.assertIsNone(get_field_value({}, "hostname"))
         self.assertEqual(get_field_value({}, "hostname", "UNKNOWN"), "UNKNOWN")
 

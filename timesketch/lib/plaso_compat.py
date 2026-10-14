@@ -28,7 +28,7 @@ Once timelines created with Plaso < 20260720 are no longer supported, remove
 the corresponding entries from PLASO_FIELD_ALIASES.
 """
 
-from typing import Any, Dict, Iterable, List, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 # Maps the current Plaso field name to its legacy field name(s) for fields
 # used by Timesketch's built-in analyzers and graph plugins.
@@ -74,7 +74,9 @@ def expand_field_names(field_names: Iterable[str]) -> List[str]:
     return expanded_field_names
 
 
-def get_field_value(source: Dict, field_name: str, default: Any = None) -> Any:
+def get_field_value(
+    source: Optional[Dict[str, Any]], field_name: str, default: Any = None
+) -> Any:
     """Returns the value of a field, falling back to its legacy aliases.
 
     Args:
@@ -88,6 +90,9 @@ def get_field_value(source: Dict, field_name: str, default: Any = None) -> Any:
             empty strings, lists, tuples or dicts are considered not set, or
             the default value.
     """
+    if not source:
+        return default
+
     for name in get_field_names(field_name):
         value = source.get(name)
         if value in (None, "-"):

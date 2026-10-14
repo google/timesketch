@@ -38,7 +38,9 @@ class WinLoginsGraph(BaseGraphPlugin):
         events = self.event_stream(query_string=query, return_fields=return_fields)
 
         for event in events:
-            computer_name = plaso_compat.get_field_value(event["_source"], "hostname")
+            computer_name = plaso_compat.get_field_value(
+                event["_source"], "hostname", "UNKNOWN"
+            )
             username = event["_source"].get("username")
             logon_type = event["_source"].get("logon_type")
 
