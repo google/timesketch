@@ -4,6 +4,7 @@ import logging
 
 
 from timesketch.lib import emojis
+from timesketch.lib import plaso_compat
 from timesketch.lib import utils as lib_utils
 from timesketch.lib.analyzers.feature_extraction_plugins import interface
 from timesketch.lib.analyzers.feature_extraction_plugins import manager
@@ -248,7 +249,9 @@ class RegexFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin):
         emoji_names = config.get("emojis", [])
         emojis_to_add = [emojis.get_emoji(x) for x in emoji_names]
 
-        return_fields = [attribute, store_as]
+        # Fields renamed by Plaso (e.g. "body" to "message_body") are looked up
+        # by their current and legacy name to support all timelines.
+        return_fields = plaso_compat.expand_field_names([attribute]) + [store_as]
 
         events = self.analyzer_object.event_stream(
             query_string=query, query_dsl=query_dsl, return_fields=return_fields
@@ -256,7 +259,7 @@ class RegexFeatureExtractionPlugin(interface.BaseFeatureExtractionPlugin):
 
         event_counter = 0
         for event in events:
-            attribute_field = event.source.get(attribute)
+            attribute_field = plaso_compat.get_field_value(event.source, attribute)
             if isinstance(attribute_field, str):
                 attribute_value = attribute_field
             elif isinstance(attribute_field, (list, tuple)):
