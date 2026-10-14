@@ -32,15 +32,18 @@ import jwt
 import requests
 from requests.exceptions import RequestException, Timeout
 
+from flask import abort
 from flask import url_for
 from flask import current_app
 from flask import session
 
+from timesketch.lib.definitions import HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 
 CSRF_KEY = "google_oauth2_csrf_token"
 AUTH_URI = "https://accounts.google.com/o/oauth2/v2/auth"
 DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
+DEFAULT_OIDC_SCOPES = ("openid", "email", "profile")
 
 
 class JwtValidationError(Exception):
@@ -133,9 +136,19 @@ def get_oauth2_authorize_url(hosted_domain: str = ""):
     # so the GOOGLE_OIDC_GROUPS_* features only work with other providers
     # configured via GOOGLE_OIDC_AUTH_URL / GOOGLE_OIDC_DISCOVERY_URL. Such
     # providers may require extra scopes (e.g. "groups") to emit the claim.
-    scopes = current_app.config.get(
-        "GOOGLE_OIDC_SCOPES", ["openid", "email", "profile"]
-    )
+    # Fall back to the defaults if the option is unset, None or empty. Any
+    # other non-list value is a configuration error: silently using the
+    # defaults could drop scopes the provider needs to emit the groups claim.
+    scopes = current_app.config.get("GOOGLE_OIDC_SCOPES") or DEFAULT_OIDC_SCOPES
+    if not isinstance(scopes, (list, tuple)):
+        current_app.logger.error(
+            "Invalid GOOGLE_OIDC_SCOPES configuration: expected a list, got %s",
+            type(scopes).__name__,
+        )
+        abort(
+            HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
+            "OIDC configuration error, please contact an administrator",
+        )
 
     # Add the generated CSRF token to the client session for later validation.
     session[CSRF_KEY] = csrf_token
@@ -353,8 +366,15 @@ def get_groups_from_jwt(
         return []
 
     groups = []
+    skipped_values = 0
     for raw_group in _split_raw_groups(raw_value, separator):
-        group_name = str(raw_group).strip()
+        # Only plain string names are supported. Nested objects, numbers or
+        # booleans would otherwise end up as group names like "{'id': ...}".
+        if not isinstance(raw_group, str):
+            skipped_values += 1
+            continue
+
+        group_name = raw_group.strip()
         if not group_name:
             continue
 
@@ -362,7 +382,39 @@ def get_groups_from_jwt(
         if group_name:
             groups.append(group_name)
 
+    if skipped_values:
+        current_app.logger.warning(
+            "Ignored %d non-string value(s) in OIDC claim [%s]. Only string "
+            "group/role names are supported.",
+            skipped_values,
+            claim_name,
+        )
+
     return groups
+
+
+def normalize_group_name(
+    group_name: str, regex_pattern: Optional[Union[str, re.Pattern]] = None
+):
+    """Normalize a configured group name the same way as token group values.
+
+    This lets configuration options such as GOOGLE_OIDC_ADMIN_GROUP use either
+    the raw name (e.g. "ts-admins") or the extracted name (e.g. "admins") when
+    GOOGLE_OIDC_GROUPS_REGEX is set. Names that don't match the regex are
+    returned unchanged.
+
+    Args:
+        group_name: Group name from the configuration.
+        regex_pattern: Optional regex (string or compiled), see
+            get_groups_from_jwt.
+
+    Returns:
+        The normalized group name, or None if the name is empty.
+    """
+    if not isinstance(group_name, str) or not group_name.strip():
+        return None
+    group_name = group_name.strip()
+    return _extract_group_name(group_name, regex_pattern) or group_name
 
 
 def get_public_key_for_jwt(encoded_jwt: str, url: str):

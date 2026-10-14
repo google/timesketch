@@ -15,15 +15,21 @@
 
 import time
 from unittest import mock
+from urllib.parse import parse_qs
+from urllib.parse import urlparse
+
 import jwt
 
 from cryptography.hazmat.primitives.asymmetric import rsa
+from werkzeug.exceptions import InternalServerError
 
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.google_auth import decode_jwt
 from timesketch.lib.google_auth import validate_jwt
 from timesketch.lib.google_auth import get_public_key_for_jwt
 from timesketch.lib.google_auth import get_groups_from_jwt
+from timesketch.lib.google_auth import get_oauth2_authorize_url
+from timesketch.lib.google_auth import normalize_group_name
 from timesketch.lib.google_auth import JwtValidationError
 from timesketch.lib.google_auth import JwtKeyError
 
@@ -496,6 +502,22 @@ class TestGetGroupsFromJwt(BaseTest):
                 r"CN=([^,]+)",
                 [],
             ),
+            (
+                "a nested object claim is ignored",
+                {"realm_access": {"roles": ["analyst"]}},
+                "realm_access",
+                None,
+                None,
+                [],
+            ),
+            (
+                "non-string list values are ignored",
+                {"groups": [{"id": "1"}, True, 42, "Analysts"]},
+                "groups",
+                None,
+                None,
+                ["Analysts"],
+            ),
         ]
         for (
             description,
@@ -514,4 +536,58 @@ class TestGetGroupsFromJwt(BaseTest):
                         regex_pattern=regex_pattern,
                     ),
                     expected,
+                )
+
+
+class TestGetOAuth2AuthorizeUrl(BaseTest):
+    """Tests for the google_auth.get_oauth2_authorize_url function."""
+
+    def test_scopes_from_config(self):
+        """Test GOOGLE_OIDC_SCOPES is turned into a space separated scope."""
+        cases = [
+            (
+                "list",
+                ["openid", "email", "profile", "groups"],
+                "openid email profile groups",
+            ),
+            ("tuple", ("openid", "email"), "openid email"),
+            ("explicit None falls back to default", None, "openid email profile"),
+            ("empty list falls back to default", [], "openid email profile"),
+        ]
+        for description, configured_scopes, expected_scope in cases:
+            with self.subTest(description):
+                self.app.config["GOOGLE_OIDC_SCOPES"] = configured_scopes
+                with self.app.test_request_context("/"):
+                    url = get_oauth2_authorize_url()
+                params = parse_qs(urlparse(url).query)
+                self.assertEqual(params["scope"], [expected_scope])
+
+    def test_scopes_must_be_a_list(self):
+        """Test a non-list GOOGLE_OIDC_SCOPES is reported as a config error."""
+        self.app.config["GOOGLE_OIDC_SCOPES"] = "openid email profile"
+        with self.app.test_request_context("/"):
+            with self.assertLogs(self.app.logger, level="ERROR") as logs:
+                with self.assertRaises(InternalServerError):
+                    get_oauth2_authorize_url()
+        self.assertIn("Invalid GOOGLE_OIDC_SCOPES", "\n".join(logs.output))
+
+
+class TestNormalizeGroupName(BaseTest):
+    """Tests for the google_auth.normalize_group_name function."""
+
+    def test_normalize_group_name(self):
+        """Test configured names are normalized like token group values."""
+        cases = [
+            ("no regex keeps the name", "Admins", None, "Admins"),
+            ("whitespace is stripped", " Admins ", None, "Admins"),
+            ("raw name is extracted", "ts-admins", r"^ts-(.+)$", "admins"),
+            ("non-matching name is kept", "admins", r"^ts-(.+)$", "admins"),
+            ("LDAP DN is extracted", "CN=Admins,OU=X", r"CN=([^,]+)", "Admins"),
+            ("empty name returns None", "", None, None),
+            ("None returns None", None, None, None),
+        ]
+        for description, group_name, regex_pattern, expected in cases:
+            with self.subTest(description):
+                self.assertEqual(
+                    normalize_group_name(group_name, regex_pattern), expected
                 )

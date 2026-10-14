@@ -16,6 +16,7 @@
 from unittest import mock
 from flask import current_app
 from flask_login import current_user
+from werkzeug.exceptions import InternalServerError
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_REDIRECT
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
@@ -380,27 +381,41 @@ class GoogleOpenIdConnectViewTest(BaseTest):
         self.app.config["GOOGLE_OIDC_GROUPS_CLAIM"] = "groups"
         self.app.config["GOOGLE_OIDC_GROUPS_SYNC_ENABLED"] = True
 
+        # Use an HTTPException: Flask handles it and still saves the session,
+        # so the test fails if login_user() ran before the sync. A plain
+        # exception would propagate in test mode before the session is saved.
         with mock.patch(
             "timesketch.views.auth._sync_oidc_groups",
-            side_effect=RuntimeError("sync failed"),
+            side_effect=InternalServerError("sync failed"),
         ):
-            with self.assertRaises(RuntimeError):
-                self._login_via_oidc(
-                    {"email": "newuser@example.com", "groups": ["Analysts"]}
-                )
+            response = self._login_via_oidc(
+                {"email": "newuser@example.com", "groups": ["Analysts"]}
+            )
 
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR)
         with self.client.session_transaction() as sess:
             self.assertNotIn("_user_id", sess)
 
     def test_missing_groups_claim_logs_warning(self):
-        """Test a warning is logged when the configured claim is missing."""
+        """Test a warning is logged when the claim is missing and sync is on."""
         self.app.config["GOOGLE_OIDC_GROUPS_CLAIM"] = "groups"
+        self.app.config["GOOGLE_OIDC_GROUPS_SYNC_ENABLED"] = True
 
         with self.assertLogs(self.app.logger, level="WARNING") as logs:
             response = self._login_via_oidc({"email": "newuser@example.com"})
 
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
         self.assertIn("missing from the token", "\n".join(logs.output))
+
+    def test_missing_groups_claim_no_warning_when_sync_disabled(self):
+        """Test no missing-claim warning is logged when sync is disabled."""
+        self.app.config["GOOGLE_OIDC_GROUPS_CLAIM"] = "groups"
+        self.app.config["GOOGLE_OIDC_GROUPS_SYNC_ENABLED"] = False
+
+        with self.assertNoLogs(self.app.logger, level="WARNING"):
+            response = self._login_via_oidc({"email": "newuser@example.com"})
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
 
     def test_incomplete_groups_claim_rejects_login(self):
         """Test login is rejected when the claim is flagged as incomplete."""
@@ -481,3 +496,63 @@ class GoogleOpenIdConnectViewTest(BaseTest):
         self.assertCountEqual(
             [group.name for group in user.groups], ["Admins", "Analysts"]
         )
+
+    def test_admin_group_member_can_log_in_without_allowed_group(self):
+        """Test ADMIN_GROUP members may log in when ALLOWED_GROUPS is set."""
+        self.app.config["GOOGLE_OIDC_GROUPS_CLAIM"] = "groups"
+        self.app.config["GOOGLE_OIDC_GROUPS_SYNC_ENABLED"] = True
+        self.app.config["GOOGLE_OIDC_ALLOWED_GROUPS"] = ["Analysts"]
+        self.app.config["GOOGLE_OIDC_ADMIN_GROUP"] = "Admins"
+
+        response = self._login_via_oidc(
+            {"email": "newuser@example.com", "groups": ["Admins"]}
+        )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+        user = User.query.filter_by(username="newuser@example.com").first()
+        self.assertTrue(user.admin)
+        # The admin group is not synced as a Timesketch group unless allowed.
+        self.assertEqual(list(user.groups), [])
+
+    def test_configured_group_names_are_normalized_with_regex(self):
+        """Test ALLOWED_GROUPS/ADMIN_GROUP work with raw and extracted names."""
+        cases = [
+            ("raw names", ["ts-analysts"], "ts-admins"),
+            ("extracted names", ["analysts"], "admins"),
+        ]
+        for index, (description, allowed_groups, admin_group) in enumerate(cases):
+            with self.subTest(description):
+                self.app.config["GOOGLE_OIDC_GROUPS_CLAIM"] = "groups"
+                self.app.config["GOOGLE_OIDC_GROUPS_REGEX"] = r"^ts-(.+)$"
+                self.app.config["GOOGLE_OIDC_GROUPS_SYNC_ENABLED"] = True
+                self.app.config["GOOGLE_OIDC_ALLOWED_GROUPS"] = allowed_groups
+                self.app.config["GOOGLE_OIDC_ADMIN_GROUP"] = admin_group
+                email = f"user{index}@example.com"
+
+                response = self._login_via_oidc(
+                    {"email": email, "groups": ["ts-analysts", "ts-admins"]},
+                    csrf_token=f"csrf-token-{index}",
+                )
+
+                self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+                user = User.query.filter_by(username=email).first()
+                self.assertTrue(user.admin)
+                self.assertEqual([group.name for group in user.groups], ["analysts"])
+
+    def test_sync_ignores_non_string_claim_values(self):
+        """Test nested objects, numbers and booleans don't become groups."""
+        self.app.config["GOOGLE_OIDC_GROUPS_CLAIM"] = "groups"
+        self.app.config["GOOGLE_OIDC_GROUPS_SYNC_ENABLED"] = True
+
+        with self.assertLogs(self.app.logger, level="WARNING") as logs:
+            response = self._login_via_oidc(
+                {
+                    "email": "newuser@example.com",
+                    "groups": [{"id": "1", "name": "A"}, True, 42, "Analysts"],
+                }
+            )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+        user = User.query.filter_by(username="newuser@example.com").first()
+        self.assertEqual([group.name for group in user.groups], ["Analysts"])
+        self.assertIn("Ignored 3 non-string value(s)", "\n".join(logs.output))

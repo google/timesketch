@@ -47,6 +47,7 @@ from timesketch.lib.google_auth import get_oauth2_discovery_document
 from timesketch.lib.google_auth import get_oauth2_authorize_url
 from timesketch.lib.google_auth import get_encoded_jwt_over_https
 from timesketch.lib.google_auth import get_groups_from_jwt
+from timesketch.lib.google_auth import normalize_group_name
 from timesketch.lib.google_auth import decode_jwt
 from timesketch.lib.google_auth import validate_jwt
 from timesketch.lib.google_auth import JwtValidationError
@@ -563,7 +564,12 @@ def _get_oidc_token_groups(decoded_jwt, validated_email):
             "claim (too many groups). Contact an administrator.",
         )
 
-    if groups_claim not in decoded_jwt:
+    # Only warn when group sync is enabled: that's when a missing claim has
+    # side effects (e.g. REMOVE_STALE stripping memberships). Denied logins
+    # due to GOOGLE_OIDC_ALLOWED_GROUPS are logged separately.
+    if groups_claim not in decoded_jwt and current_app.config.get(
+        "GOOGLE_OIDC_GROUPS_SYNC_ENABLED"
+    ):
         current_app.logger.warning(
             "Configured OIDC groups claim [%s] is missing from the token of "
             "user [%s]. Check the provider claim mapping and requested scopes.",
@@ -581,30 +587,68 @@ def _get_oidc_token_groups(decoded_jwt, validated_email):
     return groups_claim, token_groups
 
 
+def _get_configured_oidc_groups(groups_claim):
+    """Return the configured allowed groups and admin group, normalized.
+
+    The configured names are passed through GOOGLE_OIDC_GROUPS_REGEX the same
+    way as the token values, so both the raw name (e.g. "ts-admins") and the
+    extracted name (e.g. "admins") match. Names that don't match the regex are
+    kept as is.
+
+    Args:
+        groups_claim (str): The configured groups claim, or None.
+
+    Returns:
+        Tuple of (allowed_groups, admin_group). allowed_groups is a list
+        (empty if not configured), admin_group is a string or None.
+    """
+    groups_regex = current_app.config.get("GOOGLE_OIDC_GROUPS_REGEX")
+    regex_pattern = (
+        _compile_groups_regex(groups_regex) if groups_claim and groups_regex else None
+    )
+
+    allowed_groups = []
+    for group_name in current_app.config.get("GOOGLE_OIDC_ALLOWED_GROUPS") or []:
+        normalized = normalize_group_name(group_name, regex_pattern)
+        if normalized:
+            allowed_groups.append(normalized)
+
+    admin_group = normalize_group_name(
+        current_app.config.get("GOOGLE_OIDC_ADMIN_GROUP"), regex_pattern
+    )
+    return allowed_groups, admin_group
+
+
 def _enforce_oidc_access(decoded_jwt, validated_email, groups_claim, token_groups):
     """Abort unless the user is in the allowed users or allowed groups.
 
     The two lists add up: a user is allowed if listed explicitly or a member of
-    an allowed group. If neither is configured, every user is allowed.
+    an allowed group. Members of GOOGLE_OIDC_ADMIN_GROUP are always allowed
+    when a group allowlist is set. If neither list is configured, every user
+    is allowed.
 
     Returns:
-        The configured allowed groups list, or None if not configured.
+        The (normalized) allowed groups list, or None if not configured.
     """
     allowed_users = current_app.config.get("GOOGLE_OIDC_ALLOWED_USERS")
-    allowed_groups = current_app.config.get("GOOGLE_OIDC_ALLOWED_GROUPS")
+    allowed_groups, admin_group = _get_configured_oidc_groups(groups_claim)
     if not (allowed_users or allowed_groups):
         return None
 
     if allowed_users and validated_email in allowed_users:
         return allowed_groups or None
 
-    if allowed_groups and set(token_groups) & set(allowed_groups):
+    login_groups = set(allowed_groups)
+    if admin_group:
+        login_groups.add(admin_group)
+    if allowed_groups and set(token_groups) & login_groups:
         return allowed_groups
 
     if allowed_groups and not groups_claim:
         current_app.logger.warning(
             "GOOGLE_OIDC_ALLOWED_GROUPS is set but GOOGLE_OIDC_GROUPS_CLAIM "
-            "is not configured. Access control will reject all users."
+            "is not configured. Group based access is disabled, only users "
+            "listed in GOOGLE_OIDC_ALLOWED_USERS can log in."
         )
 
     current_app.logger.warning(
@@ -717,7 +761,7 @@ def _sync_oidc_groups(
 
     # Never touch admin status unless an admin group is configured, otherwise
     # REMOVE_STALE would revoke admins created via tsctl.
-    admin_group = current_app.config.get("GOOGLE_OIDC_ADMIN_GROUP")
+    _, admin_group = _get_configured_oidc_groups(groups_claim)
     if admin_group:
         _sync_admin_privileges(
             user, admin_group in token_groups, remove_stale, validated_email
