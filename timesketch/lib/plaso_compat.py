@@ -18,10 +18,11 @@ and "computer_name" to "hostname". Timesketch requires Plaso >= 20260720 for
 new imports, but existing timelines created with older Plaso versions still
 contain the legacy field names.
 
-Code that reads or queries these fields should use the current field name
-together with the helpers in this module, which transparently fall back to
-the legacy field names. The helpers are bidirectional, so a lookup of a legacy
-name (e.g. from an outdated user config) also falls back to the current name.
+This module only maps the renamed Plaso fields that are referenced by
+Timesketch's built-in analyzers and graph plugins. Code that reads or queries
+these fields should use the current field name together with the helpers in
+this module, which fall back to the legacy field names (one-directional:
+current name -> legacy name(s)).
 
 Once timelines created with Plaso < 20260720 are no longer supported, remove
 the corresponding entries from PLASO_FIELD_ALIASES.
@@ -29,7 +30,8 @@ the corresponding entries from PLASO_FIELD_ALIASES.
 
 from typing import Any, Dict, Iterable, List, Tuple
 
-# Maps the current Plaso field name to its legacy field name(s).
+# Maps the current Plaso field name to its legacy field name(s) for fields
+# used by Timesketch's built-in analyzers and graph plugins.
 PLASO_FIELD_ALIASES: Dict[str, Tuple[str, ...]] = {
     # log2timeline/plaso#5130: syslog, systemd journal and other text logs.
     "message_body": ("body",),
@@ -38,49 +40,22 @@ PLASO_FIELD_ALIASES: Dict[str, Tuple[str, ...]] = {
 }
 
 
-def _build_field_name_lookup(
-    aliases: Dict[str, Tuple[str, ...]],
-) -> Dict[str, Tuple[str, ...]]:
-    """Builds a bidirectional lookup of field names and their aliases.
-
-    Args:
-        aliases (dict[str, tuple[str]]): current field names mapped to their
-            legacy field names.
-
-    Returns:
-        dict[str, tuple[str]]: every known field name mapped to all equivalent
-            field names, starting with the field name itself followed by the
-            current name and then the legacy names.
-    """
-    lookup = {}
-    for current_name, legacy_names in aliases.items():
-        group = (current_name, *legacy_names)
-        for field_name in group:
-            lookup[field_name] = (field_name,) + tuple(
-                name for name in group if name != field_name
-            )
-    return lookup
-
-
-_FIELD_NAME_LOOKUP = _build_field_name_lookup(PLASO_FIELD_ALIASES)
-
-
 def get_field_names(field_name: str) -> Tuple[str, ...]:
-    """Returns a field name and its aliases in order of preference.
+    """Returns a field name and its legacy aliases in order of preference.
 
     Args:
-        field_name (str): name of the field, e.g. "message_body".
+        field_name (str): current name of the field, e.g. "message_body".
 
     Returns:
-        tuple[str]: the field name followed by its aliases, e.g.
-            ("message_body", "body"). Field names without aliases are returned
-            as a tuple containing only the field name.
+        tuple[str]: the field name followed by its legacy aliases, e.g.
+            ("message_body", "body"). Field names without aliases (including
+            legacy names) are returned as a single-element tuple.
     """
-    return _FIELD_NAME_LOOKUP.get(field_name, (field_name,))
+    return (field_name, *PLASO_FIELD_ALIASES.get(field_name, ()))
 
 
 def expand_field_names(field_names: Iterable[str]) -> List[str]:
-    """Expands a list of field names with their aliases.
+    """Expands a list of field names with their legacy aliases.
 
     Useful to build the list of fields to return from a search.
 
@@ -88,8 +63,8 @@ def expand_field_names(field_names: Iterable[str]) -> List[str]:
         field_names (Iterable[str]): names of fields.
 
     Returns:
-        list[str]: unique field names including aliases, in order of first
-            occurrence.
+        list[str]: unique field names including legacy aliases, in order of
+            first occurrence.
     """
     expanded_field_names = []
     for field_name in field_names:
@@ -100,22 +75,22 @@ def expand_field_names(field_names: Iterable[str]) -> List[str]:
 
 
 def get_field_value(source: Dict, field_name: str, default: Any = None) -> Any:
-    """Returns the value of a field, falling back to its aliases.
+    """Returns the value of a field, falling back to its legacy aliases.
 
     Args:
         source (dict): event source, e.g. the "_source" of an OpenSearch hit.
-        field_name (str): name of the field, e.g. "hostname".
+        field_name (str): current name of the field, e.g. "hostname".
         default (Any): value to return if neither the field nor any of its
             aliases are set.
 
     Returns:
-        Any: the value of the first field that is set, where None and empty
-            strings, lists, tuples or dicts are considered not set, or the
-            default value.
+        Any: the value of the first field that is set, where None, "-" and
+            empty strings, lists, tuples or dicts are considered not set, or
+            the default value.
     """
     for name in get_field_names(field_name):
         value = source.get(name)
-        if value is None:
+        if value in (None, "-"):
             continue
         if isinstance(value, (str, list, tuple, dict)) and not value:
             continue
@@ -124,10 +99,10 @@ def get_field_value(source: Dict, field_name: str, default: Any = None) -> Any:
 
 
 def build_field_query(field_name: str, value: str) -> str:
-    """Builds a query string clause that matches a field or its aliases.
+    """Builds a query string clause that matches a field or its legacy aliases.
 
     Args:
-        field_name (str): name of the field, e.g. "message_body".
+        field_name (str): current name of the field, e.g. "message_body".
         value (str): query string value, e.g. "*Accepted*".
 
     Returns:

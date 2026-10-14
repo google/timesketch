@@ -28,11 +28,10 @@ class TestPlasoCompat(BaseTest):
         self.assertEqual(
             plaso_compat.get_field_names("hostname"), ("hostname", "computer_name")
         )
-        # Legacy names fall back to the current name.
-        self.assertEqual(plaso_compat.get_field_names("body"), ("body", "message_body"))
+        # Lookups are one-directional: legacy names do not resolve to current names.
+        self.assertEqual(plaso_compat.get_field_names("body"), ("body",))
         self.assertEqual(
-            plaso_compat.get_field_names("computer_name"),
-            ("computer_name", "hostname"),
+            plaso_compat.get_field_names("computer_name"), ("computer_name",)
         )
         # Fields without aliases.
         self.assertEqual(plaso_compat.get_field_names("username"), ("username",))
@@ -65,16 +64,24 @@ class TestPlasoCompat(BaseTest):
         )
         self.assertEqual(get_field_value({"body": "legacy"}, "message_body"), "legacy")
 
-        # The requested field takes precedence over its aliases.
+        # Lookups are one-directional: asking for a legacy name does not return
+        # the current field name.
+        self.assertIsNone(get_field_value({"hostname": "example.com"}, "computer_name"))
+
+        # The current field takes precedence over its legacy alias.
         source = {"hostname": "new", "computer_name": "legacy"}
         self.assertEqual(get_field_value(source, "hostname"), "new")
-        self.assertEqual(get_field_value(source, "computer_name"), "legacy")
 
-        # Empty values are considered not set.
+        # Empty values and "-" placeholders are considered not set.
         source = {"hostname": "", "computer_name": "legacy"}
         self.assertEqual(get_field_value(source, "hostname"), "legacy")
         source = {"hostname": None, "computer_name": "legacy"}
         self.assertEqual(get_field_value(source, "hostname"), "legacy")
+        source = {"hostname": "-", "computer_name": "legacy"}
+        self.assertEqual(get_field_value(source, "hostname"), "legacy")
+        self.assertEqual(
+            get_field_value({"hostname": "-"}, "hostname", "UNKNOWN"), "UNKNOWN"
+        )
 
         # Falsy non-empty values, such as 0, are considered set.
         self.assertEqual(get_field_value({"pid": 0}, "pid", default=-1), 0)
