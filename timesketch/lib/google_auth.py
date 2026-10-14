@@ -20,6 +20,8 @@ import time
 import json
 import hashlib
 import os
+import re
+from typing import Optional, Union
 
 # six.moves is a dynamically-created namespace that doesn't actually
 # exist and therefore pylint can't statically analyze it.
@@ -30,15 +32,18 @@ import jwt
 import requests
 from requests.exceptions import RequestException, Timeout
 
+from flask import abort
 from flask import url_for
 from flask import current_app
 from flask import session
 
+from timesketch.lib.definitions import HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 
 CSRF_KEY = "google_oauth2_csrf_token"
 AUTH_URI = "https://accounts.google.com/o/oauth2/v2/auth"
 DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
+DEFAULT_OIDC_SCOPES = ("openid", "email", "profile")
 
 
 class JwtValidationError(Exception):
@@ -127,7 +132,23 @@ def get_oauth2_authorize_url(hosted_domain: str = ""):
     redirect_uri = url_for(
         "user_views.google_openid_connect", _scheme="https", _external=True
     )
-    scopes = ("openid", "email", "profile")
+    # Google's own OIDC provider does not put a groups claim in its ID tokens,
+    # so the GOOGLE_OIDC_GROUPS_* features only work with other providers
+    # configured via GOOGLE_OIDC_AUTH_URL / GOOGLE_OIDC_DISCOVERY_URL. Such
+    # providers may require extra scopes (e.g. "groups") to emit the claim.
+    # Fall back to the defaults if the option is unset, None or empty. Any
+    # other non-list value is a configuration error: silently using the
+    # defaults could drop scopes the provider needs to emit the groups claim.
+    scopes = current_app.config.get("GOOGLE_OIDC_SCOPES") or DEFAULT_OIDC_SCOPES
+    if not isinstance(scopes, (list, tuple)):
+        current_app.logger.error(
+            "Invalid GOOGLE_OIDC_SCOPES configuration: expected a list, got %s",
+            type(scopes).__name__,
+        )
+        abort(
+            HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
+            "OIDC configuration error, please contact an administrator",
+        )
 
     # Add the generated CSRF token to the client session for later validation.
     session[CSRF_KEY] = csrf_token
@@ -278,6 +299,122 @@ def validate_jwt(decoded_jwt: str, expected_issuer: str, expected_domain: str = 
                 raise JwtValidationError(f"Wrong domain: {domain}")
         except KeyError as e:
             raise JwtValidationError(f"Missing domain: {e}") from e
+
+
+def _extract_group_name(
+    group_name: str, regex_pattern: Optional[Union[str, re.Pattern]]
+):
+    """Apply an optional regex to a single raw group name.
+
+    Args:
+        group_name: Raw, already-stripped group name.
+        regex_pattern: Optional regex (string or compiled) to extract the group
+            name. The first
+            capture group is used if present, otherwise the whole match.
+
+    Returns:
+        The extracted group name, or None if it doesn't match/is empty.
+    """
+    if not regex_pattern:
+        return group_name
+
+    match = re.search(regex_pattern, group_name)
+    if not match:
+        return None
+
+    extracted = (
+        match.group(1)
+        if (match.groups() and match.group(1) is not None)
+        else match.group(0)
+    )
+    return extracted.strip() or None
+
+
+def _split_raw_groups(raw_value, separator: Optional[str]):
+    """Normalize a raw claim value into a list of raw group values."""
+    if isinstance(raw_value, str):
+        return raw_value.split(separator) if separator else [raw_value]
+    if isinstance(raw_value, (list, tuple, set)):
+        return list(raw_value)
+    return [raw_value]
+
+
+def get_groups_from_jwt(
+    decoded_jwt: dict,
+    claim_name: Optional[str] = None,
+    separator: Optional[str] = None,
+    regex_pattern: Optional[Union[str, re.Pattern]] = None,
+):
+    """Extract and normalize group/role names from a decoded token claim.
+
+    Args:
+        decoded_jwt: Decoded token claims dict.
+        claim_name: Claim name holding groups/roles (e.g. "groups", "roles").
+            None returns empty list.
+        separator: Optional separator for string claims (e.g. semicolon).
+        regex_pattern: Optional regex (string or compiled) to extract group
+            names. First capture group is used if present.
+
+    Returns:
+        List of extracted group/role names; empty list if claim missing/empty.
+    """
+    if not claim_name:
+        return []
+
+    raw_value = decoded_jwt.get(claim_name)
+    if not raw_value:
+        return []
+
+    groups = []
+    skipped_values = 0
+    for raw_group in _split_raw_groups(raw_value, separator):
+        # Only plain string names are supported. Nested objects, numbers or
+        # booleans would otherwise end up as group names like "{'id': ...}".
+        if not isinstance(raw_group, str):
+            skipped_values += 1
+            continue
+
+        group_name = raw_group.strip()
+        if not group_name:
+            continue
+
+        group_name = _extract_group_name(group_name, regex_pattern)
+        if group_name:
+            groups.append(group_name)
+
+    if skipped_values:
+        current_app.logger.warning(
+            "Ignored %d non-string value(s) in OIDC claim [%s]. Only string "
+            "group/role names are supported.",
+            skipped_values,
+            claim_name,
+        )
+
+    return groups
+
+
+def normalize_group_name(
+    group_name: str, regex_pattern: Optional[Union[str, re.Pattern]] = None
+):
+    """Normalize a configured group name the same way as token group values.
+
+    This lets configuration options such as GOOGLE_OIDC_ADMIN_GROUP use either
+    the raw name (e.g. "ts-admins") or the extracted name (e.g. "admins") when
+    GOOGLE_OIDC_GROUPS_REGEX is set. Names that don't match the regex are
+    returned unchanged.
+
+    Args:
+        group_name: Group name from the configuration.
+        regex_pattern: Optional regex (string or compiled), see
+            get_groups_from_jwt.
+
+    Returns:
+        The normalized group name, or None if the name is empty.
+    """
+    if not isinstance(group_name, str) or not group_name.strip():
+        return None
+    group_name = group_name.strip()
+    return _extract_group_name(group_name, regex_pattern) or group_name
 
 
 def get_public_key_for_jwt(encoded_jwt: str, url: str):
