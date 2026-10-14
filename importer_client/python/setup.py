@@ -51,9 +51,7 @@ setup(
         [
             "pandas",
             "xlrd",
-            # TODO: Pin to "timesketch-api-client>20260611" with the next API
-            # client release. The importer needs get_sketches_by_name().
-            "timesketch-api-client",
+            "timesketch-api-client>=20261014",
             "pyyaml",
         ]
     ),
