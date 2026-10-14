@@ -37,6 +37,28 @@ class TestApiUtils(BaseTest):
         invalid_index_name = "/invalid/index/name"
         self.assertFalse(utils.is_valid_index_name(invalid_index_name))
 
+    def test_index_name_without_prefix(self):
+        """Test that prefixed names are rejected if no prefix is configured."""
+        self.app.config["OPENSEARCH_INDEX_PREFIX"] = ""
+        uuid_hex = "a89933473b2a48948beee2c7e870209f"
+        self.assertTrue(utils.is_valid_index_name(uuid_hex))
+        self.assertFalse(utils.is_valid_index_name(f"timesketch-{uuid_hex}"))
+
+    def test_index_name_with_prefix(self):
+        """Test index name validation with a configured prefix."""
+        self.app.config["OPENSEARCH_INDEX_PREFIX"] = "timesketch-"
+        uuid_hex = "a89933473b2a48948beee2c7e870209f"
+        # Bare UUIDs stay valid, client supplied names are used as they are.
+        self.assertTrue(utils.is_valid_index_name(uuid_hex))
+        self.assertTrue(utils.is_valid_index_name(f"timesketch-{uuid_hex}"))
+        self.assertFalse(utils.is_valid_index_name(f"other-{uuid_hex}"))
+        self.assertFalse(utils.is_valid_index_name("timesketch-"))
+        self.assertFalse(utils.is_valid_index_name(f"timesketch-../{uuid_hex}"))
+        self.assertFalse(utils.is_valid_index_name(f"timesketch-{uuid_hex}/x"))
+        # The prefix is case-sensitive, the UUID part is not (as before).
+        self.assertFalse(utils.is_valid_index_name(f"TIMESKETCH-{uuid_hex}"))
+        self.assertTrue(utils.is_valid_index_name(f"timesketch-{uuid_hex.upper()}"))
+
     def test_invalid_upload_path(self):
         """Test invalid upload path.
 

@@ -78,6 +78,7 @@ class TestConfig:
     OPENSEARCH_PASSWORD = None
     OPENSEARCH_SSL = False
     OPENSEARCH_VERIFY_CERTS = True
+    OPENSEARCH_INDEX_PREFIX = ""
     LABELS_TO_PREVENT_DELETION = ["protected", "magic"]
     UPLOAD_ENABLED = False
     UPLOAD_FOLDER = "/tmp"
