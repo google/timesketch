@@ -17,6 +17,7 @@ import json
 import logging
 import textwrap
 
+from typing import Tuple
 from unittest import mock
 
 from timesketch.lib.analyzers.authentication.ssh import SSHBruteForceAnalyzer
@@ -51,6 +52,38 @@ class TestSSHBruteForceAnalyzer(BaseTest):
         output = self.analyzer.run()
         self.assertDictEqual(json.loads(expected_output), json.loads(output))
 
+    def test_run_message_body(self) -> None:
+        """Tests run method with events of Plaso >= 20260720.
+
+        Plaso 20260720 renamed the "body" attribute of syslog events to
+        "message_body".
+        """
+
+        self.analyzer.datastore.client = mock.Mock()
+        datastore = self.analyzer.datastore
+
+        _create_mock_events(datastore, message_fields=("message_body",))
+        expected_output = _create_analyzer_output_json()
+
+        output = self.analyzer.run()
+        self.assertDictEqual(json.loads(expected_output), json.loads(output))
+
+    def test_run_mixed_message_fields(self) -> None:
+        """Tests run method with events of Plaso < 20260720 and >= 20260720.
+
+        A sketch can contain timelines created with different Plaso versions,
+        so events with "body" and "message_body" are analyzed together.
+        """
+
+        self.analyzer.datastore.client = mock.Mock()
+        datastore = self.analyzer.datastore
+
+        _create_mock_events(datastore, message_fields=("body", "message_body"))
+        expected_output = _create_analyzer_output_json()
+
+        output = self.analyzer.run()
+        self.assertDictEqual(json.loads(expected_output), json.loads(output))
+
     def test_run_no_bruteforce(self) -> None:
         """Tests run method."""
 
@@ -64,12 +97,19 @@ class TestSSHBruteForceAnalyzer(BaseTest):
         self.assertDictEqual(json.loads(expected_output), json.loads(output))
 
 
-def _create_mock_events(datastore: MockDataStore, count: int = 200) -> None:
+def _create_mock_events(
+    datastore: MockDataStore,
+    count: int = 200,
+    message_fields: Tuple[str, ...] = ("body",),
+) -> None:
     """Creates mock TimeSketch events.
 
     Args:
         datastore (MockDataStore): Mock datastore.
         count (int): Number of events to generate.
+        message_fields (tuple[str]): Names of the syslog message field to use,
+            "body" for Plaso < 20260720 or "message_body" for Plaso >= 20260720.
+            Multiple names are assigned to the events in turn.
     """
 
     start = 58320
@@ -113,6 +153,10 @@ def _create_mock_events(datastore: MockDataStore, count: int = 200) -> None:
             },
         ]
     )
+
+    for index, event in enumerate(events):
+        message_field = message_fields[index % len(message_fields)]
+        event[message_field] = event.pop("body")
 
     event_id = 0
     timestamp = 1673368814000000

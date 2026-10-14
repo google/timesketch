@@ -311,3 +311,39 @@ class TestFeatureExtractionSketchPlugin(BaseTest):
         )
 
         self.assertEqual(new_val, "hello2")
+
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
+    def test_extract_feature_renamed_plaso_field(self):
+        """Tests feature extraction from legacy and new Plaso field names.
+
+        Plaso 20260720 renamed the "body" attribute of syslog events to
+        "message_body". A feature defined on "message_body" must also extract
+        features from events of timelines created with older Plaso versions.
+        """
+        plugin_object = FeatureExtractionSketchPlugin(
+            index_name="test", sketch_id=1, timeline_id=1
+        )
+        plugin_object.datastore.client = mock.Mock()
+        datastore = plugin_object.datastore
+
+        message = "Failed password for admin from 192.168.40.25 port 58600 ssh2"
+        events = [
+            {"reporter": "sshd", "body": message},
+            {"reporter": "sshd", "message_body": message},
+            {"reporter": "sshd", "message_body": "Server listening on 0.0.0.0"},
+        ]
+        timestamp = 1672097149681987
+        for event_id, event in enumerate(events):
+            _create_eventObj(datastore, event_id, timestamp + event_id, event)
+
+        plugin_object.plugin_name = "regex_extraction_plugin"
+        plugin_object.feature_name = "ssh_failed_username"
+        plugin_object.feature_config = self._get_feature_config(
+            "regex_features.yaml", plugin_object.feature_name
+        )
+        self.assertEqual(plugin_object.feature_config.get("attribute"), "message_body")
+
+        result = plugin_object.run()
+        self.assertEqual(
+            result, "Feature extraction [ssh_failed_username] extracted 2 features."
+        )
