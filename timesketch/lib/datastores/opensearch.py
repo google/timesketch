@@ -23,12 +23,12 @@ import socket
 import time
 import queue
 import threading
-from uuid import uuid4
 from typing import Generator, List, Dict, Optional, Any, Union
 
 from dateutil import parser, relativedelta
 from packaging import version
 from opensearchpy import OpenSearch
+from opensearchpy.exceptions import AuthorizationException
 from opensearchpy.exceptions import ConnectionTimeout
 from opensearchpy.exceptions import NotFoundError
 from opensearchpy.exceptions import RequestError
@@ -46,6 +46,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import METRICS_NAMESPACE
 from timesketch.lib import errors
 from timesketch.lib import telemetry
+from timesketch.lib import utils
 
 # Setup logging
 os_logger = logging.getLogger("timesketch.opensearch")
@@ -1702,19 +1703,53 @@ class OpenSearchDataStore:
 
         return None
 
+    def _authorization_error(
+        self, index_name: str
+    ) -> errors.DatastoreAuthorizationError:
+        """Logs and returns an error for denied access to an index.
+
+        Args:
+            index_name: Name of the index that access was denied to.
+
+        Returns:
+            A DatastoreAuthorizationError with a descriptive message.
+        """
+        index_prefix = current_app.config.get("OPENSEARCH_INDEX_PREFIX") or ""
+        message = (
+            f"OpenSearch denied access to index [{index_name}] (HTTP 403). "
+            "Check the OpenSearch permissions of the Timesketch service account"
+        )
+        if index_prefix:
+            message += (
+                f". They need to cover the configured OPENSEARCH_INDEX_PREFIX "
+                f"'{index_prefix}' and any indices that were created before "
+                "the prefix was set"
+            )
+        message += "."
+        os_logger.error(message)
+        return errors.DatastoreAuthorizationError(message)
+
     def create_index(
-        self, index_name: str = uuid4().hex, mappings: Optional[Dict] = None
+        self, index_name: Optional[str] = None, mappings: Optional[Dict] = None
     ):
         """Create index with Timesketch settings.
 
         Args:
-            index_name: Name of the index. Default is a generated UUID.
+            index_name: Optional name of the index. If not set, a new name is
+                generated that uses the configured OPENSEARCH_INDEX_PREFIX.
             mappings: Optional dict with the document mapping for OpenSearch.
 
         Returns:
             Index name in string format.
             Document type in string format.
+
+        Raises:
+            DatastoreAuthorizationError: If OpenSearch denies access to the
+                index (HTTP 403).
         """
+        if index_name is None:
+            index_name = utils.generate_index_name()
+
         if mappings:
             _document_mapping = mappings
         else:
@@ -1725,11 +1760,18 @@ class OpenSearchDataStore:
                 }
             }
 
-        if not self.client.indices.exists(index_name):
+        try:
+            index_exists = self.client.indices.exists(index_name)
+        except AuthorizationException as e:
+            raise self._authorization_error(index_name) from e
+
+        if not index_exists:
             try:
                 self.client.indices.create(
                     index=index_name, body={"mappings": _document_mapping}
                 )
+            except AuthorizationException as e:
+                raise self._authorization_error(index_name) from e
             except ConnectionError as e:
                 raise errors.DatastoreConnectionError(
                     "Unable to connect to Timesketch backend when creating "

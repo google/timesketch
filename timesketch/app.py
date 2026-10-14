@@ -38,8 +38,10 @@ from timesketch.lib import telemetry
 
 from timesketch.api.v1.routes import API_ROUTES as V1_API_ROUTES
 from timesketch.lib.errors import ApiHTTPError
+from timesketch.lib.utils import is_valid_index_prefix
 from timesketch.models import configure_engine
 from timesketch.models import init_db
+from timesketch.models.sketch import SearchIndex
 from timesketch.models.user import User
 from timesketch.views.auth import auth_views
 from timesketch.views.spa import spa_views
@@ -151,6 +153,17 @@ def create_app(
         )
         sys.exit()
 
+    # Make sure that the optional OpenSearch index prefix is valid.
+    index_prefix = app.config.get("OPENSEARCH_INDEX_PREFIX")
+    if not is_valid_index_prefix(index_prefix):
+        sys.stderr.write(
+            f"ERROR: Invalid OPENSEARCH_INDEX_PREFIX {index_prefix!r}. "
+            "The prefix must be lowercase, start with a letter or digit, "
+            "only contain [a-z0-9_-] and be at most 63 characters long. "
+            "Leave it empty to disable the prefix.\n"
+        )
+        sys.exit(1)
+
     # Plaso version that we support
     if app.config["UPLOAD_ENABLED"]:
         try:
@@ -254,6 +267,42 @@ def create_app(
         )
 
     return app
+
+
+def get_index_prefix_warning(index_prefix: Optional[str]) -> str:
+    """Checks whether the search indices in the database use the index prefix.
+
+    The OpenSearch index prefix only applies to indices that are created after
+    it was set, existing indices are not renamed. This is used by "tsctl info"
+    and on server start (wsgi.py). It is not part of create_app(), since that
+    also runs for every tsctl command and for some API requests. Search indices
+    with the status "fail" are ignored.
+
+    Args:
+        index_prefix: The configured OPENSEARCH_INDEX_PREFIX.
+
+    Returns:
+        A warning message if search indices do not use the index prefix,
+        otherwise an empty string.
+    """
+    if not index_prefix:
+        return ""
+
+    search_indices = SearchIndex.query.filter(~SearchIndex.status.any(status="fail"))
+    total_indices = search_indices.count()
+    unprefixed_indices = search_indices.filter(
+        ~SearchIndex.index_name.startswith(index_prefix, autoescape=True)
+    ).count()
+    if not unprefixed_indices:
+        return ""
+
+    return (
+        f"{unprefixed_indices} of {total_indices} search indices do not use the "
+        f"configured OPENSEARCH_INDEX_PREFIX {index_prefix!r}. The prefix only "
+        "applies to new indices, existing indices keep their names. Make sure "
+        "the OpenSearch service account can still access them, see the admin "
+        "documentation."
+    )
 
 
 def configure_logger():

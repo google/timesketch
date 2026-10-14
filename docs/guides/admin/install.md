@@ -57,6 +57,45 @@ cd /opt
 sudo ./deploy_timesketch.sh
 ```
 
+#### Configure an OpenSearch index prefix (optional)
+
+By default Timesketch names its OpenSearch indices with a random UUID. If
+Timesketch shares an OpenSearch cluster with other applications, you can set a
+prefix for all indices that Timesketch creates. This makes it possible to
+restrict the OpenSearch service account of Timesketch to an index pattern such
+as `timesketch-*`.
+
+Set the prefix in `timesketch/etc/timesketch/timesketch.conf`, ideally **before
+you start the system for the first time**:
+
+```python
+OPENSEARCH_INDEX_PREFIX = "timesketch-"
+```
+
+New indices are then named `timesketch-<32 hex characters>`.
+
+* The prefix must be lowercase, start with a letter or digit, only contain
+  `[a-z0-9_-]` and be at most 63 characters long. Timesketch refuses to start
+  with an invalid prefix.
+* **The prefix only applies to indices that are created after it is set.**
+  Timesketch does not rename or migrate existing indices. If you set the prefix
+  on an existing instance, the existing indices keep their names and keep
+  working, as long as the OpenSearch service account can still access them. If
+  you restrict the service account to the prefix (e.g. `timesketch-*`), these
+  older indices become inaccessible. The web server logs a warning on startup
+  and `tsctl info` warns if search indices without the prefix exist.
+* Use a unique prefix for every Timesketch instance that shares an OpenSearch
+  cluster.
+* Index names that clients supply for new indices in uploads (e.g. with the
+  importer's `--index-name`) must start with the prefix, otherwise the upload
+  is rejected. Timesketch never adds the prefix to them, and names of existing
+  indices keep working.
+* Setting up the OpenSearch permissions (roles, index patterns, index templates
+  and policies) is done in OpenSearch and is not managed by Timesketch. Give
+  the Timesketch service account full access to indices that match the prefix.
+  If OpenSearch denies creating an index, Timesketch logs an error and marks
+  the upload as failed, or returns a 403 from the API.
+
 ### 3. Start the system
 
 ```shell
