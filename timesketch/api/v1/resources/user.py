@@ -344,12 +344,15 @@ class CollaboratorResource(resources.ResourceMixin, Resource):
             for permission in permission_list:
                 sketch.revoke_permission(permission=permission, group=group)
 
-        public = form.get("public")
-        # TODO: Remove string check. Non-pythonic check is needed because the old UI
-        # returns a string of true or false and not a boolean.
-        if public is True or public == "true":
-            sketch.grant_permission(permission="read")
-        else:
-            sketch.revoke_permission(permission="read")
+        # Only change public access when the client asks for it, so that
+        # adding or removing collaborators does not make a sketch private.
+        if "public" in form:
+            public = form.get("public")
+            # TODO: Remove string check. Non-pythonic check is needed because the
+            # old UI returns a string of true or false and not a boolean.
+            if public is True or public == "true":
+                sketch.grant_permission(permission="read")
+            else:
+                sketch.revoke_permission(permission="read")
 
         return HTTP_STATUS_CODE_OK
