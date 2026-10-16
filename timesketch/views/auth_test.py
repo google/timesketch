@@ -16,11 +16,16 @@
 from unittest import mock
 from flask import current_app
 from flask_login import current_user
+from werkzeug.exceptions import InternalServerError
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_REDIRECT
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
+from timesketch.lib.definitions import HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR
+from timesketch.lib.definitions import HTTP_STATUS_CODE_UNAUTHORIZED
+from timesketch.lib.google_auth import CSRF_KEY
 from timesketch.lib.testlib import BaseTest
 from timesketch.models import db_session
+from timesketch.models.user import Group
 from timesketch.models.user import User
 
 
@@ -250,3 +255,397 @@ class DisabledUserTest(BaseTest):
         self.assertNotEqual(response.status_code, HTTP_STATUS_CODE_OK)
         self.assertIsNone(self._get_session_user_id(self.client))
         self.assertIsNone(self.client.get_cookie("remember_token"))
+
+
+class GoogleOpenIdConnectViewTest(BaseTest):
+    """Tests for the google_openid_connect view."""
+
+    def _login_via_oidc(self, decoded_jwt, csrf_token="test-csrf-token"):
+        """Call the OIDC callback route with the OIDC dependencies mocked."""
+        with self.client.session_transaction() as sess:
+            sess[CSRF_KEY] = csrf_token
+
+        discovery_document = {
+            "id_token_signing_alg_values_supported": ["RS256"],
+            "issuer": "https://example-issuer.example.com",
+            "jwks_uri": "https://example-issuer.example.com/certs",
+        }
+        with mock.patch(
+            "timesketch.views.auth.get_encoded_jwt_over_https",
+            return_value="encoded-jwt",
+        ), mock.patch(
+            "timesketch.views.auth.get_oauth2_discovery_document",
+            return_value=discovery_document,
+        ), mock.patch(
+            "timesketch.views.auth.get_public_key_for_jwt",
+            return_value="public-key",
+        ), mock.patch(
+            "timesketch.views.auth.decode_jwt", return_value=decoded_jwt
+        ), mock.patch(
+            "timesketch.views.auth.validate_jwt"
+        ):
+            return self.client.get(
+                f"/login/google_openid_connect/?code=test-code&state={csrf_token}"
+            )
+
+    def test_login_allowed_users(self):
+        """Test GOOGLE_OIDC_ALLOWED_USERS restricts who can log in."""
+        cases = [
+            ("no allowlist configured allows any user", [], HTTP_STATUS_CODE_REDIRECT),
+            (
+                "user present in the allowlist is allowed",
+                ["allowed@example.com"],
+                HTTP_STATUS_CODE_REDIRECT,
+            ),
+            (
+                "user missing from the allowlist is rejected",
+                ["other@example.com"],
+                HTTP_STATUS_CODE_UNAUTHORIZED,
+            ),
+        ]
+        for description, allowed_users, expected_status in cases:
+            with self.subTest(description):
+                self.app.config["GOOGLE_OIDC_ALLOWED_USERS"] = allowed_users
+                response = self._login_via_oidc({"email": "allowed@example.com"})
+                self.assertEqual(response.status_code, expected_status)
+
+    def test_login_rejects_user_not_in_allowed_group(self):
+        """Test login is rejected for a user without an allowed group."""
+        self.app.config["GOOGLE_OIDC_GROUPS_CLAIM"] = "groups"
+        self.app.config["GOOGLE_OIDC_ALLOWED_GROUPS"] = ["Admins"]
+
+        response = self._login_via_oidc(
+            {"email": "newuser@example.com", "groups": ["Users"]}
+        )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_UNAUTHORIZED)
+        self.assertIsNone(User.query.filter_by(username="newuser@example.com").first())
+
+    def test_login_allows_user_in_allowed_group(self):
+        """Test login succeeds for a user who is a member of an allowed group."""
+        self.app.config["GOOGLE_OIDC_GROUPS_CLAIM"] = "groups"
+        self.app.config["GOOGLE_OIDC_ALLOWED_GROUPS"] = ["Admins", "Users"]
+
+        response = self._login_via_oidc(
+            {"email": "newuser@example.com", "groups": ["Users"]}
+        )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+        self.assertIsNotNone(
+            User.query.filter_by(username="newuser@example.com").first()
+        )
+
+    def test_login_syncs_groups_and_grants_admin(self):
+        """Test a successful login syncs groups and grants admin rights."""
+        self.app.config["GOOGLE_OIDC_GROUPS_CLAIM"] = "groups"
+        self.app.config["GOOGLE_OIDC_GROUPS_SYNC_ENABLED"] = True
+        self.app.config["GOOGLE_OIDC_ADMIN_GROUP"] = "Admins"
+
+        response = self._login_via_oidc(
+            {"email": "newuser@example.com", "groups": ["Admins", "Analysts"]}
+        )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+        user = User.query.filter_by(username="newuser@example.com").first()
+        self.assertIsNotNone(user)
+        self.assertTrue(user.admin)
+        self.assertCountEqual(
+            [group.name for group in user.groups], ["Admins", "Analysts"]
+        )
+
+    def test_login_does_not_sync_groups_when_sync_disabled(self):
+        """Test groups/admin are untouched when GROUPS_SYNC_ENABLED is off."""
+        self.app.config["GOOGLE_OIDC_GROUPS_CLAIM"] = "groups"
+        self.app.config["GOOGLE_OIDC_ADMIN_GROUP"] = "Admins"
+        self.app.config["GOOGLE_OIDC_GROUPS_SYNC_ENABLED"] = False
+
+        response = self._login_via_oidc(
+            {"email": "newuser@example.com", "groups": ["Admins"]}
+        )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+        user = User.query.filter_by(username="newuser@example.com").first()
+        self.assertIsNotNone(user)
+        self.assertFalse(user.admin)
+        self.assertEqual(list(user.groups), [])
+
+    def test_login_removes_stale_groups_and_admin_on_subsequent_login(self):
+        """Test groups/admin no longer present in the token get revoked."""
+        self.app.config["GOOGLE_OIDC_GROUPS_CLAIM"] = "groups"
+        self.app.config["GOOGLE_OIDC_GROUPS_SYNC_ENABLED"] = True
+        self.app.config["GOOGLE_OIDC_ADMIN_GROUP"] = "Admins"
+        self.app.config["GOOGLE_OIDC_GROUPS_REMOVE_STALE"] = True
+
+        self._login_via_oidc(
+            {"email": "newuser@example.com", "groups": ["Admins", "Analysts"]},
+            csrf_token="csrf-token-1",
+        )
+        user = User.query.filter_by(username="newuser@example.com").first()
+        self.assertTrue(user.admin)
+        self.assertCountEqual(
+            [group.name for group in user.groups], ["Admins", "Analysts"]
+        )
+
+        response = self._login_via_oidc(
+            {"email": "newuser@example.com", "groups": ["Analysts"]},
+            csrf_token="csrf-token-2",
+        )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+        user = User.query.filter_by(username="newuser@example.com").first()
+        self.assertFalse(user.admin)
+        self.assertEqual([group.name for group in user.groups], ["Analysts"])
+
+    def test_login_keeps_stale_groups_and_admin_when_remove_stale_disabled(self):
+        """Test groups/admin are kept when GROUPS_REMOVE_STALE is off."""
+        self.app.config["GOOGLE_OIDC_GROUPS_CLAIM"] = "groups"
+        self.app.config["GOOGLE_OIDC_GROUPS_SYNC_ENABLED"] = True
+        self.app.config["GOOGLE_OIDC_ADMIN_GROUP"] = "Admins"
+        self.app.config["GOOGLE_OIDC_GROUPS_REMOVE_STALE"] = False
+
+        self._login_via_oidc(
+            {"email": "newuser@example.com", "groups": ["Admins", "Analysts"]},
+            csrf_token="csrf-token-1",
+        )
+
+        response = self._login_via_oidc(
+            {"email": "newuser@example.com", "groups": ["Analysts"]},
+            csrf_token="csrf-token-2",
+        )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+        user = User.query.filter_by(username="newuser@example.com").first()
+        self.assertTrue(user.admin)
+        self.assertCountEqual(
+            [group.name for group in user.groups], ["Admins", "Analysts"]
+        )
+
+    def test_login_allowed_users_and_groups_are_combined(self):
+        """Test ALLOWED_USERS and ALLOWED_GROUPS add up (OR), not intersect."""
+        self.app.config["GOOGLE_OIDC_GROUPS_CLAIM"] = "groups"
+        self.app.config["GOOGLE_OIDC_ALLOWED_USERS"] = ["listed@example.com"]
+        self.app.config["GOOGLE_OIDC_ALLOWED_GROUPS"] = ["Analysts"]
+        cases = [
+            ("listed user outside the group", "listed@example.com", ["Other"], True),
+            ("group member not listed", "member@example.com", ["Analysts"], True),
+            ("neither listed nor member", "other@example.com", ["Other"], False),
+        ]
+        for description, email, groups, expected_allowed in cases:
+            with self.subTest(description):
+                response = self._login_via_oidc({"email": email, "groups": groups})
+                expected_status = (
+                    HTTP_STATUS_CODE_REDIRECT
+                    if expected_allowed
+                    else HTTP_STATUS_CODE_UNAUTHORIZED
+                )
+                self.assertEqual(response.status_code, expected_status)
+
+    def test_denied_login_does_not_log_token_groups(self):
+        """Test the names of the token groups are not logged on denial."""
+        self.app.config["GOOGLE_OIDC_GROUPS_CLAIM"] = "groups"
+        self.app.config["GOOGLE_OIDC_ALLOWED_GROUPS"] = ["Analysts"]
+
+        with self.assertLogs(self.app.logger, level="WARNING") as logs:
+            response = self._login_via_oidc(
+                {"email": "denied@example.com", "groups": ["SecretGroupName"]}
+            )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_UNAUTHORIZED)
+        self.assertNotIn("SecretGroupName", "\n".join(logs.output))
+
+    def test_remove_stale_without_admin_group_keeps_admin(self):
+        """Test REMOVE_STALE doesn't revoke admin when no ADMIN_GROUP is set."""
+        self._create_user("existing-admin@example.com", set_admin=True)
+        self.app.config["GOOGLE_OIDC_GROUPS_CLAIM"] = "groups"
+        self.app.config["GOOGLE_OIDC_GROUPS_SYNC_ENABLED"] = True
+        self.app.config["GOOGLE_OIDC_GROUPS_REMOVE_STALE"] = True
+        self.app.config["GOOGLE_OIDC_ADMIN_GROUP"] = ""
+
+        response = self._login_via_oidc(
+            {"email": "existing-admin@example.com", "groups": ["Analysts"]}
+        )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+        user = User.query.filter_by(username="existing-admin@example.com").first()
+        self.assertTrue(user.admin)
+
+    def test_sync_failure_does_not_log_the_user_in(self):
+        """Test a failing group sync leaves no authenticated session."""
+        self.app.config["GOOGLE_OIDC_GROUPS_CLAIM"] = "groups"
+        self.app.config["GOOGLE_OIDC_GROUPS_SYNC_ENABLED"] = True
+
+        # Use an HTTPException: Flask handles it and still saves the session,
+        # so the test fails if login_user() ran before the sync. A plain
+        # exception would propagate in test mode before the session is saved.
+        with mock.patch(
+            "timesketch.views.auth._sync_oidc_groups",
+            side_effect=InternalServerError("sync failed"),
+        ):
+            response = self._login_via_oidc(
+                {"email": "newuser@example.com", "groups": ["Analysts"]}
+            )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR)
+        with self.client.session_transaction() as sess:
+            self.assertNotIn("_user_id", sess)
+
+    def test_missing_groups_claim_logs_warning(self):
+        """Test a warning is logged when the claim is missing and sync is on."""
+        self.app.config["GOOGLE_OIDC_GROUPS_CLAIM"] = "groups"
+        self.app.config["GOOGLE_OIDC_GROUPS_SYNC_ENABLED"] = True
+
+        with self.assertLogs(self.app.logger, level="WARNING") as logs:
+            response = self._login_via_oidc({"email": "newuser@example.com"})
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+        self.assertIn("missing from the token", "\n".join(logs.output))
+
+    def test_missing_groups_claim_no_warning_when_sync_disabled(self):
+        """Test no missing-claim warning is logged when sync is disabled."""
+        self.app.config["GOOGLE_OIDC_GROUPS_CLAIM"] = "groups"
+        self.app.config["GOOGLE_OIDC_GROUPS_SYNC_ENABLED"] = False
+
+        with self.assertNoLogs(self.app.logger, level="WARNING"):
+            response = self._login_via_oidc({"email": "newuser@example.com"})
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+
+    def test_incomplete_groups_claim_rejects_login(self):
+        """Test login is rejected when the claim is flagged as incomplete."""
+        self.app.config["GOOGLE_OIDC_GROUPS_CLAIM"] = "groups"
+        self.app.config["GOOGLE_OIDC_GROUPS_SYNC_ENABLED"] = True
+        self.app.config["GOOGLE_OIDC_GROUPS_REMOVE_STALE"] = True
+
+        response = self._login_via_oidc(
+            {
+                "email": "newuser@example.com",
+                "_claim_names": {"groups": "src1"},
+                "_claim_sources": {"src1": {"endpoint": "https://graph.example.com"}},
+            }
+        )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_UNAUTHORIZED)
+        self.assertIn(b"too many groups", response.data)
+        self.assertIsNone(User.query.filter_by(username="newuser@example.com").first())
+
+    def test_invalid_groups_regex_returns_configuration_error(self):
+        """Test an invalid GROUPS_REGEX logs an error and returns HTTP 500."""
+        self.app.config["GOOGLE_OIDC_GROUPS_CLAIM"] = "groups"
+        self.app.config["GOOGLE_OIDC_GROUPS_REGEX"] = "CN=([^,"
+
+        with self.assertLogs(self.app.logger, level="ERROR") as logs:
+            response = self._login_via_oidc(
+                {"email": "newuser@example.com", "groups": ["CN=Admins,OU=X"]}
+            )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR)
+        self.assertIn("Invalid GOOGLE_OIDC_GROUPS_REGEX", "\n".join(logs.output))
+
+    def test_sync_skips_group_names_that_are_too_long(self):
+        """Test group names exceeding the database column length are skipped."""
+        self.app.config["GOOGLE_OIDC_GROUPS_CLAIM"] = "groups"
+        self.app.config["GOOGLE_OIDC_GROUPS_SYNC_ENABLED"] = True
+
+        response = self._login_via_oidc(
+            {"email": "newuser@example.com", "groups": ["x" * 300, "Analysts"]}
+        )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+        user = User.query.filter_by(username="newuser@example.com").first()
+        self.assertEqual([group.name for group in user.groups], ["Analysts"])
+
+    def test_sync_reuses_group_created_with_other_display_name(self):
+        """Test a locally created group is reused instead of re-inserted."""
+        local_group = Group(name="Analysts", display_name="Local Analysts")
+        self._commit_to_database(local_group)
+        self.app.config["GOOGLE_OIDC_GROUPS_CLAIM"] = "groups"
+        self.app.config["GOOGLE_OIDC_GROUPS_SYNC_ENABLED"] = True
+
+        response = self._login_via_oidc(
+            {"email": "newuser@example.com", "groups": ["Analysts"]}
+        )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+        user = User.query.filter_by(username="newuser@example.com").first()
+        self.assertEqual([group.id for group in user.groups], [local_group.id])
+
+    def test_login_extracts_groups_using_separator_and_regex(self):
+        """Test the groups claim is parsed using the separator/regex config."""
+        self.app.config["GOOGLE_OIDC_GROUPS_CLAIM"] = "groups"
+        self.app.config["GOOGLE_OIDC_GROUPS_SEPARATOR"] = ";"
+        self.app.config["GOOGLE_OIDC_GROUPS_REGEX"] = "CN=([^,]+)"
+        self.app.config["GOOGLE_OIDC_GROUPS_SYNC_ENABLED"] = True
+
+        response = self._login_via_oidc(
+            {
+                "email": "newuser@example.com",
+                "groups": "CN=Admins,OU=X;CN=Analysts,OU=Y",
+            }
+        )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+        user = User.query.filter_by(username="newuser@example.com").first()
+        self.assertIsNotNone(user)
+        self.assertCountEqual(
+            [group.name for group in user.groups], ["Admins", "Analysts"]
+        )
+
+    def test_admin_group_member_can_log_in_without_allowed_group(self):
+        """Test ADMIN_GROUP members may log in when ALLOWED_GROUPS is set."""
+        self.app.config["GOOGLE_OIDC_GROUPS_CLAIM"] = "groups"
+        self.app.config["GOOGLE_OIDC_GROUPS_SYNC_ENABLED"] = True
+        self.app.config["GOOGLE_OIDC_ALLOWED_GROUPS"] = ["Analysts"]
+        self.app.config["GOOGLE_OIDC_ADMIN_GROUP"] = "Admins"
+
+        response = self._login_via_oidc(
+            {"email": "newuser@example.com", "groups": ["Admins"]}
+        )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+        user = User.query.filter_by(username="newuser@example.com").first()
+        self.assertTrue(user.admin)
+        # The admin group is not synced as a Timesketch group unless allowed.
+        self.assertEqual(list(user.groups), [])
+
+    def test_configured_group_names_are_normalized_with_regex(self):
+        """Test ALLOWED_GROUPS/ADMIN_GROUP work with raw and extracted names."""
+        cases = [
+            ("raw names", ["ts-analysts"], "ts-admins"),
+            ("extracted names", ["analysts"], "admins"),
+        ]
+        for index, (description, allowed_groups, admin_group) in enumerate(cases):
+            with self.subTest(description):
+                self.app.config["GOOGLE_OIDC_GROUPS_CLAIM"] = "groups"
+                self.app.config["GOOGLE_OIDC_GROUPS_REGEX"] = r"^ts-(.+)$"
+                self.app.config["GOOGLE_OIDC_GROUPS_SYNC_ENABLED"] = True
+                self.app.config["GOOGLE_OIDC_ALLOWED_GROUPS"] = allowed_groups
+                self.app.config["GOOGLE_OIDC_ADMIN_GROUP"] = admin_group
+                email = f"user{index}@example.com"
+
+                response = self._login_via_oidc(
+                    {"email": email, "groups": ["ts-analysts", "ts-admins"]},
+                    csrf_token=f"csrf-token-{index}",
+                )
+
+                self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+                user = User.query.filter_by(username=email).first()
+                self.assertTrue(user.admin)
+                self.assertEqual([group.name for group in user.groups], ["analysts"])
+
+    def test_sync_ignores_non_string_claim_values(self):
+        """Test nested objects, numbers and booleans don't become groups."""
+        self.app.config["GOOGLE_OIDC_GROUPS_CLAIM"] = "groups"
+        self.app.config["GOOGLE_OIDC_GROUPS_SYNC_ENABLED"] = True
+
+        with self.assertLogs(self.app.logger, level="WARNING") as logs:
+            response = self._login_via_oidc(
+                {
+                    "email": "newuser@example.com",
+                    "groups": [{"id": "1", "name": "A"}, True, 42, "Analysts"],
+                }
+            )
+
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+        user = User.query.filter_by(username="newuser@example.com").first()
+        self.assertEqual([group.name for group in user.groups], ["Analysts"])
+        self.assertIn("Ignored 3 non-string value(s)", "\n".join(logs.output))

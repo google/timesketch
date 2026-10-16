@@ -23,7 +23,7 @@
     "roboto-fontface": "*",
     "tiny-emitter": "^2.1.0",
     "v-calendar": "^3.1.2",
-    "vue": "^3.4.31",
+    "vue": "^3.5.42",
     "vue-dragscroll": "^4.0.6",
     "vue3-apexcharts": "^1.8.0",
     "vuetify": "^3.6.11"

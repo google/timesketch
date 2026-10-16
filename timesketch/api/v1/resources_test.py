@@ -26,6 +26,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_NOT_FOUND
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_FORBIDDEN
 from timesketch.lib.definitions import HTTP_STATUS_CODE_GATEWAY_TIMEOUT
+from timesketch.lib.errors import DatastoreAuthorizationError
 from timesketch.lib.errors import DatastoreTimeoutError
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
@@ -1482,6 +1483,140 @@ class SearchIndexResourceTest(BaseTest):
         self.assertIsInstance(response.json, dict)
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
 
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_post_create_searchindex_authorization_error(self):
+        """Test that a denied index creation returns a clear 403."""
+        self.login()
+        data = {"searchindex_name": "denied", "es_index_name": "denied"}
+        with mock.patch.object(
+            MockDataStore,
+            "create_index",
+            side_effect=DatastoreAuthorizationError("OpenSearch denied access"),
+        ):
+            for _ in range(2):
+                response = self.client.post(
+                    self.resource_url,
+                    data=json.dumps(data),
+                    content_type="application/json",
+                )
+                self.assertEqual(response.status_code, HTTP_STATUS_CODE_FORBIDDEN)
+                self.assertIn("OpenSearch denied access", response.json["message"])
+        self.assertIsNone(SearchIndex.query.filter_by(index_name="denied").first())
+
+
+class EventCreateResourceTest(BaseTest):
+    """Test EventCreateResource (manual events)."""
+
+    resource_url = "/api/v1/sketches/1/event/create/"
+    timeline_description = "internal timeline for user-created events"
+
+    def _add_manual_event(self, message="manual event"):
+        """Adds a manual event and returns the response."""
+        return self.client.post(
+            self.resource_url,
+            data=json.dumps(
+                {"message": message, "date_string": "2024-01-01T00:00:00Z"}
+            ),
+            content_type="application/json",
+        )
+
+    def _manual_index_name(self, response):
+        """Returns the index name of the timeline in the response."""
+        timeline = Timeline.get_by_id(response.json["objects"][0]["id"])
+        return timeline.searchindex.index_name
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_manual_events_index_without_prefix(self):
+        """Test that manual events use a new UUID index that is reused."""
+        self.login()
+        response = self._add_manual_event()
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+        index_name = self._manual_index_name(response)
+        self.assertRegex(index_name, r"^[0-9a-f]{32}$")
+
+        response = self._add_manual_event("second manual event")
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+        self.assertEqual(self._manual_index_name(response), index_name)
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_manual_events_index_with_prefix(self):
+        """Test that new manual events indices use the configured prefix."""
+        self.app.config["OPENSEARCH_INDEX_PREFIX"] = "timesketch-"
+        self.login()
+        response = self._add_manual_event()
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+        index_name = self._manual_index_name(response)
+        self.assertRegex(index_name, r"^timesketch-[0-9a-f]{32}$")
+
+        response = self._add_manual_event("second manual event")
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+        self.assertEqual(self._manual_index_name(response), index_name)
+        self.assertEqual(
+            SearchIndex.query.filter_by(description=self.timeline_description).count(),
+            1,
+        )
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_manual_events_reuse_existing_index(self):
+        """Test that an existing (legacy md5 named) manual index is reused."""
+        legacy_index_name = "0cc175b9c0f1b6a831c399e269772661"
+        searchindex = SearchIndex.get_or_create(
+            name="Manual events",
+            description=self.timeline_description,
+            user=self.user1,
+            index_name=legacy_index_name,
+        )
+        timeline = Timeline(
+            name="Manual events",
+            description=self.timeline_description,
+            user=self.user1,
+            sketch=self.sketch1,
+            searchindex=searchindex,
+        )
+        db_session.add(timeline)
+        db_session.commit()
+
+        # Even with a prefix the existing index from the database is used.
+        self.app.config["OPENSEARCH_INDEX_PREFIX"] = "timesketch-"
+        self.login()
+        response = self._add_manual_event()
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+        self.assertEqual(self._manual_index_name(response), legacy_index_name)
+        self.assertEqual(
+            SearchIndex.query.filter(
+                SearchIndex.index_name.startswith("timesketch-")
+            ).count(),
+            0,
+        )
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_manual_events_timeline_without_searchindex(self):
+        """Test that timelines without a search index are skipped."""
+        self._create_timeline(
+            name="No searchindex",
+            sketch=self.sketch1,
+            searchindex=None,
+            user=self.user1,
+        )
+        self.login()
+        response = self._add_manual_event()
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+        self.assertRegex(self._manual_index_name(response), r"^[0-9a-f]{32}$")
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_manual_events_authorization_error(self):
+        """Test that a denied index creation returns a clear 403."""
+        self.login()
+        with mock.patch.object(
+            MockDataStore,
+            "create_index",
+            side_effect=DatastoreAuthorizationError("OpenSearch denied access"),
+        ):
+            response = self._add_manual_event()
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_FORBIDDEN)
+        self.assertIn("Failed to add event to sketch 1", response.json["message"])
+        self.assertIn("OpenSearch denied access", response.json["message"])
+
 
 class TimelineListResourceTest(BaseTest):
     """Test TimelineList resource."""
@@ -2553,6 +2688,62 @@ class UploadFileResourceTest(BaseTest):
         super().tearDown()
         if os.path.exists(self.upload_folder):
             shutil.rmtree(self.upload_folder)
+
+    def _upload_events(self, index_name=""):
+        """Uploads an empty event list to sketch 3 and returns the index name."""
+        data = {"sketch_id": "3", "name": "prefix test timeline", "events": "[]"}
+        if index_name:
+            data["index_name"] = index_name
+        with mock.patch("timesketch.lib.tasks.build_index_pipeline") as pipeline:
+            response = self.client.post("/api/v1/upload/", data=data)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+        return pipeline.call_args.kwargs["index_name"]
+
+    def test_upload_new_index_without_prefix(self):
+        """Test that new upload indices are bare UUIDs without a prefix."""
+        self.login()
+        self.assertRegex(self._upload_events(), r"^[0-9a-f]{32}$")
+
+    def test_upload_new_index_with_prefix(self):
+        """Test that new upload indices use the configured prefix."""
+        self.app.config["OPENSEARCH_INDEX_PREFIX"] = "timesketch-"
+        self.login()
+        self.assertRegex(self._upload_events(), r"^timesketch-[0-9a-f]{32}$")
+
+    def test_upload_supplied_index_name_without_prefix(self):
+        """Test that client supplied index names are used without a prefix."""
+        self.login()
+        self.assertEqual(self._upload_events("customindex"), "customindex")
+
+    def test_upload_supplied_index_name_with_prefix(self):
+        """Test that client supplied names with the prefix are used as is."""
+        self.app.config["OPENSEARCH_INDEX_PREFIX"] = "timesketch-"
+        self.login()
+        self.assertEqual(self._upload_events("timesketch-custom"), "timesketch-custom")
+
+    def test_upload_existing_index_name_with_prefix(self):
+        """Test that names of existing search indices don't need the prefix."""
+        self.app.config["OPENSEARCH_INDEX_PREFIX"] = "timesketch-"
+        self.login()
+        # The search index "test" is created in BaseTest.setUp().
+        self.assertEqual(self._upload_events("test"), "test")
+
+    def test_upload_new_index_name_without_prefix_rejected(self):
+        """Test that new index names without the prefix are rejected."""
+        self.app.config["OPENSEARCH_INDEX_PREFIX"] = "timesketch-"
+        self.login()
+        data = {
+            "sketch_id": "3",
+            "name": "prefix test timeline",
+            "events": "[]",
+            "index_name": "customindex",
+        }
+        with mock.patch("timesketch.lib.tasks.build_index_pipeline") as pipeline:
+            response = self.client.post("/api/v1/upload/", data=data)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+        self.assertIn("OPENSEARCH_INDEX_PREFIX 'timesketch-'", response.json["message"])
+        pipeline.assert_not_called()
+        self.assertIsNone(SearchIndex.query.filter_by(index_name="customindex").first())
 
     @mock.patch("timesketch.api.v1.resources.upload.utils.format_upload_path")
     @mock.patch("timesketch.api.v1.resources.upload.current_app")

@@ -13,6 +13,7 @@
 # limitations under the License.
 """Graph plugin for Windows services."""
 
+from timesketch.lib import plaso_compat
 from timesketch.lib.graphs.interface import BaseGraphPlugin
 from timesketch.lib.graphs import manager
 
@@ -30,12 +31,16 @@ class WinServiceGraph(BaseGraphPlugin):
             Graph object instance.
         """
         query = "event_identifier:7045"
-        return_fields = ["computer_name", "username", "strings"]
+        return_fields = plaso_compat.expand_field_names(
+            ["hostname", "username", "strings"]
+        )
 
         events = self.event_stream(query_string=query, return_fields=return_fields)
 
         for event in events:
-            computer_name = event["_source"].get("computer_name", "UNKNOWN")
+            computer_name = plaso_compat.get_field_value(
+                event["_source"], "hostname", "UNKNOWN"
+            )
             username = event["_source"].get("username", "UNKNOWN")
             event_strings = event["_source"].get("strings", [])
 

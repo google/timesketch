@@ -16,7 +16,6 @@
 import codecs
 import json
 import logging
-import uuid
 
 import opensearchpy
 from flask import jsonify
@@ -30,6 +29,7 @@ from flask_login import current_user
 from timesketch.api.v1 import resources
 from timesketch.api.v1 import utils
 from timesketch.lib import forms
+from timesketch.lib import utils as lib_utils
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
@@ -679,7 +679,7 @@ class TimelineCreateResource(resources.ResourceMixin, Resource):
 
         # We do not need a human readable filename or
         # datastore index name, so we use UUIDs here.
-        index_name = uuid.uuid4().hex
+        index_name = lib_utils.generate_index_name()
         if not isinstance(index_name, str):
             index_name = codecs.decode(index_name, "utf-8")
 
