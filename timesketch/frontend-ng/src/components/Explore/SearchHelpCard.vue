@@ -19,6 +19,7 @@ limitations under the License.
     :show-tags="false"
     :show-data-types="false"
     :show-saved-searches="false"
+    :query-language="queryLanguage"
     @search-triggered="$emit('close-dialog')"
   >
     <template v-slot:header>
@@ -47,6 +48,10 @@ export default {
     flat: {
       type: Boolean,
       default: false,
+    },
+    queryLanguage: {
+      type: String,
+      default: 'lucene',
     },
   },
   components: {
