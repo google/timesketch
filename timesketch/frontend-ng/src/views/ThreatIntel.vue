@@ -56,7 +56,7 @@ limitations under the License.
             <v-chip-group>
               <v-chip small v-for="tag in augmentedTags(item.tags).sort((a, b) => b.weight - a.weight)"
                 :color="tag.color" :text-color="tag.textColor" :outlined="tag.style === 'outlined'" :key="tag.name"
-                @click="searchForIOC(tag)">
+                @click="searchForIOC(tag.name)">
                 {{ tag.name }}
               </v-chip>
             </v-chip-group>
