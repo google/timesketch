@@ -255,7 +255,7 @@ class EvtxGapPlugin(interface.BaseAnalyzer):
                     {"day": str(missing_day), "timestamp": 0, "count": 0}
                 )
             df_append = pd.DataFrame(rows_to_append)
-            event_count = event_count.append(df_append, sort=False)
+            event_count = pd.concat([event_count, df_append], sort=False)
             event_count.sort_values(by="day", inplace=True)
             if "timestamp" in event_count:
                 del event_count["timestamp"]
