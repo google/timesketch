@@ -140,7 +140,7 @@ class LogonSessionizerSketchPlugin(WinEVTXSessionizerSketchPlugin):
     session_type = "logon_session"
     query_template = (
         'data_type:"windows:evtx:record" AND event_identifier:('
-        "4624 OR 4778 OR 4634 OR 4647 OR 4779 OR 6005) AND timestamp:[%d TO *]"
+        "4624 OR 4778 OR 4634 OR 4647 OR 4779 OR 6005) AND timestamp:[{0:d} TO *]"
     )
 
     start_events = [4624, 4778]
@@ -172,7 +172,7 @@ class UnlockSessionizerSketchPlugin(WinEVTXSessionizerSketchPlugin):
     query_template = (
         'data_type:"windows:evtx:record" AND event_identifier:'
         "(4801 OR 4800 OR 4634 OR 4647 OR 4779 OR 6005) AND timestamp:"
-        "[%d TO *]"
+        "[{0:d} TO *]"
     )
     start_events = [4801]
     end_events = [4800, 4802, 4634, 4647, 4779]
