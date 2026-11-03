@@ -28,9 +28,11 @@ class TestNl2qFeature(BaseTest):
         """Set up the tests."""
         super().setUp()
         self.nl2q_feature = Nl2qFeature()
-        current_app.config["PROMPT_NL2Q"] = "./tests/test_data/nl2q/test_prompt_nl2q"
+        current_app.config["PROMPT_NL2Q"] = (
+            "./tests/test_data/llm_prompts/nl2q_prompt.txt"
+        )
         current_app.config["EXAMPLES_NL2Q"] = (
-            "./tests/test_data/nl2q/test_examples_nl2q"
+            "./tests/test_data/llm_prompts/nl2q_examples.txt"
         )
 
     @mock.patch("timesketch.lib.llms.features.nl2q.utils.run_aggregator")
