@@ -13,6 +13,7 @@
 # limitations under the License.
 """This file contains a class for managing end to end tests."""
 
+from collections.abc import Iterator
 import inspect
 import logging
 import os
@@ -104,7 +105,9 @@ class EndToEndTestManager(object):
             return 0
 
     @classmethod
-    def get_tests(cls, sort_by_mtime=False, include_excluded=False):
+    def get_tests(
+        cls, sort_by_mtime: bool = False, include_excluded: bool = False
+    ) -> Iterator[tuple[str, type]]:
         """Retrieves registered end-to-end test classes.
 
         This method yields test classes that have been registered using the

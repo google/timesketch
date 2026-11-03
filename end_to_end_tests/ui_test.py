@@ -13,6 +13,7 @@
 # limitations under the License.
 """Browser UI end-to-end tests using Playwright."""
 
+from collections.abc import Iterator
 import contextlib
 import datetime
 import html
@@ -28,11 +29,15 @@ import uuid
 try:
     # pylint: disable=import-error
     from playwright.sync_api import expect  # type: ignore[import-not-found]
+    from playwright.sync_api import Page  # type: ignore[import-not-found]
+    from playwright.sync_api import Response  # type: ignore[import-not-found]
     from playwright.sync_api import (  # type: ignore[import-not-found]
         sync_playwright,
     )
 except ImportError:
     expect = None  # type: ignore[assignment]
+    Page = Any  # type: ignore[assignment,misc]
+    Response = Any  # type: ignore[assignment,misc]
     sync_playwright = None  # type: ignore[assignment]
 
 from . import interface
@@ -66,13 +71,13 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
 
     NAME = "ui_test"
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self._step_screenshots: list[dict[str, str]] = []
         self._auth_storage_state: Any = None
         self._pending_plaso_sketch_id: Optional[int] = None
 
-    def setup(self):
+    def setup(self) -> None:
         """Resets per-suite UI state; tests drive imports through the browser."""
         self._step_screenshots.clear()
         self._auth_storage_state = None
@@ -93,7 +98,7 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
         }
 
     def _capture_step_screenshot(
-        self, page, step_slug: str, title: str, description: str
+        self, page: Page, step_slug: str, title: str, description: str
     ) -> str:
         """Captures a milestone PNG screenshot and refreshes the HTML storyboard.
 
@@ -225,7 +230,9 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
             md_fh.write("\n".join(md_rows))
 
     @contextlib.contextmanager
-    def _browser_page(self, test_label: str, use_saved_auth: bool = False):
+    def _browser_page(
+        self, test_label: str, use_saved_auth: bool = False
+    ) -> Iterator[Page]:
         """Yields an isolated Playwright Page with network, JS, and trace guards.
 
         Args:
@@ -251,7 +258,7 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
         server_errors: list[str] = []
         asset_errors: list[str] = []
 
-        def _on_response(response) -> None:
+        def _on_response(response: Response) -> None:
             path = urllib.parse.urlsplit(response.url).path
             if path.startswith("/api/v1/") and response.status >= 500:
                 server_errors.append(
@@ -322,7 +329,7 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
 
     def _login_via_ui(
         self,
-        page,
+        page: Page,
         username: str = interface.USERNAME,
         password: str = interface.PASSWORD,
     ) -> None:
@@ -344,12 +351,16 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
         ).to_be_visible(timeout=30000)
         self._auth_storage_state = page.context.storage_state()
 
-    def _ensure_authenticated(self, page) -> None:
-        """Logs in via UI only if storage_state was not already cached."""
+    def _ensure_authenticated(self, page: Page) -> None:
+        """Logs in via UI only if storage_state was not already cached.
+
+        Args:
+            page (playwright.sync_api.Page): Active Playwright page.
+        """
         if self._auth_storage_state is None:
             self._login_via_ui(page)
 
-    def _create_blank_sketch_via_ui(self, page, sketch_name: str) -> int:
+    def _create_blank_sketch_via_ui(self, page: Page, sketch_name: str) -> int:
         """Creates a blank sketch from the Home dialog and returns its sketch ID.
 
         Args:
@@ -380,7 +391,7 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
         assert match is not None
         return int(match.group(1))
 
-    def _open_new_empty_sketch_in_ui(self, page, sketch_prefix: str) -> int:
+    def _open_new_empty_sketch_in_ui(self, page: Page, sketch_prefix: str) -> int:
         """Creates a fresh sketch via API and opens its empty Explore view in UI.
 
         Args:
@@ -406,7 +417,7 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
 
     def _submit_timeline_upload_via_ui(
         self,
-        page,
+        page: Page,
         file_path: str,
         step_screenshot: Optional[tuple[str, str, str]] = None,
     ) -> str:
@@ -463,7 +474,7 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
         sketch_id: int,
         expected_name: str,
         timeout_seconds: int = PLASO_INDEX_TIMEOUT_SECONDS,
-    ):
+    ) -> Any:
         """Polls the Timesketch API until the uploaded timeline finishes indexing.
 
         Args:
@@ -520,7 +531,7 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
 
     def _await_chip_and_run_wildcard_search(
         self,
-        page,
+        page: Page,
         sketch_id: int,
         expected_tl_name: str,
         expected_events: int,
@@ -572,7 +583,7 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
             "Expected rendered event rows in Explore data table.",
         )
 
-    def test_01_ui_reachable_and_login_guard(self):
+    def test_01_ui_reachable_and_login_guard(self) -> None:
         """Unauthenticated root redirects to /login/ and serves static UI assets."""
         with self._browser_page("test_01_ui_reachable") as page:
             assert expect is not None
@@ -608,7 +619,7 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
                 "branding, CSRF token, and sign-in form.",
             )
 
-    def test_02_login_and_create_blank_sketch(self):
+    def test_02_login_and_create_blank_sketch(self) -> None:
         """Rejects invalid credentials, logs in, and creates a blank sketch."""
         with self._browser_page("test_02_login_and_sketch") as page:
             assert expect is not None
@@ -644,7 +655,7 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
             api_sketch = self.api.get_sketch(sketch_id)
             self.assertions.assertEqual(api_sketch.name, sketch_name)
 
-    def test_03_kickoff_plaso_upload_via_ui(self):
+    def test_03_kickoff_plaso_upload_via_ui(self) -> None:
         """Starts browser Plaso upload immediately so Celery runs in parallel."""
         if self._skip_plaso_enabled():
             logger.info("Skipping Plaso kickoff (UI_E2E_SKIP_PLASO enabled).")
@@ -669,7 +680,7 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
             )
             self._pending_plaso_sketch_id = sketch_id
 
-    def test_04_fast_csv_upload_and_explore_via_ui(self):
+    def test_04_fast_csv_upload_and_explore_via_ui(self) -> None:
         """Uploads a 4-row CSV for rapid UI/auto-poll/Explore feedback."""
         csv_path = os.path.join(interface.TEST_DATA_DIR, CSV_FIXTURE_FILENAME)
 
@@ -706,7 +717,7 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
             events = api_sketch.explore("*", as_pandas=True)
             self.assertions.assertEqual(len(events), EXPECTED_CSV_EVENTS)
 
-    def test_05_await_parallel_plaso_and_search_events(self):
+    def test_05_await_parallel_plaso_and_search_events(self) -> None:
         """Awaits the background Plaso timeline and queries all 3,205 events."""
         if self._skip_plaso_enabled():
             logger.info("Skipping Plaso search check (UI_E2E_SKIP_PLASO enabled).")
