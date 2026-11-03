@@ -1,6 +1,7 @@
 alembic==1.11.1
 altair==4.2.2
 celery==5.4.0
+kombu==5.6.2
 cryptography==50.0.0
 datasketch==1.6.5
 dfir-unfurl>=20260405
