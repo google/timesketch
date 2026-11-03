@@ -13,7 +13,12 @@
 # limitations under the License.
 """Commands for timelines."""
 
+from typing import Any, Dict, Optional
+
 import click
+
+from timesketch_api_client import error as api_error
+from timesketch_api_client import timeline as timeline_lib
 
 
 @click.group("timelines")
@@ -33,6 +38,46 @@ def list_timelines(ctx: click.Context):
     sketch = ctx.obj.sketch
     for timeline in sketch.list_timelines():
         click.echo(f"{timeline.id} {timeline.name}")
+
+
+def _format_fields_count(
+    timeline: timeline_lib.Timeline,
+    meta: Dict[str, Any],
+    status: Optional[str],
+) -> str:
+    """Formats the timeline field count with a fallback for HTTP 403 errors.
+
+    Args:
+        timeline: Timeline instance.
+        meta: Metadata dictionary from the timeline resource payload.
+        status: Current status string of the timeline, if available.
+
+    Returns:
+        Formatted field count or permission fallback string.
+
+    Raises:
+        RuntimeError: If querying SearchIndex fails with a non-403 error.
+    """
+    if "fields_count" in meta:
+        fields_count = meta.get("fields_count")
+        if fields_count is not None:
+            return str(fields_count)
+        if status in ("archived", "fail", "deleted"):
+            return "0"
+        return "N/A"
+    if status in ("archived", "fail", "deleted"):
+        return "0"
+    timeline_index = timeline.index
+    if timeline_index is None or not timeline_index.id:
+        return "0"
+    try:
+        return str(len(timeline_index.fields))
+    except api_error.NotFoundError:
+        return "0"
+    except RuntimeError as e:
+        if "[403]" in str(e):
+            return "N/A (no direct SearchIndex read permission)"
+        raise
 
 
 @timelines_group.command("describe")
@@ -68,28 +113,33 @@ def describe_timeline(ctx: click.Context, timeline_id: int):
     if not timeline:
         click.echo("No such timeline")
         return
-    timeline.lazyload_data()
     if output == "json":
+        timeline.lazyload_data()
         click.echo(f"{timeline.resource_data}")
         return
     if output != "text":
         click.echo(f'Unsupported output format: "{output}" - using "text" instead')
 
+    status = timeline.status
+    resource_data = timeline.resource_data or timeline.lazyload_data() or {}
+    meta = resource_data.get("meta") or {}
+
     click.echo(f"Name: {timeline.name}")
     click.echo(f"Index: {timeline.index_name}")
-    click.echo(f"Status: {timeline.status}")
-    lines_indexed = timeline.resource_data.get("meta").get("lines_indexed", 0)
+    click.echo(f"Status: {status}")
+    lines_indexed = meta.get("lines_indexed", 0)
     click.echo(f"Event count: {lines_indexed or 0}")
     click.echo(f"Color: {timeline.color}")
-    click.echo(f"Number of fields: {len(timeline.index.fields)}")
+    fields_display = _format_fields_count(timeline, meta, status)
+    click.echo(f"Number of fields: {fields_display}")
 
-    for timeline_object in timeline.resource_data.get("objects", None):
+    for timeline_object in resource_data.get("objects") or []:
         name = timeline_object.get("name", "no name")
         created = timeline_object.get("created_at", 0)
         click.echo(f"Name: {name}")
         click.echo(f"Created: {created}")
         click.echo("Datasources:")
-        for datasource in timeline_object.get("datasources", []):
+        for datasource in timeline_object.get("datasources") or []:
             error_message = datasource.get("error_message", None)
             original_filename = datasource.get("original_filename", None)
             file_on_disk = datasource.get("file_on_disk", None)

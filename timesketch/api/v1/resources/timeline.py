@@ -272,7 +272,7 @@ class TimelineResource(resources.ResourceMixin, Resource):
         It verifies that both the sketch and the timeline exist, that the timeline
         belongs to the sketch, and that the current user has read permission for
         the sketch. It also fetches metadata about the timeline, such as the number
-        of indexed events.
+        of indexed events and mapped fields.
 
         Args:
             sketch_id (int): The ID of the sketch.
@@ -281,7 +281,7 @@ class TimelineResource(resources.ResourceMixin, Resource):
         Returns:
             flask.wrappers.Response: A JSON response containing the timeline object
                 and metadata. The metadata includes the number of indexed events
-                in the timeline.
+                and mapped fields in the timeline.
 
         Raises:
             HTTP_STATUS_CODE_NOT_FOUND: If the sketch or timeline is not found, or
@@ -318,8 +318,13 @@ class TimelineResource(resources.ResourceMixin, Resource):
                 "The user does not have read permission on the sketch.",
             )
 
-        meta = {"lines_indexed": None}
-        if timeline.get_status.status != "fail":
+        meta = {"lines_indexed": None, "fields_count": None}
+        if (
+            timeline.get_status.status not in ("archived", "fail", "deleted")
+            and timeline.searchindex
+            and timeline.searchindex.index_name
+        ):
+            index_name = timeline.searchindex.index_name
             try:
                 result = self.datastore.search(
                     sketch_id=timeline.searchindex.id,
@@ -332,7 +337,7 @@ class TimelineResource(resources.ResourceMixin, Resource):
                         "fields": [{"field": "message", "type": "text"}],
                     },
                     query_dsl=None,
-                    indices=[timeline.searchindex.index_name],
+                    indices=[index_name],
                     timeline_ids=[timeline.id],
                     count=True,
                 )
@@ -343,13 +348,50 @@ class TimelineResource(resources.ResourceMixin, Resource):
                     "on index [%s]. Error: %s",
                     sketch_id,
                     timeline_id,
-                    timeline.searchindex.index_name,
+                    index_name,
                     e,
                     exc_info=True,
                 )
                 abort(
                     HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR,
                     f"Error retrieving timeline data: {e}",
+                )
+
+            try:
+                mapping = self.datastore.client.indices.get_mapping(index=index_name)
+                field_names = set()
+                if isinstance(mapping, dict):
+                    for index_data in mapping.values():
+                        if not isinstance(index_data, dict):
+                            continue
+                        mappings_obj = index_data.get("mappings", {})
+                        props = mappings_obj.get("properties")
+                        if not isinstance(props, dict) and isinstance(
+                            mappings_obj, dict
+                        ):
+                            first_type = next(iter(mappings_obj.values()), {})
+                            if isinstance(first_type, dict):
+                                props = first_type.get("properties")
+                        if isinstance(props, dict):
+                            field_names.update(props.keys())
+                meta["fields_count"] = len(field_names)
+            except opensearchpy.NotFoundError:
+                logger.debug(
+                    "Index [%s] not found when getting field count for sketch [%s], "
+                    "timeline [%s].",
+                    index_name,
+                    sketch_id,
+                    timeline_id,
+                )
+                meta["fields_count"] = 0
+            except opensearchpy.exceptions.OpenSearchException as e:
+                logger.warning(
+                    "Unable to get mapping for index [%s] on sketch [%s], "
+                    "timeline [%s]. Error: %s",
+                    index_name,
+                    sketch_id,
+                    timeline_id,
+                    e,
                 )
 
         return self.to_json(timeline, meta=meta)
