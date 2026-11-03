@@ -16,9 +16,24 @@
 from unittest import mock
 
 from timesketch.lib.testlib import BaseTest
+from timesketch.lib.testlib import MockDataStore
 from timesketch.lib import tasks
+from timesketch.lib.analyzers import interface
 from timesketch.models import db_session
-from timesketch.models.sketch import DataSource, SearchIndex
+from timesketch.models.sketch import Analysis, DataSource, SearchIndex
+
+
+class _DummyDFIQAnalyzer(interface.BaseAnalyzer):
+    """Minimal DFIQ analyzer subclass for testing run_sketch_analyzer."""
+
+    NAME = "dummy_dfiq"
+    DISPLAY_NAME = "Dummy DFIQ"
+    DESCRIPTION = "Dummy DFIQ analyzer."
+    IS_DFIQ_ANALYZER = True
+
+    def run(self):
+        """Return a dummy summary."""
+        return "ok"
 
 
 class TestTasks(BaseTest):
@@ -405,3 +420,53 @@ class TestTasks(BaseTest):
             )
             self.assertEqual(datasource.status[0].status, "fail")
             mock_storage_reader.Close.assert_called_once()
+
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
+    @mock.patch("timesketch.lib.tasks._create_question_conclusion")
+    @mock.patch("timesketch.lib.tasks.manager.AnalysisManager.get_analyzer")
+    def test_run_sketch_analyzer_dfiq_skips_conclusion_when_timeline_deleted(
+        self, mock_get_analyzer, mock_create_conclusion
+    ):
+        """DFIQ task skips creating a conclusion if timeline was deleted."""
+        mock_get_analyzer.return_value = _DummyDFIQAnalyzer
+
+        analysis = Analysis(
+            name="dummy_dfiq",
+            description="desc",
+            analyzer_name="dummy_dfiq",
+            parameters="{}",
+            user=self.user1,
+            sketch=self.sketch1,
+            timeline=None,
+        )
+        analysis.set_status("PENDING")
+
+        index_name = tasks.run_sketch_analyzer(
+            index_name="test_index",
+            sketch_id=self.sketch1.id,
+            analysis_id=analysis.id,
+            analyzer_name="dummy_dfiq",
+        )
+
+        self.assertEqual(index_name, "test_index")
+        self.assertEqual(Analysis.get_by_id(analysis.id).get_status.status, "ERROR")
+        mock_create_conclusion.assert_not_called()
+
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
+    @mock.patch("timesketch.lib.tasks._create_question_conclusion")
+    @mock.patch("timesketch.lib.tasks.manager.AnalysisManager.get_analyzer")
+    def test_run_sketch_analyzer_dfiq_handles_missing_analysis(
+        self, mock_get_analyzer, mock_create_conclusion
+    ):
+        """DFIQ task exits cleanly without crashing when analysis is missing."""
+        mock_get_analyzer.return_value = _DummyDFIQAnalyzer
+
+        index_name = tasks.run_sketch_analyzer(
+            index_name="test_index",
+            sketch_id=self.sketch1.id,
+            analysis_id=999999,
+            analyzer_name="dummy_dfiq",
+        )
+
+        self.assertEqual(index_name, "test_index")
+        mock_create_conclusion.assert_not_called()

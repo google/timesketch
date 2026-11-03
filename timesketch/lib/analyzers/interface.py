@@ -1107,9 +1107,29 @@ class BaseAnalyzer:
             Return value of the run method.
         """
         analysis = Analysis.get_by_id(analysis_id)
-        analysis.set_status("STARTED")
+        if not analysis:
+            logger.error(
+                "Analyzer %s (ID:%d): Analysis record not found, aborting.",
+                self.name,
+                analysis_id,
+            )
+            return "Failed"
 
         timeline = analysis.timeline
+        if not timeline:
+            logger.warning(
+                "Analyzer %s (ID:%d) in sketch (ID:%d): "
+                "Timeline was deleted before analyzer started, aborting.",
+                self.name,
+                analysis_id,
+                self.sketch.id,
+            )
+            analysis.result = "Timeline was deleted before analyzer started."
+            analysis.set_status("ERROR")
+            return "Failed"
+
+        analysis.set_status("STARTED")
+
         self.timeline_name = timeline.name
         searchindex = timeline.searchindex
 

@@ -15,6 +15,7 @@
 
 import json
 
+from timesketch.models.sketch import Analysis
 from timesketch.models.sketch import AnalysisSession
 from timesketch.models.sketch import Event
 from timesketch.models.sketch import SearchHistory
@@ -132,6 +133,40 @@ class SketchModelTest(ModelBaseTest):
         validated_filter_json = self.view1.validate_filter(test_filter_json)
         self.assertDictEqual(json.loads(validated_filter_dict), default_values)
         self.assertDictEqual(json.loads(validated_filter_json), default_values)
+
+    def test_get_active_analysis_sessions_ignores_deleted_timeline_analyses(self):
+        """Sessions with only deleted-timeline analyses are not reported active."""
+        orphaned_session = AnalysisSession(user=self.user1, sketch=self.sketch1)
+        active_session = AnalysisSession(user=self.user1, sketch=self.sketch1)
+        self.db_session.add_all([orphaned_session, active_session])
+        self.db_session.commit()
+
+        orphaned_analysis = Analysis(
+            name="orphaned_analyzer",
+            description="desc",
+            analyzer_name="test",
+            parameters="{}",
+            user=self.user1,
+            sketch=self.sketch1,
+            timeline=None,
+            analysissession=orphaned_session,
+        )
+        orphaned_analysis.set_status("PENDING")
+
+        live_analysis = Analysis(
+            name="live_analyzer",
+            description="desc",
+            analyzer_name="test",
+            parameters="{}",
+            user=self.user1,
+            sketch=self.sketch1,
+            timeline=self.timeline,
+            analysissession=active_session,
+        )
+        live_analysis.set_status("PENDING")
+
+        active_sessions = self.sketch1.get_active_analysis_sessions()
+        self.assertEqual(active_sessions, [active_session])
 
 
 class StoryModelTest(ModelBaseTest):

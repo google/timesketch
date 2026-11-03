@@ -810,17 +810,18 @@ def run_sketch_analyzer(
     logger.info("[%s] result: %s", analyzer_name, result)
     if hasattr(analyzer_class, "IS_DFIQ_ANALYZER") and analyzer_class.IS_DFIQ_ANALYZER:
         analysis = Analysis.get_by_id(analysis_id)
-        user_id = analysis.user.id
-        approach_id = analysis.approach_id
-        question_conclusion = _create_question_conclusion(
-            user_id, approach_id, result, analysis
-        )
-        if question_conclusion:
-            logger.info(
-                '[{:s}] added a conclusion to dfiq: "{:s}"'.format(
-                    analyzer_name, question_conclusion.investigativequestion.name
-                )
+        if analysis and analysis.get_status.status == "DONE":
+            user_id = analysis.user.id if analysis.user else None
+            approach_id = analysis.approach_id
+            question_conclusion = _create_question_conclusion(
+                user_id, approach_id, result, analysis
             )
+            if question_conclusion:
+                logger.info(
+                    '[%s] added a conclusion to dfiq: "%s"',
+                    analyzer_name,
+                    question_conclusion.investigativequestion.name,
+                )
     return index_name
 
 
