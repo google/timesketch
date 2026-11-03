@@ -296,14 +296,14 @@ class TimesketchApi:
                 will not be automatically opened.
             run_server: A boolean, if set to true (default) a web server is
                 run to catch the OAUTH request and response.
-            skip_open: A booelan, if set to True (defaults to False) an
+            skip_open: A boolean, if set to True (defaults to False) an
                 authorization URL is printed on the screen to visit. This is
                 only valid if run_server is set to False.
             timeout_seconds: Optional timeout in seconds for the authentication.
                 If set to None (default), it will wait indefinitely.
 
-        Return:
-            session: Instance of requests.Session.
+        Returns:
+            Instance of requests.Session.
 
         Raises:
             RuntimeError: if unable to log in to the application.
@@ -649,7 +649,7 @@ class TimesketchApi:
             password: Password of the user
 
         Returns:
-            True if user created successfully.
+            Instance of a User object representing the newly created user.
 
         Raises:
             urllib3.exceptions.MaxRetryError: If the maximum number of retries

@@ -173,7 +173,7 @@ class ViewBlock(BaseBlock):
     def view_name(self) -> str:
         """Returns the view name."""
         if self._data and hasattr(self._data, "name"):
-            return str(self._data.name)
+            return "" if self._data.name is None else str(self._data.name)
         return self._view_name
 
     def from_dict(self, data_dict: Dict[str, Any]) -> None:
@@ -611,14 +611,14 @@ class Story(resource.BaseResource):
         """Property that returns the content of a story.
 
         Returns:
-            Story content as a list of blocks.
+            Story content as a JSON serialized string of blocks.
         """
         content_list = [x.to_dict() for x in self.blocks]
         return json.dumps(content_list)
 
     @property
     def size(self) -> int:
-        """Retiurns the number of blocks stored in the story."""
+        """Returns the number of blocks stored in the story."""
         return len(self._blocks)
 
     def __len__(self) -> int:
@@ -632,11 +632,14 @@ class Story(resource.BaseResource):
         Args:
             block: Story block object.
             index: Index to add the block at.
+
+        Returns:
+            Boolean that indicates whether the block was successfully committed.
         """
         self._blocks.insert(index, block)
-        self.commit()
+        committed = self.commit()
         self.reset()
-        return True
+        return committed
 
     def add_aggregation(
         self,
@@ -804,12 +807,12 @@ class Story(resource.BaseResource):
     def to_html(self) -> str:
         """Returns HTML formatted string with the content of the story."""
         story_dict = self.to_export_format("html")
-        return str(story_dict.get("story", ""))
+        return str(story_dict.get("story") or "")
 
     def to_markdown(self) -> str:
         """Returns markdown formatted string with the content of the story."""
         story_dict = self.to_export_format("markdown")
-        return str(story_dict.get("story", ""))
+        return str(story_dict.get("story") or "")
 
     def to_export_format(self, export_format: str) -> Dict[str, Any]:
         """Returns exported copy of the story as defined in export_format.

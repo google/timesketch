@@ -16,7 +16,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Dict, Optional, Type, TYPE_CHECKING
+from typing import Any, NoReturn, Optional, Type, TYPE_CHECKING
 
 import bs4
 
@@ -87,9 +87,7 @@ def _get_reason(response: Optional[requests.Response]) -> str:
     return str(reason)
 
 
-def get_response_json(
-    response: requests.Response, logger: logging.Logger
-) -> Dict[str, Any]:
+def get_response_json(response: requests.Response, logger: logging.Logger) -> Any:
     """Return the JSON object from a response, logging any errors.
 
     Args:
@@ -98,7 +96,7 @@ def get_response_json(
           messages.
 
     Returns:
-        a dict with the decoded JSON object within the HTTP
+        the decoded JSON object (typically a dict or list) within the HTTP
             response object.
 
     Raises:
@@ -130,10 +128,10 @@ def get_response_json(
 
 
 def error_message(
-    response: requests.Response,
+    response: Optional[requests.Response],
     message: Optional[str] = None,
     error: Type[Exception] = RuntimeError,
-) -> None:
+) -> NoReturn:
     """Raise an error using error message extracted from response.
 
     Args:

@@ -64,7 +64,7 @@ class SearchTemplate(resource.BaseResource):
         return self._description
 
     def delete(self) -> bool:
-        """Deletes the saved graph from the store."""
+        """Deletes the saved search template from the store."""
         if not self._resource_id:
             raise ValueError(
                 "Unable to delete the search template, since the template "

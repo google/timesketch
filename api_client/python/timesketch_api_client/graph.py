@@ -146,12 +146,12 @@ class Graph(resource.SketchResource):
 
     @property
     def description(self) -> str:
-        """Property that returns back the description of the saved search."""
+        """Property that returns back the description of the graph."""
         return self._description
 
     @description.setter
     def description(self, description: str) -> None:
-        """Make changes to the saved search description field.
+        """Make changes to the graph description field.
 
         Args:
             description: The description of the graph.
@@ -251,7 +251,7 @@ class Graph(resource.SketchResource):
         self._updated_at = time
 
     def from_manual(
-        self, data: Optional[Dict[str, Any]] = None, **kwargs: Any
+        self, data: Optional[Dict[Any, Any]] = None, **kwargs: Any
     ) -> None:  # pylint: disable=arguments-differ; pytype: disable=signature-mismatch
         """Generate a new graph using a dictionary.
 
@@ -388,12 +388,12 @@ class Graph(resource.SketchResource):
 
     @property
     def name(self) -> str:
-        """Property that returns the query name."""
+        """Property that returns the graph name."""
         return self._name
 
     @name.setter
     def name(self, name: str) -> None:
-        """Make changes to the saved search name.
+        """Make changes to the graph name.
 
         Args:
             name: The name of the graph.
@@ -413,10 +413,10 @@ class Graph(resource.SketchResource):
         return pandas.DataFrame(self.plugins)
 
     def save(self) -> str:
-        """Save the search in the database.
+        """Save the graph in the database.
 
         Raises:
-            ValueError: if there are values missing in order to save the query.
+            ValueError: if there are values missing in order to save the graph.
         """
         if not self.name:
             raise ValueError("No name for the graph. Please select a name first.")

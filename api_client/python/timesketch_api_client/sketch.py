@@ -947,8 +947,8 @@ class Sketch(resource.BaseResource):
                     return timeline_
         return None
 
-    def get_intelligence_attribute(self) -> Dict[str, Any]:
-        """Returns a timeline object that is stored in the sketch.
+    def get_intelligence_attribute(self) -> List[Dict[str, Any]]:
+        """Returns the intelligence attribute data stored in the sketch.
 
         Returns:
             A list of dicts with indicators stored in the intelligence
@@ -958,8 +958,10 @@ class Sketch(resource.BaseResource):
             raise RuntimeError("Unable to get attributes on an archived sketch.")
 
         intel_attribute = (
-            self.attributes.get("intelligence", {}).get("value", {}).get("data", {})
+            self.attributes.get("intelligence", {}).get("value", {}).get("data", [])
         )
+        if not isinstance(intel_attribute, list):
+            return []
 
         return intel_attribute
 
@@ -1227,7 +1229,7 @@ class Sketch(resource.BaseResource):
         response = self.api.session.post(resource_url, json=form_data)
         return error.get_response_json(response, logger)
 
-    def list_available_analyzers(self) -> List[str]:
+    def list_available_analyzers(self) -> List[Dict[str, Any]]:
         """Returns a list of available analyzers."""
         resource_url = "{0:s}/sketches/{1:d}/analyzer/".format(
             self.api.api_root, self.id
@@ -1243,7 +1245,7 @@ class Sketch(resource.BaseResource):
         analyzer_kwargs: Optional[Dict[str, Any]] = None,
         timeline_id: Optional[int] = None,
         timeline_name: Optional[str] = None,
-    ) -> Union[analyzer.AnalyzerResult, str]:
+    ) -> Optional[Union[List[analyzer.AnalyzerResult], str]]:
         """Run an analyzer on a timeline.
 
         Args:
@@ -1263,8 +1265,9 @@ class Sketch(resource.BaseResource):
             error.UnableToRunAnalyzer: if not able to run the analyzer.
 
         Returns:
-            If the analyzer runs successfully return back an AnalyzerResult
-            object.
+            If the analyzer runs successfully return back a list of
+            AnalyzerResult objects, or an error string if neither timeline ID
+            nor name is set.
         """
         # TODO: Deprecate this function.
         logger.warning(

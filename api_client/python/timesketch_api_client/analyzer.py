@@ -55,13 +55,20 @@ class AnalyzerResult(resource.BaseResource):
         """Yields a dict for each analyzer status."""
         data = self._fetch_data()
         for entry in data.get("analyzers", []):
+            log = entry.get("log")
+            name = entry.get("name")
+            results = entry.get("results")
+            status = entry.get("status")
+            status_date = entry.get("status_date")
             yield {
-                "log": str(entry.get("log", "No recorded logs.")),
-                "name": str(entry.get("name", "No Name")),
-                "results": str(entry.get("results", "")),
-                "status": str(entry.get("status", "Unknown")),
-                "date": str(
-                    entry.get("status_date", datetime.datetime.utcnow().isoformat())
+                "log": "No recorded logs." if log is None else str(log),
+                "name": "No Name" if name is None else str(name),
+                "results": "" if results is None else str(results),
+                "status": "Unknown" if status is None else str(status),
+                "date": (
+                    datetime.datetime.utcnow().isoformat()
+                    if status_date is None
+                    else str(status_date)
                 ),
             }
 

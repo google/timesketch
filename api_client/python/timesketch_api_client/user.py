@@ -88,7 +88,7 @@ class User(resource.BaseResource):
         """Property that returns the groups the user belongs to."""
         data = self._get_data()
         groups = data.get("groups", [])
-        return [str(x.get("name", "")) for x in groups]
+        return [str(x.get("name") or "") for x in groups]
 
     @property
     def is_active(self) -> bool:
@@ -106,7 +106,7 @@ class User(resource.BaseResource):
     def username(self) -> str:
         """Property that returns back the username of the current user."""
         data = self._get_data()
-        return str(data.get("username", "Unknown"))
+        return str(data.get("username") or "Unknown")
 
     def __str__(self) -> str:
         """Returns a string representation of the username."""

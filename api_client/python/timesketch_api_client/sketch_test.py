@@ -275,3 +275,22 @@ class SketchTest(unittest.TestCase):
             mock_post.assert_called_once()
             call_args = mock_post.call_args
             self.assertEqual(call_args.kwargs["json"]["filter"]["size"], 0)
+
+    def test_get_intelligence_attribute(self):
+        """Test get_intelligence_attribute returns a list when unset or set."""
+        with mock.patch.object(
+            type(self.sketch),
+            "attributes",
+            new_callable=mock.PropertyMock,
+            return_value={},
+        ):
+            self.assertEqual(self.sketch.get_intelligence_attribute(), [])
+
+        sample_iocs = [{"ioc": "evil.example", "type": "hostname"}]
+        with mock.patch.object(
+            type(self.sketch),
+            "attributes",
+            new_callable=mock.PropertyMock,
+            return_value={"intelligence": {"value": {"data": sample_iocs}}},
+        ):
+            self.assertEqual(self.sketch.get_intelligence_attribute(), sample_iocs)

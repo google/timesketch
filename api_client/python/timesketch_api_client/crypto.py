@@ -20,7 +20,7 @@ import os
 import getpass
 import logging
 import stat
-from typing import Any, Optional, Union
+from typing import Optional, TYPE_CHECKING, Union
 
 from cryptography import fernet
 from cryptography.hazmat import backends
@@ -28,6 +28,9 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 from . import credentials
+
+if TYPE_CHECKING:
+    from . import config
 
 logger = logging.getLogger("timesketch_api.crypto_client")
 
@@ -87,8 +90,8 @@ class CredentialStorage:
         self,
         cred_obj: credentials.TimesketchCredentials,
         file_path: str = "",
-        password: Union[str, bytes] = "",
-        config_assistant: Any = None,
+        password: Optional[Union[str, bytes]] = "",
+        config_assistant: Optional[config.ConfigAssistant] = None,
     ) -> None:
         """Save credential data to a token file.
 
@@ -119,7 +122,7 @@ class CredentialStorage:
         else:
             password_bytes = fernet.Fernet.generate_key()
             if config_assistant:
-                config_assistant.set_config("cred_key", password_bytes)
+                config_assistant.set_config("cred_key", password_bytes.decode("utf-8"))
                 config_assistant.save_config()
 
         if not os.path.isfile(file_path):
@@ -142,8 +145,8 @@ class CredentialStorage:
     def load_credentials(
         self,
         file_path: str = "",
-        password: Union[str, bytes] = "",
-        config_assistant: Any = None,
+        password: Optional[Union[str, bytes]] = "",
+        config_assistant: Optional[config.ConfigAssistant] = None,
     ) -> Optional[credentials.TimesketchCredentials]:
         """Load credentials from a file and return a credential object.
 

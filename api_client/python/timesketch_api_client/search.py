@@ -526,11 +526,11 @@ class Search(resource.SketchResource):
         self._indices = "_all"
         self._max_entries = self.DEFAULT_SIZE_LIMIT
         self._name = ""
-        self._query_dsl = ""
+        self._query_dsl: Optional[Union[str, Dict[str, Any]]] = ""
         self._query_filter = {}
-        self._query_string = ""
+        self._query_string: Optional[str] = ""
         self._raw_response = None
-        self._return_fields = ""
+        self._return_fields: Optional[str] = ""
         self._scrolling = None
         self._searchtemplate = ""
         self._total_elastic_size = 0
@@ -769,7 +769,7 @@ class Search(resource.SketchResource):
     def from_manual(  # pylint: disable=arguments-differ
         self,
         query_string: Optional[str] = None,
-        query_dsl: Optional[str] = None,
+        query_dsl: Optional[Union[str, Dict[str, Any]]] = None,
         query_filter: Optional[Dict[str, Any]] = None,
         return_fields: Optional[str] = None,
         max_entries: Optional[int] = None,
@@ -1010,12 +1010,12 @@ class Search(resource.SketchResource):
         self.commit()
 
     @property
-    def query_dsl(self) -> str:
+    def query_dsl(self) -> Optional[Union[str, Dict[str, Any]]]:
         """Property that returns back the query DSL."""
         return self._query_dsl
 
     @query_dsl.setter
-    def query_dsl(self, query_dsl: str) -> None:
+    def query_dsl(self, query_dsl: Optional[Union[str, Dict[str, Any]]]) -> None:
         """Make changes to the query DSL of the search.
 
         Args:
@@ -1090,12 +1090,12 @@ class Search(resource.SketchResource):
         self.commit()
 
     @property
-    def query_string(self) -> str:
+    def query_string(self) -> Optional[str]:
         """Property that returns back the query string."""
         return self._query_string
 
     @query_string.setter
-    def query_string(self, query_string: str) -> None:
+    def query_string(self, query_string: Optional[str]) -> None:
         """Make changes to the query string of a saved search.
 
         Args:
@@ -1127,7 +1127,7 @@ class Search(resource.SketchResource):
         self.commit()
 
     @property
-    def return_fields(self) -> str:
+    def return_fields(self) -> Optional[str]:
         """Property that returns the return_fields."""
         if self._return_fields:
             items = self._return_fields.split(",")
@@ -1137,7 +1137,7 @@ class Search(resource.SketchResource):
         return self._return_fields
 
     @return_fields.setter
-    def return_fields(self, return_fields: str) -> None:
+    def return_fields(self, return_fields: Optional[str]) -> None:
         """Make changes to the return fields.
 
         Args:
