@@ -13,12 +13,7 @@
 # limitations under the License.
 """Commands for timelines."""
 
-from typing import Any, Dict, Optional
-
 import click
-
-from timesketch_api_client import error as api_error
-from timesketch_api_client import timeline as timeline_lib
 
 
 @click.group("timelines")
@@ -38,46 +33,6 @@ def list_timelines(ctx: click.Context):
     sketch = ctx.obj.sketch
     for timeline in sketch.list_timelines():
         click.echo(f"{timeline.id} {timeline.name}")
-
-
-def _format_fields_count(
-    timeline: timeline_lib.Timeline,
-    meta: Dict[str, Any],
-    status: Optional[str],
-) -> str:
-    """Formats the timeline field count with a fallback for HTTP 403 errors.
-
-    Args:
-        timeline: Timeline instance.
-        meta: Metadata dictionary from the timeline resource payload.
-        status: Current status string of the timeline, if available.
-
-    Returns:
-        Formatted field count or permission fallback string.
-
-    Raises:
-        RuntimeError: If querying SearchIndex fails with a non-403 error.
-    """
-    if "fields_count" in meta:
-        fields_count = meta.get("fields_count")
-        if fields_count is not None:
-            return str(fields_count)
-        if status in ("archived", "fail", "deleted"):
-            return "0"
-        return "N/A"
-    if status in ("archived", "fail", "deleted"):
-        return "0"
-    timeline_index = timeline.index
-    if timeline_index is None or not timeline_index.id:
-        return "0"
-    try:
-        return str(len(timeline_index.fields))
-    except api_error.NotFoundError:
-        return "0"
-    except RuntimeError as e:
-        if "[403]" in str(e):
-            return "N/A (no direct SearchIndex read permission)"
-        raise
 
 
 @timelines_group.command("describe")
@@ -130,7 +85,13 @@ def describe_timeline(ctx: click.Context, timeline_id: int):
     lines_indexed = meta.get("lines_indexed", 0)
     click.echo(f"Event count: {lines_indexed or 0}")
     click.echo(f"Color: {timeline.color}")
-    fields_display = _format_fields_count(timeline, meta, status)
+    fields_count = meta.get("fields_count")
+    if fields_count is not None:
+        fields_display = str(fields_count)
+    elif status in ("archived", "fail", "deleted"):
+        fields_display = "0"
+    else:
+        fields_display = "N/A"
     click.echo(f"Number of fields: {fields_display}")
 
     for timeline_object in resource_data.get("objects") or []:

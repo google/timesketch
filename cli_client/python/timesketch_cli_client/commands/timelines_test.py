@@ -18,7 +18,6 @@ from unittest import mock
 
 from click.testing import CliRunner
 
-from timesketch_api_client import error as api_error
 from timesketch_api_client import test_lib as api_test_lib
 
 from timesketch_cli_client import test_lib
@@ -105,50 +104,14 @@ class TimelinesTest(unittest.TestCase):
                 self.assertIn("Datasources:", result.output)
                 self.assertIn("Original filename: evtx_part.csv", result.output)
 
-    def test_describe_timeline_legacy_not_found_and_null_index_id(self):
-        """Test legacy fallback handles missing SearchIndex id and NotFoundError."""
-        self.ctx.output_format_from_flag = "text"
-
-        mock_null_id = self._create_mock_timeline(meta={"lines_indexed": 5})
-        mock_null_id.index.id = None
-        type(mock_null_id.index).fields = mock.PropertyMock(
-            side_effect=AssertionError("SearchIndex.fields should not be queried")
-        )
-        with mock.patch(
-            "timesketch_api_client.sketch.Sketch.get_timeline",
-            return_value=mock_null_id,
-        ):
-            runner = CliRunner()
-            res_null = runner.invoke(timelines_group, ["describe", "1"], obj=self.ctx)
-        self.assertEqual(res_null.exit_code, 0, msg=res_null.output)
-        self.assertIn("Number of fields: 0", res_null.output)
-
-        mock_404 = self._create_mock_timeline(meta={"lines_indexed": 5})
-        mock_404.index.id = 10
-        type(mock_404.index).fields = mock.PropertyMock(
-            side_effect=api_error.NotFoundError("Not Found")
-        )
-        with mock.patch(
-            "timesketch_api_client.sketch.Sketch.get_timeline",
-            return_value=mock_404,
-        ):
-            runner = CliRunner()
-            res_404 = runner.invoke(timelines_group, ["describe", "1"], obj=self.ctx)
-        self.assertEqual(res_404.exit_code, 0, msg=res_404.output)
-        self.assertIn("Number of fields: 0", res_404.output)
-        self.assertIn("Datasources:", res_404.output)
-
-    def test_describe_timeline_collaborator_403_fallback(self):
-        """Test describe degrades cleanly on SearchIndex 403 and prints datasources."""
+    def test_describe_timeline_missing_fields_count_key(self):
+        """Test describe prints N/A and datasources when fields_count is absent."""
         mock_tl = self._create_mock_timeline(
             meta={"lines_indexed": 10},
             error_message="Sample import warning",
         )
-        type(mock_tl.index).fields = mock.PropertyMock(
-            side_effect=RuntimeError(
-                "Failed to get a valid response json from Timesketch API, "
-                "with error [403] FORBIDDEN (http://127.0.0.1/api/v1/searchindices/10/)"
-            )
+        type(mock_tl).index = mock.PropertyMock(
+            side_effect=AssertionError("SearchIndex should not be accessed")
         )
         self.ctx.output_format_from_flag = "text"
         with mock.patch(
@@ -159,59 +122,20 @@ class TimelinesTest(unittest.TestCase):
             result = runner.invoke(timelines_group, ["describe", "1"], obj=self.ctx)
 
         self.assertEqual(result.exit_code, 0, msg=result.output)
-        self.assertIn(
-            "Number of fields: N/A (no direct SearchIndex read permission)",
-            result.output,
-        )
+        self.assertIn("Number of fields: N/A", result.output)
         self.assertIn("Datasources:", result.output)
         self.assertIn("Original filename: evtx_part.csv", result.output)
         self.assertIn("Error: Sample import warning", result.output)
 
-    def test_describe_timeline_legacy_owner_fields(self):
-        """Test describe falls back to SearchIndex.fields without fields_count."""
-        mock_tl = self._create_mock_timeline(meta={"lines_indexed": 10})
-        mock_tl.index.fields = ["datetime", "message", "timestamp"]
-        self.ctx.output_format_from_flag = "text"
-        with mock.patch(
-            "timesketch_api_client.sketch.Sketch.get_timeline",
-            return_value=mock_tl,
-        ):
-            runner = CliRunner()
-            result = runner.invoke(timelines_group, ["describe", "1"], obj=self.ctx)
-
-        self.assertEqual(result.exit_code, 0, msg=result.output)
-        self.assertIn("Number of fields: 3", result.output)
-        self.assertIn("Datasources:", result.output)
-
-    def test_describe_timeline_non_403_error_propagates(self):
-        """Test describe re-raises non-403 RuntimeErrors from SearchIndex."""
-        mock_tl = self._create_mock_timeline(meta={"lines_indexed": 10})
-        type(mock_tl.index).fields = mock.PropertyMock(
-            side_effect=RuntimeError(
-                "Failed to get a valid response json from Timesketch API, "
-                "with error [500] INTERNAL SERVER ERROR"
-            )
-        )
-        self.ctx.output_format_from_flag = "text"
-        with mock.patch(
-            "timesketch_api_client.sketch.Sketch.get_timeline",
-            return_value=mock_tl,
-        ):
-            runner = CliRunner()
-            result = runner.invoke(timelines_group, ["describe", "1"], obj=self.ctx)
-
-        self.assertEqual(result.exit_code, 1)
-        self.assertIsInstance(result.exception, RuntimeError)
-
     def test_describe_timeline_failed_status_skips_searchindex(self):
-        """Test describe skips SearchIndex lookup when timeline status is fail."""
+        """Test describe prints 0 fields and error details on failed timelines."""
         mock_tl = self._create_mock_timeline(
-            meta={"lines_indexed": None},
+            meta={"lines_indexed": None, "fields_count": None},
             status="fail",
             error_message="Plaso version out of date",
         )
-        type(mock_tl.index).fields = mock.PropertyMock(
-            side_effect=AssertionError("SearchIndex should not be queried on fail")
+        type(mock_tl).index = mock.PropertyMock(
+            side_effect=AssertionError("SearchIndex should not be accessed")
         )
         self.ctx.output_format_from_flag = "text"
         with mock.patch(

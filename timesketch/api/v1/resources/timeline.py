@@ -359,22 +359,12 @@ class TimelineResource(resources.ResourceMixin, Resource):
 
             try:
                 mapping = self.datastore.client.indices.get_mapping(index=index_name)
-                field_names = set()
-                if isinstance(mapping, dict):
-                    for index_data in mapping.values():
-                        if not isinstance(index_data, dict):
-                            continue
-                        mappings_obj = index_data.get("mappings", {})
-                        props = mappings_obj.get("properties")
-                        if not isinstance(props, dict) and isinstance(
-                            mappings_obj, dict
-                        ):
-                            first_type = next(iter(mappings_obj.values()), {})
-                            if isinstance(first_type, dict):
-                                props = first_type.get("properties")
-                        if isinstance(props, dict):
-                            field_names.update(props.keys())
-                meta["fields_count"] = len(field_names)
+                properties = (
+                    mapping.get(index_name, {})
+                    .get("mappings", {})
+                    .get("properties", {})
+                )
+                meta["fields_count"] = len(properties)
             except opensearchpy.NotFoundError:
                 logger.debug(
                     "Index [%s] not found when getting field count for sketch [%s], "

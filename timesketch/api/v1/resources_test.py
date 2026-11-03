@@ -1692,26 +1692,9 @@ class TimelineResourceTest(BaseTest):
         self.assertEqual(self.searchindex.get_status.status, initial_status)
 
     @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
-    def test_get_timeline_fields_count_alias_and_opensearch_error(self):
-        """Test multi-index alias union, empty index_name, and OpenSearchException."""
+    def test_get_timeline_fields_count_empty_index_and_opensearch_error(self):
+        """Test GET timeline handles empty index_name and OpenSearchException."""
         self.login()
-        alias_mapping = {
-            "backing_idx_empty": {"mappings": {}},
-            "backing_idx_1": {
-                "mappings": {"properties": {"datetime": {}, "message": {}}}
-            },
-            "backing_idx_2": {
-                "mappings": {"properties": {"message": {}, "hostname": {}}}
-            },
-        }
-        with mock.patch(
-            "timesketch.lib.testlib.MockOpenSearchIndices.get_mapping",
-            return_value=alias_mapping,
-        ):
-            response = self.client.get(self.resource_url)
-        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
-        self.assertEqual(response.json["meta"]["fields_count"], 3)
-
         with mock.patch(
             "timesketch.lib.testlib.MockOpenSearchIndices.get_mapping",
             side_effect=opensearchpy.exceptions.SerializationError("invalid json"),
