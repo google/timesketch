@@ -1,0 +1,39 @@
+# Browser UI E2E runner image based on Microsoft's official Python Playwright
+# image (Ubuntu 24.04 Noble / Python 3.12 + pre-installed headless browsers).
+ARG PLAYWRIGHT_VERSION=1.57.0
+ARG PLAYWRIGHT_IMAGE_TAG=v${PLAYWRIGHT_VERSION}-noble
+FROM mcr.microsoft.com/playwright/python:${PLAYWRIGHT_IMAGE_TAG}
+
+ARG PLAYWRIGHT_VERSION=1.57.0
+USER root
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Ensure git is available for EndToEndTestManager mtime sorting and mark the
+# bind-mounted repository root safe when host UID differs from container root.
+RUN which git >/dev/null 2>&1 || ( \
+    apt-get update && \
+    apt-get install -y --no-install-recommends git && \
+    rm -rf /var/lib/apt/lists/* \
+    ) && \
+    git config --system --add safe.directory /usr/local/src/timesketch
+
+COPY . /tmp/timesketch
+
+RUN pip3 install --no-cache-dir \
+    "playwright==${PLAYWRIGHT_VERSION}" \
+    psycopg2-binary \
+    -r /tmp/timesketch/requirements.txt && \
+    pip3 install --no-cache-dir \
+    /tmp/timesketch \
+    /tmp/timesketch/api_client/python \
+    /tmp/timesketch/importer_client/python \
+    /tmp/timesketch/cli_client/python && \
+    python3 -m playwright --version && \
+    mkdir -p /etc/timesketch /tmp/timesketch-ui-artifacts && \
+    cp /tmp/timesketch/data/timesketch.conf \
+       /tmp/timesketch/data/plaso.mappings \
+       /tmp/timesketch/data/generic.mappings \
+       /etc/timesketch/ && \
+    rm -rf /tmp/timesketch
+
+WORKDIR /usr/local/src/timesketch

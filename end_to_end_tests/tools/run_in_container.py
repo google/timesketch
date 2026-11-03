@@ -37,7 +37,39 @@ from end_to_end_tests import manager as test_manager
 # pylint: enable=wrong-import-position
 
 manager = test_manager.EndToEndTestManager()
-counter = Counter()
+counter: Counter[str] = Counter()
+
+
+def resolve_tests_to_run(test_mgr, requested_arg=None):
+    """Resolves registered E2E test classes to execute.
+
+    Default invocations (`requested_arg=None`) omit opt-in suites registered
+    with `exclude_from_list=True` (such as browser UI tests). Explicit CLI
+    invocations (`requested_arg='ui_test'`) search all registered suites so
+    opt-in tests can be executed on demand.
+
+    Args:
+        test_mgr (EndToEndTestManager): Manager class or instance.
+        requested_arg (str): Optional comma-separated list of test names.
+
+    Returns:
+        list[tuple[str, type]]: Ordered `(test_name, test_class)` pairs.
+
+    Raises:
+        KeyError: If one or more explicitly requested test names do not exist.
+    """
+    if not requested_arg:
+        return list(test_mgr.get_tests(sort_by_mtime=True, include_excluded=False))
+
+    all_available = list(test_mgr.get_tests(sort_by_mtime=True, include_excluded=True))
+    available_names = {name for name, _ in all_available}
+    test_filters = [t.strip().lower() for t in requested_arg.split(",") if t.strip()]
+
+    missing_tests = [t for t in test_filters if t not in available_names]
+    if missing_tests:
+        raise KeyError(", ".join(missing_tests))
+
+    return [(name, cls) for name, cls in all_available if name in test_filters]
 
 
 if __name__ == "__main__":
@@ -101,26 +133,16 @@ if __name__ == "__main__":
         print(f"Timeout: Server did not become active within 120s on {host}:{port}.")
         sys.exit(1)
 
-    all_tests = list(manager.get_tests(sort_by_mtime=True))
-    tests_to_run = all_tests
-    if len(sys.argv) > 1:
-        # Support running a subset of tests by passing a single test class name
-        # or a comma-separated list of names (e.g., 'client_test,query_test').
-        test_filters = [t.strip().lower() for t in sys.argv[1].split(",")]
-        filtered_tests = [(n, c) for n, c in all_tests if n in test_filters]
-
-        missing_tests = [t for t in test_filters if t not in [n for n, _ in all_tests]]
-        if missing_tests:
-            print(
-                "Error: The following requested tests do not exist: "
-                f"{', '.join(missing_tests)}"
-            )
-            print("Available test classes:")
-            for name, _ in all_tests:
-                print(f"  - {name}")
-            sys.exit(1)
-
-        tests_to_run = filtered_tests
+    cli_test_filter = sys.argv[1] if len(sys.argv) > 1 else None
+    try:
+        tests_to_run = resolve_tests_to_run(manager, requested_arg=cli_test_filter)
+    except KeyError as e:
+        missing_str = e.args[0] if e.args else str(e)
+        print(f"Error: The following requested tests do not exist: {missing_str}")
+        print("Available test classes:")
+        for name, _ in manager.get_tests(sort_by_mtime=True, include_excluded=True):
+            print(f"  - {name}")
+        sys.exit(1)
 
     for name, cls in tests_to_run:
         test_class = cls()

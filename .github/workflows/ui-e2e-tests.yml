@@ -1,0 +1,128 @@
+name: ui-e2e-tests
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths-ignore:
+      - 'docs/**'
+      - '.gitignore'
+      - 'README.md'
+      - '*.md'
+      - 'timesketch/frontend/**'
+      - 'timesketch/frontend-v3/**'
+  workflow_dispatch:
+    inputs:
+      rebuild_frontend_ng:
+        description: 'Rebuild timesketch/frontend-ng/dist from source before starting containers'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  playwright-chromium-frontend-ng:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Detect frontend-ng source changes
+        id: frontend-changes
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          FORCE_REBUILD: ${{ inputs.rebuild_frontend_ng || false }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ "$FORCE_REBUILD" = "true" ]; then
+            echo "Workflow dispatch requested frontend-ng rebuild."
+            echo "rebuild=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$EVENT_NAME" = "pull_request" ] && [ -n "$BASE_REF" ]; then
+            git fetch --no-tags origin "$BASE_REF:refs/remotes/origin/$BASE_REF"
+            CHANGED=$(git --no-pager diff --name-only "origin/$BASE_REF...HEAD" -- \
+              'timesketch/frontend-ng/' ':!timesketch/frontend-ng/dist/')
+            if [ -n "$CHANGED" ]; then
+              echo "Detected frontend-ng source changes requiring dist/ rebuild:"
+              echo "$CHANGED"
+              echo "rebuild=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+          echo "No frontend-ng source changes detected; reusing committed dist/ assets."
+          echo "rebuild=false" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Node.js 24
+        if: steps.frontend-changes.outputs.rebuild == 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Cache yarn dependencies
+        if: steps.frontend-changes.outputs.rebuild == 'true'
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/yarn
+          key: ${{ runner.os }}-yarn-24-${{ hashFiles('timesketch/frontend-ng/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-24-
+
+      - name: Rebuild frontend-ng dist assets
+        if: steps.frontend-changes.outputs.rebuild == 'true'
+        working-directory: timesketch/frontend-ng
+        run: |
+          yarn install --frozen-lockfile
+          yarn build
+
+      - name: Prepare UI artifact directory
+        run: mkdir -p /tmp/timesketch-ui-artifacts
+
+      - name: Set up infrastructure and build UI runner with docker compose
+        env:
+          UBUNTU_VERSION: 26.04
+          OPENSEARCH_VERSION: 2.19.5
+          PLASO_PPA_TRACK: stable
+        run: |
+          docker compose -f docker/e2e/docker-compose.yml up -d --build
+          docker compose -f docker/e2e/docker-compose.yml --profile ui build ui-e2e
+
+      - name: Wait for Timesketch web UI and run Playwright UI E2E suite
+        env:
+          TEST_PLASO_FILE: evtx_20260720.plaso
+          UI_E2E_HOST_ARTIFACT_DIR: /tmp/timesketch-ui-artifacts
+        run: |
+          curl --retry 30 --retry-delay 2 --retry-all-errors -fsS -o /dev/null http://127.0.0.1:80/login/
+          docker compose -f docker/e2e/docker-compose.yml --profile ui \
+            run --rm -i=false -T --no-deps ui-e2e \
+            python3 -u /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py ui_test
+
+      - name: Upload Playwright storyboard screenshots and failure traces
+        id: upload-storyboard
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-e2e-artifacts
+          path: /tmp/timesketch-ui-artifacts/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Publish UI milestone summary
+        if: always()
+        env:
+          ARTIFACT_URL: ${{ steps.upload-storyboard.outputs.artifact-url }}
+        run: |
+          if [ -f /tmp/timesketch-ui-artifacts/steps/summary.md ]; then
+            cat /tmp/timesketch-ui-artifacts/steps/summary.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [ -n "$ARTIFACT_URL" ]; then
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "Direct artifact bundle: [Download ui-e2e-artifacts]($ARTIFACT_URL)" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Dump docker logs on failure
+        if: failure()
+        uses: jwalton/gh-docker-logs@2741064ab9d7af54b0b1ffb6076cf64c16f0220e  # v2.2.2
