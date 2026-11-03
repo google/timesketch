@@ -20,8 +20,13 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   playwright-chromium-frontend-ng:
+    name: Playwright Chromium (frontend-ng)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -29,6 +34,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Detect frontend-ng source changes
         id: frontend-changes
@@ -43,7 +49,8 @@ jobs:
             exit 0
           fi
           if [ "$EVENT_NAME" = "pull_request" ] && [ -n "$BASE_REF" ]; then
-            git fetch --no-tags origin "$BASE_REF:refs/remotes/origin/$BASE_REF"
+            git show-ref --quiet "refs/remotes/origin/$BASE_REF" || \
+              git fetch --no-tags origin "$BASE_REF:refs/remotes/origin/$BASE_REF"
             CHANGED=$(git --no-pager diff --name-only "origin/$BASE_REF...HEAD" -- \
               'timesketch/frontend-ng/' ':!timesketch/frontend-ng/dist/')
             if [ -n "$CHANGED" ]; then
@@ -58,13 +65,13 @@ jobs:
 
       - name: Set up Node.js 24
         if: steps.frontend-changes.outputs.rebuild == 'true'
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
         with:
           node-version: '24'
 
       - name: Cache yarn dependencies
         if: steps.frontend-changes.outputs.rebuild == 'true'
-        uses: actions/cache@v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
         with:
           path: ~/.cache/yarn
           key: ${{ runner.os }}-yarn-24-${{ hashFiles('timesketch/frontend-ng/yarn.lock') }}
@@ -103,7 +110,7 @@ jobs:
       - name: Upload Playwright storyboard screenshots and failure traces
         id: upload-storyboard
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         with:
           name: ui-e2e-artifacts
           path: /tmp/timesketch-ui-artifacts/
