@@ -13,11 +13,16 @@
 # limitations under the License.
 """Timesketch API client library for working with scenarios."""
 
+from __future__ import annotations
+
 import logging
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, TYPE_CHECKING
 
 from . import error
 from . import resource
+
+if TYPE_CHECKING:
+    from .client import TimesketchApi
 
 logger = logging.getLogger("timesketch_api.scenario")
 
@@ -36,7 +41,9 @@ class Scenario(resource.BaseResource):
         api: An instance of TimesketchApi object.
     """
 
-    def __init__(self, sketch_id, scenario_id, uuid, api):
+    def __init__(
+        self, sketch_id: int, scenario_id: int, uuid: str, api: TimesketchApi
+    ) -> None:
         """Initializes the Scenario object.
 
         Args:
@@ -89,11 +96,11 @@ class Scenario(resource.BaseResource):
         True.
 
         Args:
-            refresh_cache (bool): If True, forces a refresh of the cached data
+            refresh_cache: If True, forces a refresh of the cached data
                 from the API.
 
         Returns:
-            dict: A dictionary containing the resource data from the API.
+            A dictionary containing the resource data from the API.
         """
         if not self._is_populated or refresh_cache:
             super().lazyload_data(refresh_cache=refresh_cache)
@@ -150,7 +157,7 @@ class Scenario(resource.BaseResource):
         """Lists all facets for the scenario.
 
         Returns:
-            list[dict]: A list of dictionaries, each representing a facet.
+            A list of dictionaries, each representing a facet.
         """
         resource_url = (
             f"{self.api.api_root}/sketches/{self.sketch_id}/"
@@ -202,7 +209,9 @@ class Question(resource.BaseResource):
         api: An instance of TimesketchApi object.
     """
 
-    def __init__(self, sketch_id, question_id, uuid, api):
+    def __init__(
+        self, sketch_id: int, question_id: int, uuid: str, api: TimesketchApi
+    ) -> None:
         """Initializes the Question object.
 
         Args:
@@ -257,11 +266,11 @@ class Question(resource.BaseResource):
         True.
 
         Args:
-            refresh_cache (bool): If True, forces a refresh of the cached data
+            refresh_cache: If True, forces a refresh of the cached data
                 from the API.
 
         Returns:
-            dict: A dictionary containing the resource data from the API.
+            A dictionary containing the resource data from the API.
         """
         if not self._is_populated or refresh_cache:
             super().lazyload_data(refresh_cache=refresh_cache)
@@ -463,7 +472,7 @@ class Question(resource.BaseResource):
         return self.lazyload_data()
 
 
-def getScenarioTemplateList(api) -> List[Dict[str, Any]]:
+def getScenarioTemplateList(api: TimesketchApi) -> List[Dict[str, Any]]:
     """Retrieves a list of all available scenario templates.
 
     Args:
@@ -479,7 +488,7 @@ def getScenarioTemplateList(api) -> List[Dict[str, Any]]:
     return scenario_objects
 
 
-def getQuestionTemplateList(api) -> List[Dict[str, Any]]:
+def getQuestionTemplateList(api: TimesketchApi) -> List[Dict[str, Any]]:
     """Retrieves a list of all available question templates.
 
     Args:

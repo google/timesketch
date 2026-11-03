@@ -13,12 +13,12 @@
 # limitations under the License.
 """Tests for the Timesketch config library for the API client."""
 
-from __future__ import unicode_literals
-
 import unittest
 import tempfile
 
 from . import config
+from . import credentials
+from . import crypto
 
 
 class TimesketchConfigAssistantTest(unittest.TestCase):
@@ -110,3 +110,43 @@ output_format = tabular
         config_obj.set_config("host_uri", "http://127.0.0.1")
 
         self.assertTrue(config_obj.has_config("host_uri"))
+
+    def test_cred_key_roundtrip(self):
+        """Test generated cred_key is stored as str and round-trips cleanly."""
+        with (
+            tempfile.NamedTemporaryFile(mode="w") as rc_file,
+            tempfile.NamedTemporaryFile() as token_file,
+        ):
+            assistant = config.ConfigAssistant()
+            assistant.config_file_path = rc_file.name
+            assistant.set_config("host_uri", "http://127.0.0.1")
+            assistant.set_config("username", "foobar")
+            assistant.set_config("auth_mode", "userpass")
+
+            cred = credentials.TimesketchPwdCredentials()
+            cred.credential = {"username": "foobar", "password": "secret"}
+
+            storage = crypto.CredentialStorage(file_path=token_file.name)
+            storage.save_credentials(cred, config_assistant=assistant)
+
+            saved_key = assistant.get_config("cred_key")
+            self.assertIsInstance(saved_key, str)
+
+            reloaded = config.ConfigAssistant()
+            reloaded.load_config_file(rc_file.name)
+            loaded_cred = storage.load_credentials(config_assistant=reloaded)
+            self.assertIsNotNone(loaded_cred)
+            assert loaded_cred is not None
+            self.assertEqual(
+                loaded_cred.credential,
+                {"username": "foobar", "password": "secret"},
+            )
+
+            empty_key_assistant = config.ConfigAssistant()
+            empty_key_assistant.set_config("cred_key", "")
+            with self.assertRaises(IOError):
+                storage.load_credentials(config_assistant=empty_key_assistant)
+
+
+if __name__ == "__main__":
+    unittest.main()
