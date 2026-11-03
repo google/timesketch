@@ -780,7 +780,9 @@ class Facet(LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, BaseMo
     user_id = Column(Integer, ForeignKey("user.id"))
     scenario_id = Column(Integer, ForeignKey("scenario.id"))
     timeframes = relationship("FacetTimeFrame", backref="facet", lazy="select")
-    timelines = relationship("Timeline", secondary=facet_timeline_association_table)
+    timelines = relationship(
+        "Timeline", secondary=facet_timeline_association_table, backref="facets"
+    )
     questions = relationship("InvestigativeQuestion", backref="facet", lazy="select")
     conclusions = relationship("FacetConclusion", backref="facet", lazy="select")
     search_histories = relationship("SearchHistory", backref="facet", lazy="select")

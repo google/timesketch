@@ -559,9 +559,14 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
             if not search_index:
                 continue
             for timeline in search_index.timelines:
-                # If the timeline is in the sketch we are currently archiving,
-                # we can ignore its current status, as it's about to be archived.
-                if timeline.sketch_id == sketch.id:
+                # Ignore timelines in the sketch being archived, pre-existing
+                # orphaned timelines (sketch is None), and timelines belonging
+                # to soft-deleted sketches.
+                if (
+                    timeline.sketch is None
+                    or timeline.sketch_id == sketch.id
+                    or timeline.sketch.get_status.status == "deleted"
+                ):
                     continue
 
                 # If a timeline is in another sketch, it must already be archived.

@@ -484,10 +484,12 @@ class TimelineResource(resources.ResourceMixin, Resource):
     def delete(self, sketch_id: int, timeline_id: int) -> int:
         """Handles DELETE requests to remove a timeline from a sketch.
 
-        This method dissociates a timeline from a specific sketch. If the
-        underlying search index associated with the timeline is not in use by any
-        other active timelines (across any sketch), the index will be closed
-        and archived to free up resources.
+        This method deletes the timeline database record from the sketch while
+        preserving the underlying OpenSearch events and SearchIndex record. If
+        the SearchIndex associated with the timeline is not in use by any other
+        active timelines (across any non-deleted sketch), the OpenSearch index
+        will be closed and the SearchIndex marked as archived to free up
+        resources.
 
         The method performs the following checks:
         1. Validates that the sketch and timeline exist.
@@ -613,9 +615,13 @@ class TimelineResource(resources.ResourceMixin, Resource):
                 abort(HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR, error_msg)
 
             searchindex.set_status(status="archived")
-            timeline.set_status(status="archived")
 
-        sketch.timelines.remove(timeline)
+        # Delete the Timeline row itself rather than removing it from
+        # sketch.timelines. Because Sketch.timelines does not use delete-orphan
+        # cascade, sketch.timelines.remove(timeline) only sets sketch_id=None,
+        # leaving an orphaned Timeline attached to the SearchIndex that can
+        # later prevent shared OpenSearch indices from closing on archive.
+        db_session.delete(timeline)
         db_session.commit()
 
         # Update the last activity of a sketch.
