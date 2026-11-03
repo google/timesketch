@@ -43,7 +43,12 @@ limitations under the License.
             <center>
               <v-img src="/dist/empty-state.png" max-height="100" max-width="300"></v-img>
               <div style="font-size: 2em" class="mb-3 mt-3">This sketch is archived</div>
-              <v-btn rounded depressed color="primary" @click="unArchiveSketch()"> Bring it back </v-btn>
+              <v-btn v-if="canArchive" rounded depressed color="primary" @click="unArchiveSketch()">
+                Bring it back
+              </v-btn>
+              <div v-else class="text--secondary">
+                Only users with write access or administrators can unarchive this sketch.
+              </div>
             </center>
           </v-sheet>
         </v-row>
@@ -182,7 +187,7 @@ limitations under the License.
                   </v-list-item-content>
                 </v-list-item>
 
-                <v-list-item @click="archiveSketch()" :disabled="isArchived">
+                <v-list-item v-if="canArchive" @click="archiveSketch()" :disabled="isArchived">
                   <v-list-item-icon>
                     <v-icon>mdi-archive</v-icon>
                   </v-list-item-icon>
@@ -487,6 +492,11 @@ export default {
       }
       return this.sketch.status[0].status === 'archived'
     },
+    canArchive() {
+      return Boolean(
+        this.meta && this.meta.permissions && (this.meta.permissions.write || this.meta.permissions.admin)
+      )
+    },
     currentUser() {
       return this.$store.state.currentUser
     },
@@ -508,12 +518,13 @@ export default {
       this.loadingSketch = true
       ApiClient.archiveSketch(this.sketch.id)
         .then((response) => {
-          this.$store.dispatch('updateSketch', this.sketch.id).then(() => {
+          return this.$store.dispatch('updateSketch', this.sketch.id).then(() => {
             this.showLeftPanel = false
             this.loadingSketch = false
           })
         })
         .catch((e) => {
+          this.loadingSketch = false
           console.error(e)
         })
     },
@@ -521,12 +532,13 @@ export default {
       this.loadingSketch = true
       ApiClient.unArchiveSketch(this.sketch.id)
         .then((response) => {
-          this.$store.dispatch('updateSketch', this.sketch.id).then(() => {
+          return this.$store.dispatch('updateSketch', this.sketch.id).then(() => {
             this.loadingSketch = false
             this.showLeftPanel = true
           })
         })
         .catch((e) => {
+          this.loadingSketch = false
           console.error(e)
         })
     },

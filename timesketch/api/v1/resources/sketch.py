@@ -400,6 +400,13 @@ class SketchResource(resources.ResourceMixin, Resource):
         meta = {
             "current_user": current_user.username,
             "last_activity": utils.get_sketch_last_activity(sketch),
+            "permissions": {
+                "public": bool(sketch.is_public),
+                "read": bool(has_read_permission),
+                "write": bool(sketch.has_permission(current_user, "write")),
+                "delete": bool(sketch.has_permission(current_user, "delete")),
+                "admin": bool(current_user.admin),
+            },
         }
         return jsonify({"objects": [sketch_fields], "meta": meta})
 
@@ -595,6 +602,7 @@ class SketchResource(resources.ResourceMixin, Resource):
                 "read": bool(sketch.has_permission(current_user, "read")),
                 "write": bool(sketch.has_permission(current_user, "write")),
                 "delete": bool(sketch.has_permission(current_user, "delete")),
+                "admin": bool(current_user.admin),
             },
             "collaborators": {
                 "users": [user.username for user in sketch.collaborators],

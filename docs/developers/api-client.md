@@ -661,7 +661,7 @@ The sketch object can be used to do several other actions that are not documente
 + Create/list/retrieve stories
 + Add timelines to the sketch
 + Modify the ACL of the sketch
-+ Archive the sketch (via the `sketch.archive` function)
++ Archive or unarchive the sketch (via the `sketch.archive` and `sketch.unarchive` functions; requires `write` permission or administrator privileges)
 + Comment on an event
 + Delete a sketch
 + Export the sketch data
