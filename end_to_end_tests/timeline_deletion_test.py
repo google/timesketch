@@ -217,6 +217,72 @@ class TimelineDeletionTest(interface.BaseEndToEndTest):
         # 6. Verify Index is NOW CLOSED
         self.check_opensearch_index_status(shared_index_name, "close")
 
+    def test_delete_failed_timeline_shared_index_then_archive(self):
+        """Test deleting a failed timeline on a shared index and archiving.
+
+        Reproduces the workflow where a sketch has both a ready timeline and a
+        failed timeline sharing the same SearchIndex:
+        1. Archiving the sketch fails while the failed timeline is present.
+        2. Deleting the failed timeline removes it cleanly without leaving an
+           orphaned timeline record ('No associated sketch found.') attached to
+           the shared SearchIndex.
+        3. Subsequent sketch archival succeeds, marks the SearchIndex as
+           archived, and closes the underlying OpenSearch index.
+        """
+        rand = uuid.uuid4().hex
+        sketch = self.api.create_sketch(
+            name=f"test-delete-failed-shared-archive_{rand}"
+        )
+        shared_index_name = f"shared_archive_index_{rand}"
+
+        # 1. Import Timeline A (ready) and Timeline B sharing the same index.
+        self.import_timeline(
+            "sigma_events.csv", sketch=sketch, index_name=shared_index_name
+        )
+        timeline_b = self.import_timeline(
+            "evtx_part.csv", sketch=sketch, index_name=shared_index_name
+        )
+
+        # 2. Force Timeline B into a 'fail' state.
+        subprocess.check_call(
+            [
+                "tsctl",
+                "timeline-status",
+                str(timeline_b.id),
+                "--action",
+                "set",
+                "--status",
+                "fail",
+            ]
+        )
+        _ = sketch.lazyload_data(refresh_cache=True)
+        timeline_b = next(t for t in sketch.list_timelines() if t.id == timeline_b.id)
+        self.assertions.assertEqual(timeline_b.status, "fail")
+
+        # 3. Archiving must be rejected while the failed timeline exists.
+        self.assertions.assertFalse(sketch.archive())
+        self.check_opensearch_index_status(shared_index_name, "open")
+
+        # 4. Delete the failed timeline as instructed by the archive error.
+        timeline_b.delete()
+
+        # 5. Archive the sketch; both the SearchIndex and OpenSearch index
+        # should now be archived/closed, with no orphaned timeline attached.
+        self.assertions.assertTrue(sketch.archive())
+        _ = sketch.lazyload_data(refresh_cache=True)
+        self.assertions.assertEqual(sketch.status, "archived")
+
+        searchindex_info = subprocess.check_output(
+            ["tsctl", "searchindex-info", "--index_name", shared_index_name]
+        ).decode("utf-8")
+        self.assertions.assertNotIn(
+            "No associated sketch found.", searchindex_info, msg=searchindex_info
+        )
+        self.assertions.assertIn(
+            "Status: archived", searchindex_info, msg=searchindex_info
+        )
+        self.check_opensearch_index_status(shared_index_name, "close")
+
     def test_delete_sketch_with_shared_index(self):
         """Test deleting a sketch where multiple timelines share the same index.
 
