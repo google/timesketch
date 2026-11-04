@@ -114,3 +114,26 @@ services:
       - "127.0.0.1:16687:16686"
     profiles:
       - telemetry
+
+  ui-e2e:
+    build:
+      context: ../../
+      dockerfile: ./docker/e2e/Dockerfile.ui
+      args:
+        PLAYWRIGHT_VERSION: ${PLAYWRIGHT_VERSION:-1.57.0}
+        PLAYWRIGHT_IMAGE_TAG: ${PLAYWRIGHT_IMAGE_TAG:-v1.57.0-noble}
+    ipc: host
+    environment:
+      - TIMESKETCH_SERVER_URL=${TIMESKETCH_SERVER_URL:-http://timesketch:80}
+      - OPENSEARCH_HOST=opensearch
+      - OPENSEARCH_PORT=9200
+      - TEST_PLASO_FILE=${TEST_PLASO_FILE:-evtx_20260720.plaso}
+      - UI_E2E_ARTIFACT_DIR=${UI_E2E_ARTIFACT_DIR:-/tmp/timesketch-ui-artifacts}
+    depends_on:
+      - timesketch
+      - opensearch
+    volumes:
+      - ../../:/usr/local/src/timesketch/
+      - ${UI_E2E_HOST_ARTIFACT_DIR:-/tmp/timesketch-ui-artifacts}:/tmp/timesketch-ui-artifacts
+    profiles:
+      - ui
