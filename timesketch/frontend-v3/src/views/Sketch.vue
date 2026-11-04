@@ -39,7 +39,12 @@ limitations under the License.
           <v-sheet class="pa-4 text-center">
               <v-img src="/assets/empty-state.png" max-height="100" max-width="300"></v-img>
               <div style="font-size: 2em" class="mb-3 mt-3">This sketch is archived</div>
-              <v-btn rounded depressed color="primary" @click="unArchiveSketch()"> Bring it back </v-btn>
+              <v-btn v-if="canArchive" rounded depressed color="primary" @click="unArchiveSketch()">
+                Bring it back
+              </v-btn>
+              <div v-else class="text-medium-emphasis">
+                Only users with write access or administrators can unarchive this sketch.
+              </div>
           </v-sheet>
         </v-row>
       </v-container>
@@ -172,6 +177,7 @@ limitations under the License.
                 </v-list-item>
 
                 <v-list-item
+                  v-if="canArchive"
                   @click="archiveSketch()"
                   :disabled="isArchived"
                   prepend-icon="mdi-archive"
@@ -401,6 +407,11 @@ export default {
       }
       return this.sketch.status[0].status === 'archived'
     },
+    canArchive() {
+      return Boolean(
+        this.meta && this.meta.permissions && (this.meta.permissions.write || this.meta.permissions.admin)
+      )
+    },
     currentUser() {
       return this.appStore.currentUser
     },
@@ -422,12 +433,13 @@ export default {
       this.loadingSketch = true
       ApiClient.archiveSketch(this.sketch.id)
         .then((response) => {
-          this.appStore.updateSketch(this.sketch.id).then(() => {
+          return this.appStore.updateSketch(this.sketch.id).then(() => {
             this.showLeftPanel = false
             this.loadingSketch = false
           })
         })
         .catch((e) => {
+          this.loadingSketch = false
           console.error(e)
         })
     },
@@ -435,12 +447,13 @@ export default {
       this.loadingSketch = true
       ApiClient.unArchiveSketch(this.sketch.id)
         .then((response) => {
-          this.appStore.updateSketch(this.sketch.id).then(() => {
+          return this.appStore.updateSketch(this.sketch.id).then(() => {
             this.loadingSketch = false
             this.showLeftPanel = true
           })
         })
         .catch((e) => {
+          this.loadingSketch = false
           console.error(e)
         })
     },

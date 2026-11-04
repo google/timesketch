@@ -37,6 +37,9 @@ After the sketch is created, you can share it with other users in the system. To
 
 You can share the sketch with users, groups of users, make it available to all users in your system, or leave private.
 
+* **Shared collaborators (`read` + `write` access):** Collaborators added via the Share dialog receive both **read** and **write** permissions. Users with **write** access can explore data, add annotations, import timelines, and **archive or unarchive** the sketch. Deleting a sketch remains restricted to users with **delete** permission (by default, the sketch creator) or Timesketch administrators.
+* **Read-only users (`read` access only):** Users with read-only access (such as viewers of a public sketch without explicit write access, or users granted read-only permissions via the API) can view and search active sketches, but **cannot** modify, archive, or unarchive the sketch.
+
 ## Explore
 
 **Search** See [Search query guide](search-query-guide.md)
@@ -98,10 +101,11 @@ Archiving a sketch is a way to preserve it in a archived state while freeing up 
 - All its timelines are marked as archived.
 - The underlying OpenSearch indices are closed if they are not used by any other active sketches. This reduces memory usage on the OpenSearch cluster. **Note:** This check is performed system-wide across all users to ensure data integrity.
 - You cannot explore data, run analyzers, or make other modifications to an archived sketch.
-- The sketch can be unarchived at any time to restore full functionality.
+- The sketch can be unarchived at any time by any user with **write** permission on the sketch (including shared collaborators) or a Timesketch administrator to restore full functionality.
 
 #### When a sketch can be archived:
 
+* You have **write** permission on the sketch (for example, as the sketch creator or a shared collaborator) or are a Timesketch administrator.
 * The sketch is currently not in an 'archived' state.
 * It does not have any labels that are configured to prevent archival (e.g., LABELS_TO_PREVENT_DELETION).
 * Crucially, none of its associated timelines are in a 'processing', 'fail', or 'timeout' state. All timelines must be in a **'ready'** state to be archived.
@@ -118,6 +122,7 @@ Archiving a sketch is a way to preserve it in a archived state while freeing up 
 
 #### When a sketch cannot be archived (and why):
 
+* If you only have **read** access to the sketch (and are not an administrator), the operation will be rejected (`403 Forbidden`) and the **Archive sketch** action is hidden in the Web UI.
 * If the sketch is already archived, the operation will be aborted.
 * If the sketch has a label that prevents archival, the operation will be aborted.
 * If any of its timelines are in a 'processing', 'fail', or 'timeout' state, the archival process will be aborted. This is a critical check to prevent archiving incomplete or problematic data. The system will explicitly tell the user that these timelines must be resolved (e.g., deleted) before the sketch can be archived.
@@ -141,6 +146,7 @@ Unarchiving a sketch restores it to a fully active and writable state. This acti
 
 #### When a sketch can be unarchived:
 
+* You have **write** permission on the sketch (for example, as the sketch creator or a shared collaborator) or are a Timesketch administrator.
 * The sketch's current status must be **'archived'**.
 * It can be unarchived even if some of its timelines are in a **'processing'** or **'fail'** state, but a warning will be logged, advising the user to resolve these timelines (e.g., by deleting them) before attempting to re-archive the sketch.
 
@@ -158,6 +164,7 @@ Unarchiving a sketch restores it to a fully active and writable state. This acti
 
 #### When a sketch cannot be unarchived (and why):
 
+* If you only have **read** access to the sketch (and are not an administrator), the operation will be rejected (`403 Forbidden`) and the **Bring it back** button is hidden in the Web UI.
 * If the sketch is not currently 'archived' (e.g., it's already **'ready'** or **'deleted'**), the operation will be aborted.
 * Critical errors unrelated to specific indices (e.g., database connection failures) may still abort the process.
 
@@ -170,6 +177,8 @@ comprehensive ZIP file containing:
 - Stories as HTML
 - Views (as CSV)
 - Metadata
+
+Exporting an active sketch requires **read** permission. Exporting an **archived** sketch via the Web UI (or `--use_sketch_export`) additionally requires **write** permission (or administrator privileges alongside read access), because Timesketch temporarily reopens and re-closes the archived OpenSearch indices during export.
 
 This is equivalent to the `--use_sketch_export` option in the [CLI tool](cli-client.md#export-a-sketch).
 By default, the CLI tool exports just the events from the sketch.

@@ -296,11 +296,19 @@ timesketch sketch export --filename my_large_export.zip --use_sketch_export --st
 
 ### Archive Sketch
 
-Running `sketch archive` will set the archive flag to the sketch.
+Running `sketch archive` archives the sketch and closes its underlying OpenSearch indices (requires **write** permission on the sketch or administrator privileges).
+
+```bash
+timesketch sketch archive
+```
 
 ### Unarchive a sketch
 
-Running `sketch unarchive` will set the archive flag to the sketch.
+Running `sketch unarchive` unarchives the sketch and reopens its OpenSearch indices (requires **write** permission on the sketch or administrator privileges).
+
+```bash
+timesketch sketch unarchive
+```
 
 ### Delete a sketch
 

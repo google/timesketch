@@ -28,9 +28,9 @@ limitations under the License.
       >
         <h4 class="title is-4">{{ sketch.name }}</h4>
         <p>This sketch has been archived</p>
-        <div class="buttons is-centered" style="margin-top:30px">
+        <div v-if="canArchive" class="buttons is-centered" style="margin-top:30px">
           <button v-on:click="unArchiveSketch()" class="button is-success is-outlined">Unarchive</button>
-          <button v-on:click="exportSketch()" class="button is-link is-outlined">Export</button>
+          <button v-if="meta.permissions && meta.permissions.read" v-on:click="exportSketch()" class="button is-link is-outlined">Export</button>
         </div>
       </div>
     </div>
@@ -63,7 +63,7 @@ limitations under the License.
           </a>
         </b-tooltip>
 
-        <ts-dropdown v-if="meta.permissions.write" position="is-bottom-left">
+        <ts-dropdown v-if="canArchive" position="is-bottom-left">
           <template v-slot:dropdown-trigger-element>
             <a
               class="button ts-dropdown-button is-small"
@@ -81,7 +81,7 @@ limitations under the License.
               <span>Delete</span>
             </span>
           </div>
-          <div class="ts-dropdown-item" v-if="meta.permissions.delete" aria-role="listitem">
+          <div class="ts-dropdown-item" v-if="canArchive" aria-role="listitem">
             <a v-on:click="archiveSketch()">
               <span class="icon is-small" style="margin-right:5px;"><i class="fas fa-archive"></i></span>
               <span>Archive</span>
@@ -391,6 +391,11 @@ export default {
     count() {
       return this.$store.state.count
     },
+    canArchive() {
+      return Boolean(
+        this.meta && this.meta.permissions && (this.meta.permissions.write || this.meta.permissions.admin)
+      )
+    },
     shareTooltip: function() {
       let msg = ''
       let baseMsg = 'Shared with '
@@ -424,6 +429,7 @@ export default {
           this.$router.push({ name: 'Overview', params: { sketchId: this.sketch.id } })
         })
         .catch(e => {
+          this.isArchived = false
           console.error(e)
         })
     },
@@ -435,6 +441,7 @@ export default {
           this.$router.push({ name: 'Overview', params: { sketchId: this.sketch.id } })
         })
         .catch(e => {
+          this.isArchived = true
           console.error(e)
         })
     },

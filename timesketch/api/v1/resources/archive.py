@@ -154,12 +154,12 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
 
         action = form.get("action", "")
         if action == "archive":
-            if not sketch.has_permission(current_user, "delete"):
+            if not sketch.has_permission(current_user, "write"):
                 if not current_user.admin:
                     abort(
                         HTTP_STATUS_CODE_FORBIDDEN,
                         "User does not have sufficient access rights to "
-                        "delete a sketch.",
+                        "archive a sketch.",
                     )
 
             return self._archive_sketch(sketch)
@@ -171,11 +171,19 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                     "User does not have sufficient access rights to "
                     "read from a sketch.",
                 )
+            if sketch.get_status.status == "archived":
+                if not sketch.has_permission(current_user, "write"):
+                    if not current_user.admin:
+                        abort(
+                            HTTP_STATUS_CODE_FORBIDDEN,
+                            "User does not have sufficient access rights to "
+                            "export an archived sketch.",
+                        )
 
             return self._export_sketch(sketch)
 
         if action == "unarchive":
-            if not sketch.has_permission(current_user, "delete"):
+            if not sketch.has_permission(current_user, "write"):
                 if not current_user.admin:
                     abort(
                         HTTP_STATUS_CODE_FORBIDDEN,
