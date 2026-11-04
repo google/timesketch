@@ -291,6 +291,90 @@ class TimesketchImporterTest(unittest.TestCase):
         self.assertSetEqual(set(messages), message_correct)
 
 
+class CloseStreamerTest(unittest.TestCase):
+    """Tests for closing the streamer, see issue #3246.
+
+    Calling ImportStreamer.close() a second time used to be silently ignored
+    or, depending on how the streamer was driven, to re-upload the buffered
+    events. The expected behavior is that events are uploaded exactly once
+    and that closing an already closed streamer raises an error.
+    """
+
+    def setUp(self):
+        """Set up a streamer with a mocked sketch."""
+        self.sketch = MockSketch()
+        self.lines = [
+            {
+                "message": "test message one",
+                "datetime": "2024-01-01T00:00:00+00:00",
+                "timestamp_desc": "test",
+            },
+            {
+                "message": "test message two",
+                "datetime": "2024-01-01T00:00:01+00:00",
+                "timestamp_desc": "test",
+            },
+        ]
+
+    def _uploaded_events(self):
+        """Return a list of all events uploaded through the mocked session."""
+        events = []
+        for call in self.sketch.api.session.post.call_args_list:
+            kwargs = call[1]
+            files = kwargs.get("files") or {}
+            events_field = files.get("events")
+            if not events_field:
+                continue
+            events.extend(json.loads(line) for line in events_field[1].splitlines())
+        return events
+
+    def test_close_inside_context_raises_on_second_close(self):
+        """Closing inside a with block must raise at the end of the block.
+
+        This is the example from issue #3246: the explicit close() uploads
+        the buffered events and the implicit close() run by the context
+        manager must raise instead of silently passing or uploading the
+        same events a second time.
+        """
+        with self.assertRaises(ValueError):
+            with importer.ImportStreamer() as streamer:
+                streamer.set_sketch(self.sketch)
+                streamer.set_timeline_name("test_timeline")
+                for entry in self.lines:
+                    streamer.add_dict(dict(entry))
+
+                streamer.close()
+
+        self.assertEqual(len(self._uploaded_events()), len(self.lines))
+
+    def test_second_close_raises(self):
+        """Calling close() twice must raise an error on the second call."""
+        streamer = importer.ImportStreamer()
+        streamer.set_sketch(self.sketch)
+        streamer.set_timeline_name("test_timeline")
+        for entry in self.lines:
+            streamer.add_dict(dict(entry))
+
+        streamer.close()
+        with self.assertRaises(ValueError):
+            streamer.close()
+
+        self.assertEqual(len(self._uploaded_events()), len(self.lines))
+
+    def test_close_after_context_exit_raises(self):
+        """Calling close() after the with block has ended must raise."""
+        with importer.ImportStreamer() as streamer:
+            streamer.set_sketch(self.sketch)
+            streamer.set_timeline_name("test_timeline")
+            for entry in self.lines:
+                streamer.add_dict(dict(entry))
+
+        with self.assertRaises(ValueError):
+            streamer.close()
+
+        self.assertEqual(len(self._uploaded_events()), len(self.lines))
+
+
 class TestUploadLogic(unittest.TestCase):
     """Tests for the upload logic including chunking and recursion."""
 
