@@ -220,6 +220,42 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
         with open(summary_path, "w", encoding="utf-8") as md_fh:
             md_fh.write("\n".join(md_rows))
 
+    @staticmethod
+    def _save_failure_artifacts(
+        page: Page,
+        context: Any,
+        artifact_dir: str,
+        test_label: str,
+        exc: Exception,
+    ) -> None:
+        """Writes a full-page failure screenshot and Playwright trace bundle.
+
+        Args:
+            page (playwright.sync_api.Page): Active Playwright page.
+            context (playwright.sync_api.BrowserContext): Active browser context.
+            artifact_dir (str): Output directory for failure artifacts.
+            test_label (str): Identifier prefix for screenshot and trace files.
+            exc (Exception): The exception that triggered failure capture.
+        """
+        screenshot_path = os.path.join(artifact_dir, f"{test_label}_failure.png")
+        trace_path = os.path.join(artifact_dir, f"{test_label}_trace.zip")
+        try:
+            page.screenshot(path=screenshot_path, full_page=True)
+            context.tracing.stop(path=trace_path)
+            logger.error(
+                "Saved UI failure artifacts for %s: %s and %s (%s)",
+                test_label,
+                screenshot_path,
+                trace_path,
+                exc,
+            )
+        except Exception as e:  # pylint: disable=broad-except
+            logger.warning(
+                "Could not write failure artifacts for %s: %s",
+                test_label,
+                e,
+            )
+
     @contextlib.contextmanager
     def _browser_page(
         self, test_label: str, use_saved_auth: bool = False
@@ -293,26 +329,7 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
                 )
                 context.tracing.stop()
             except Exception as e:
-                screenshot_path = os.path.join(
-                    artifact_dir, f"{test_label}_failure.png"
-                )
-                trace_path = os.path.join(artifact_dir, f"{test_label}_trace.zip")
-                try:
-                    page.screenshot(path=screenshot_path, full_page=True)
-                    context.tracing.stop(path=trace_path)
-                    logger.error(
-                        "Saved UI failure artifacts for %s: %s and %s (%s)",
-                        test_label,
-                        screenshot_path,
-                        trace_path,
-                        e,
-                    )
-                except Exception as artifact_err:  # pylint: disable=broad-except
-                    logger.warning(
-                        "Could not write failure artifacts for %s: %s",
-                        test_label,
-                        artifact_err,
-                    )
+                self._save_failure_artifacts(page, context, artifact_dir, test_label, e)
                 raise
             finally:
                 context.close()
