@@ -21,7 +21,6 @@ def run_python_tests():
             "api_client/",
             "cli_client/",
             "importer_client/",
-            "end_to_end_tests/manager_test.py",
         ],
         env=env,
     )

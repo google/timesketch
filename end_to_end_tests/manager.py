@@ -13,7 +13,6 @@
 # limitations under the License.
 """This file contains a class for managing end to end tests."""
 
-from collections.abc import Iterator
 import inspect
 import logging
 import os
@@ -25,8 +24,8 @@ logger = logging.getLogger("timesketch.e2e_manager")
 class EndToEndTestManager(object):
     """The test manager."""
 
-    _class_registry: dict[str, type] = {}
-    _exclude_registry: set[str] = set()
+    _class_registry = {}
+    _exclude_registry = set()
 
     @classmethod
     def get_git_root(cls):
@@ -105,23 +104,17 @@ class EndToEndTestManager(object):
             return 0
 
     @classmethod
-    def get_tests(
-        cls, sort_by_mtime: bool = False, include_excluded: bool = False
-    ) -> Iterator[tuple[str, type]]:
-        """Retrieves registered end-to-end test classes.
+    def get_tests(cls, sort_by_mtime=False):
+        """Retrieves all registered end-to-end test classes.
 
         This method yields test classes that have been registered using the
-        `register_test` method, excluding any marked for exclusion unless
-        `include_excluded` is True.
+        `register_test` method, excluding any that were marked for exclusion.
 
         Args:
             sort_by_mtime (bool): Optional. If True, tests are sorted by the
                 modification time of the source file where the test class is
                 defined, with the most recently modified tests yielded first.
                 Defaults to False.
-            include_excluded (bool): Optional. If True, also yields test
-                classes registered with `exclude_from_list=True` (such as
-                opt-in browser UI suites). Defaults to False.
 
         Yields:
             tuple: A pair containing:
@@ -130,7 +123,7 @@ class EndToEndTestManager(object):
         """
         tests = []
         for test_name, test_class in iter(cls._class_registry.items()):
-            if not include_excluded and test_name in cls._exclude_registry:
+            if test_name in cls._exclude_registry:
                 continue
             tests.append((test_name, test_class))
 

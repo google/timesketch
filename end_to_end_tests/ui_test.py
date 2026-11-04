@@ -88,15 +88,6 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
         """Returns the configured UI E2E artifact output directory."""
         return os.environ.get("UI_E2E_ARTIFACT_DIR", DEFAULT_ARTIFACT_DIR)
 
-    @staticmethod
-    def _skip_plaso_enabled() -> bool:
-        """Returns True when fast CSV-only local iteration mode is enabled."""
-        return os.environ.get("UI_E2E_SKIP_PLASO", "").strip().lower() in {
-            "1",
-            "true",
-            "yes",
-        }
-
     def _capture_step_screenshot(
         self, page: Page, step_slug: str, title: str, description: str
     ) -> str:
@@ -657,10 +648,6 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
 
     def test_03_kickoff_plaso_upload_via_ui(self) -> None:
         """Starts browser Plaso upload immediately so Celery runs in parallel."""
-        if self._skip_plaso_enabled():
-            logger.info("Skipping Plaso kickoff (UI_E2E_SKIP_PLASO enabled).")
-            return
-
         plaso_filename = interface.get_plaso_filename()
         plaso_path = os.path.join(interface.TEST_DATA_DIR, plaso_filename)
 
@@ -719,10 +706,6 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
 
     def test_05_await_parallel_plaso_and_search_events(self) -> None:
         """Awaits the background Plaso timeline and queries all 3,205 events."""
-        if self._skip_plaso_enabled():
-            logger.info("Skipping Plaso search check (UI_E2E_SKIP_PLASO enabled).")
-            return
-
         plaso_filename = interface.get_plaso_filename()
         plaso_path = os.path.join(interface.TEST_DATA_DIR, plaso_filename)
         expected_tl_name = os.path.splitext(plaso_filename)[0]
@@ -759,4 +742,5 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
             self.assertions.assertEqual(len(events), EXPECTED_PLASO_EVENTS)
 
 
-manager.EndToEndTestManager.register_test(UiEndToEndTest, exclude_from_list=True)
+if sync_playwright is not None:
+    manager.EndToEndTestManager.register_test(UiEndToEndTest)
