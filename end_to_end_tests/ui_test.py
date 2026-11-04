@@ -557,7 +557,7 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
         expect(processed_chip).not_to_have_class(re.compile(r"\bfailed\b"))
         expect(
             processed_chip.locator(".timeline-name-ellipsis:not(.disabled)")
-        ).to_be_visible(timeout=30000)
+        ).to_be_visible(timeout=timeout_seconds * 1000)
 
         self._wait_for_timeline_ready(
             sketch_id, expected_tl_name, timeout_seconds=timeout_seconds
