@@ -24,6 +24,7 @@ from flask_login import current_user
 
 from timesketch.api.v1 import resources
 from timesketch.lib import forms
+from timesketch.lib.errors import DatastoreAuthorizationError
 from timesketch.lib.definitions import HTTP_STATUS_CODE_OK
 from timesketch.lib.definitions import HTTP_STATUS_CODE_CREATED
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
@@ -72,6 +73,17 @@ class SearchIndexListResource(resources.ResourceMixin, Resource):
             metadata["deleted"] = searchindex.get_status.status == "deleted"
             status_code = HTTP_STATUS_CODE_OK
         else:
+            # Create the OpenSearch index first, so that nothing is stored in
+            # the database if OpenSearch denies the index creation.
+            # create_index() only creates the index if it does not exist yet.
+            try:
+                self.datastore.create_index(index_name=es_index_name)
+            except DatastoreAuthorizationError as e:
+                abort(
+                    HTTP_STATUS_CODE_FORBIDDEN,
+                    f"Unable to create searchindex ({e!s})",
+                )
+
             searchindex = SearchIndex.get_or_create(
                 name=searchindex_name,
                 description=searchindex_name,
@@ -84,11 +96,6 @@ class SearchIndexListResource(resources.ResourceMixin, Resource):
 
             if public:
                 searchindex.grant_permission(permission="read", user=None)
-
-            datastore = self.datastore
-
-            if not datastore.client.indices.exists(index=es_index_name):
-                self.datastore.create_index(index_name=es_index_name)
 
             db_session.add(searchindex)
             db_session.commit()

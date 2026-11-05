@@ -49,6 +49,10 @@ class DataIngestionError(Error):
     """Raised when unable to ingest data."""
 
 
+class DatastoreAuthorizationError(DataIngestionError):
+    """Raised when the datastore denies access (HTTP 403) to an index."""
+
+
 class IndexNotReadyError(Error):
     """Index was created but did not become healthy in time."""
 
