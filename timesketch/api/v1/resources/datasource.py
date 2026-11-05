@@ -148,6 +148,9 @@ class DataSourceResource(resources.ResourceMixin, Resource):
 
         This function aborts if the ACLs on the sketch are not sufficient and
         the data source does not belong to the sketch in question.
+
+        Returns:
+            The sketch (instance of timesketch.models.sketch.Sketch).
         """
         sketch = Sketch.get_with_acl(sketch_id)
         if not sketch:
@@ -168,6 +171,8 @@ class DataSourceResource(resources.ResourceMixin, Resource):
                 HTTP_STATUS_CODE_BAD_REQUEST,
                 "Data Source does not match the Sketch ID.",
             )
+
+        return sketch
 
     @login_required
     def get(self, sketch_id, datasource_id):
@@ -195,7 +200,12 @@ class DataSourceResource(resources.ResourceMixin, Resource):
         Returns:
             A sketch in JSON (instance of flask.wrappers.Response)
         """
-        self._verify_sketch_and_datasource(sketch_id, datasource_id)
+        sketch = self._verify_sketch_and_datasource(sketch_id, datasource_id)
+        if not sketch.has_permission(current_user, "write"):
+            abort(
+                HTTP_STATUS_CODE_FORBIDDEN,
+                "User does not have sufficient write access to the sketch.",
+            )
 
         data_source = DataSource.get_by_id(datasource_id)
         changed = False
