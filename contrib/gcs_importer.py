@@ -20,7 +20,6 @@ import argparse
 import time
 import os
 import sys
-import uuid
 import json
 import logging
 
@@ -28,6 +27,7 @@ from werkzeug.exceptions import Forbidden
 
 from timesketch.app import create_app
 from timesketch.lib import tasks
+from timesketch.lib import utils as lib_utils
 from timesketch.models import db_session
 from timesketch.models.sketch import SearchIndex
 from timesketch.models.sketch import Sketch
@@ -182,7 +182,8 @@ def callback(message):
         return
 
     timeline_name = os.path.splitext(gcs_plaso_filename)[0]
-    index_name = uuid.uuid4().hex
+    with app.app_context():
+        index_name = lib_utils.generate_index_name()
     sketch_id, timeline_id = setup_sketch(
         timeline_name, index_name, "admin", sketch_id_from_metadata
     )

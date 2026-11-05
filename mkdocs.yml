@@ -36,6 +36,7 @@ nav:
       - Index Mappings: guides/admin/index-mappings.md
       - Troubleshooting: guides/admin/troubleshooting.md
       - Admin CLI: guides/admin/admin-cli.md
+      - OIDC Groups: guides/admin/oidc-groups.md
       - Context Links: guides/admin/context-links.md
       - LLM Features: guides/admin/llm-features.md
       - Investigation View: guides/admin/investigation-view-setup.md

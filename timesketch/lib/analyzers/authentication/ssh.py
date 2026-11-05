@@ -19,6 +19,7 @@ import textwrap
 import pandas as pd
 
 
+from timesketch.lib import plaso_compat
 from timesketch.lib.analyzers.interface import BaseAnalyzer, AnalyzerOutput
 from timesketch.lib.analyzers import manager
 from timesketch.lib.analyzers.authentication.utils import BruteForceUtils
@@ -100,22 +101,29 @@ class SSHBruteForceAnalyzer(BaseAnalyzer):
 
     DEPENDENCIES = frozenset(["feature_extraction"])
 
+    # The syslog message field was renamed from "body" to "message_body" in
+    # Plaso 20260720, plaso_compat also matches the legacy field name.
     SEARCH_QUERY = (
-        "reporter:sshd AND (body:*Accepted* OR body:*Failed* OR "
-        "(body:*Disconnected* AND NOT body:*preauth*))"
+        "reporter:sshd AND ("
+        f"{plaso_compat.build_field_query('message_body', '*Accepted*')} OR "
+        f"{plaso_compat.build_field_query('message_body', '*Failed*')} OR "
+        f"({plaso_compat.build_field_query('message_body', '*Disconnected*')} AND "
+        f"NOT {plaso_compat.build_field_query('message_body', '*preauth*')}))"
     )
 
-    EVENT_FIELDS = [
-        "event_id",
-        "timestamp",
-        "hostname",
-        "pid",
-        "authentication_method",
-        "username",
-        "ip_address",
-        "port",
-        "body",
-    ]
+    EVENT_FIELDS = plaso_compat.expand_field_names(
+        [
+            "event_id",
+            "timestamp",
+            "hostname",
+            "pid",
+            "authentication_method",
+            "username",
+            "ip_address",
+            "port",
+            "message_body",
+        ]
+    )
 
     # Create a BruteForceAnalyzer instance to handle the auth data analysis
     brute_force_analyzer = BruteForceUtils(
@@ -156,7 +164,7 @@ class SSHBruteForceAnalyzer(BaseAnalyzer):
             # Set the event data
             event_data.event_id = event.event_id
             event_data.timestamp = int(event.source.get("timestamp") / 1000000)
-            event_data.hostname = event.source.get("hostname")
+            event_data.hostname = plaso_compat.get_field_value(event.source, "hostname")
             event_data.pid = event.source.get("pid")
             event_data.authentication_method = event.source.get("authentication_method")
             event_data.username = event.source.get("username")
@@ -164,7 +172,7 @@ class SSHBruteForceAnalyzer(BaseAnalyzer):
             event_data.source_port = event.source.get("port")
 
             # Extract event_type and authentication_result based on the body message
-            body = event.source.get("body", "")
+            body = plaso_compat.get_field_value(event.source, "message_body", "")
             if not body:
                 raise ValueError("body is empty")
 
