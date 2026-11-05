@@ -23,6 +23,87 @@ limitations under the License.
       <v-row no-gutters>
         <v-col style="min-width: 250px; flex-basis: 25%">
           <div class="pa-2">
+            <div v-if="queryLanguage === 'ppl'" class="mt-4">
+              <h4 class="mb-2">PPL (Piped Processing Language) Examples</h4>
+              <p class="text-body-2 mb-2">The sketch's index is added automatically &mdash; just type your pipe commands.</p>
+              <v-simple-table>
+                <template v-slot:default>
+                  <thead>
+                    <tr>
+                      <th class="text-left">Description</th>
+                      <th class="text-left">Example Query</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Search all events</td>
+                      <td><code>head 100</code></td>
+                    </tr>
+                    <tr>
+                      <td>Filter by message content</td>
+                      <td><code>where message LIKE '%error%' | head 100</code></td>
+                    </tr>
+                    <tr>
+                      <td>Count events by data type</td>
+                      <td><code>stats count() by data_type</code></td>
+                    </tr>
+                    <tr>
+                      <td>Filter by time range</td>
+                      <td><code>where datetime > '2025-01-01' | head 100</code></td>
+                    </tr>
+                    <tr>
+                      <td>Dedup by field</td>
+                      <td><code>dedup source_short | head 50</code></td>
+                    </tr>
+                    <tr>
+                      <td>Sort results</td>
+                      <td><code>sort - datetime | head 100</code></td>
+                    </tr>
+                  </tbody>
+                </template>
+              </v-simple-table>
+            </div>
+
+            <div v-if="queryLanguage === 'sql'" class="mt-4">
+              <h4 class="mb-2">SQL Examples</h4>
+              <p class="text-body-2 mb-2">The FROM clause is added automatically &mdash; just type your SELECT query.</p>
+              <v-simple-table>
+                <template v-slot:default>
+                  <thead>
+                    <tr>
+                      <th class="text-left">Description</th>
+                      <th class="text-left">Example Query</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Select all events</td>
+                      <td><code>SELECT datetime, message, timestamp_desc LIMIT 100</code></td>
+                    </tr>
+                    <tr>
+                      <td>Filter by message</td>
+                      <td><code>SELECT datetime, message WHERE message LIKE '%error%' LIMIT 100</code></td>
+                    </tr>
+                    <tr>
+                      <td>Count events by data type</td>
+                      <td><code>SELECT data_type, COUNT(*) as cnt GROUP BY data_type ORDER BY cnt DESC</code></td>
+                    </tr>
+                    <tr>
+                      <td>Filter by time range</td>
+                      <td><code>SELECT datetime, message WHERE datetime > '2025-01-01' LIMIT 100</code></td>
+                    </tr>
+                    <tr>
+                      <td>Distinct values</td>
+                      <td><code>SELECT DISTINCT source_short LIMIT 50</code></td>
+                    </tr>
+                  </tbody>
+                </template>
+              </v-simple-table>
+            </div>
+
+            <!-- The Lucene tabs describe a syntax that does not apply while a
+                 direct query language is selected. -->
+            <template v-if="queryLanguage !== 'ppl' && queryLanguage !== 'sql'">
             <v-tabs v-model="activeTab" color="primary" grow>
               <v-tab>Query String</v-tab>
               <v-tab :disabled="!isWildcardSupported" :title="!isWildcardSupported ? 'This sketch does not support wildcard searches' : ''">Wildcard</v-tab>
@@ -247,6 +328,7 @@ limitations under the License.
                 </v-simple-table>
               </v-tab-item>
             </v-tabs-items>
+            </template>
           </div>
         </v-col>
 
@@ -308,6 +390,10 @@ export default {
     showSavedSearches: {
       type: Boolean,
       default: false,
+    },
+    queryLanguage: {
+      type: String,
+      default: 'lucene',
     },
     searchMode: {
       type: String,

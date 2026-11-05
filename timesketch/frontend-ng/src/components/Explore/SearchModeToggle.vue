@@ -1,7 +1,9 @@
 
 
 <template>
-  <v-menu offset-y :disabled="!isWildcardSupported">
+  <!-- Which languages are on offer depends on the sketch and the cluster, so
+       the menu opens only when there is more than query string to pick. -->
+  <v-menu offset-y :disabled="!canOpenMenu">
     <template v-slot:activator="{ on, attrs }">
       <v-btn
         depressed
@@ -12,12 +14,12 @@
         width="60"
         class="px-2 rounded-0 grey--text"
         :class="$vuetify.theme.dark ? 'text--lighten-3' : 'text--darken-3'"
-        :title="!isWildcardSupported ? 'This sketch does not support wildcard searches' : selectedTitle"
-        :style="!isWildcardSupported ? 'cursor: default; opacity: 0.8;' : ''"
+        :title="!canOpenMenu ? 'This sketch does not support wildcard searches' : selectedTitle"
+        :style="!canOpenMenu ? 'cursor: default; opacity: 0.8;' : ''"
       >
         {{ displayValue }}
 
-        <v-icon v-if="isWildcardSupported" small class="ml-1">
+        <v-icon v-if="canOpenMenu" small class="ml-1">
           mdi-chevron-down
         </v-icon>
       </v-btn>
@@ -46,22 +48,17 @@ export default {
     value: {
       type: String,
       default: 'query_string'
+    },
+    // Set when the cluster can serve PPL and SQL, which puts them in this
+    // selector alongside the Lucene search modes. One control picks both the
+    // language and the mode, so the two cannot disagree.
+    directQueryEnabled: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
     return {
-      menuItems: [
-        {
-          title: 'Query String',
-          subtitle: 'Standard Lucene query_string searching using tokenized and keyword type fields.',
-          value: 'query_string'
-        },
-        {
-          title: 'Wildcard',
-          subtitle: 'Exact-match substring searching on string type fields only. Use * or ? for wildcards.',
-          value: 'wildcard'
-        }
-      ],
       selectedValue: this.value,
     }
   },
@@ -71,6 +68,41 @@ export default {
     },
     isWildcardSupported() {
       return !!this.meta.supports_wildcard;
+    },
+    menuItems() {
+      const items = [
+        {
+          title: 'Query String',
+          subtitle: 'Standard Lucene query_string searching using tokenized and keyword type fields.',
+          value: 'query_string'
+        }
+      ]
+      // Wildcard needs string-type mappings on the sketch, and PPL and SQL
+      // need the OpenSearch SQL plugin on the cluster, so the list cannot be
+      // fixed at build time.
+      if (this.isWildcardSupported) {
+        items.push({
+          title: 'Wildcard',
+          subtitle: 'Exact-match substring searching on string type fields only. Use * or ? for wildcards.',
+          value: 'wildcard'
+        })
+      }
+      if (this.directQueryEnabled) {
+        items.push({
+          title: 'PPL',
+          subtitle: 'OpenSearch Piped Processing Language. Runs directly against OpenSearch for aggregations and pipe-based queries.',
+          value: 'ppl'
+        })
+        items.push({
+          title: 'SQL',
+          subtitle: 'OpenSearch SQL. Runs directly against OpenSearch using familiar SELECT / GROUP BY syntax.',
+          value: 'sql'
+        })
+      }
+      return items
+    },
+    canOpenMenu() {
+      return this.menuItems.length > 1
     },
     selectedTitle() {
       const item = this.menuItems.find(i => i.value === this.selectedValue)
@@ -83,6 +115,12 @@ export default {
       if (this.selectedValue === 'wildcard') {
         return 'WC'
       }
+      if (this.selectedValue === 'ppl') {
+        return 'PPL'
+      }
+      if (this.selectedValue === 'sql') {
+        return 'SQL'
+      }
       return this.selectedValue
     }
   },
@@ -93,7 +131,9 @@ export default {
     isWildcardSupported: {
       immediate: true,
       handler(supported) {
-        if (!supported && this.selectedValue !== 'query_string') {
+        // Only wildcard depends on the sketch's mappings, so only wildcard is
+        // reset by losing them. PPL and SQL answer to the cluster instead.
+        if (!supported && this.selectedValue === 'wildcard') {
           this.selectedValue = 'query_string';
           this.$emit('input', 'query_string');
         }
