@@ -18,6 +18,7 @@ from unittest import mock
 
 from click.testing import CliRunner
 
+from timesketch_api_client import sketch as sketch_obj
 from timesketch_api_client import test_lib as api_test_lib
 
 
@@ -103,3 +104,31 @@ class EventsTest(unittest.TestCase):
             obj=self.ctx,
         )
         assert "Event added to sketch: test" in result.output
+
+    def test_remove_multiple_tags(self):
+        """Test to remove a comma separated list of tags from an event."""
+        runner = CliRunner()
+        with mock.patch.object(
+            sketch_obj.Sketch,
+            "untag_events",
+            autospec=True,
+            return_value={"objects": [], "meta": {}},
+        ) as mock_untag_events:
+            result = runner.invoke(
+                events_group,
+                [
+                    "remove_tag",
+                    "--timeline-id",
+                    "1",
+                    "--event-id",
+                    "abc",
+                    "--tag",
+                    "foo,bar",
+                ],
+                obj=self.ctx,
+            )
+        assert result.exception is None, result.output
+        assert result.exit_code == 0
+        mock_untag_events.assert_called_once_with(
+            mock.ANY, [{"_id": "abc", "_index": "test"}], ["foo", "bar"]
+        )
