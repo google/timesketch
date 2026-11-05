@@ -20,10 +20,12 @@ import email
 import json
 import logging
 import random
+import re
 import smtplib
 import time
 import codecs
 import os
+import uuid
 from typing import List, Optional
 import pandas
 import yaml
@@ -47,6 +49,46 @@ TIMESKETCH_FIELDS = frozenset({"message", "datetime", "timestamp_desc"})
 
 # Columns that must be present in ingested redline files.
 REDLINE_FIELDS = frozenset({"Alert", "Tag", "Timestamp", "Field", "Summary"})
+
+# Allowed format for the optional OPENSEARCH_INDEX_PREFIX setting. It has to be
+# a valid start of an OpenSearch index name and short enough that the prefix
+# plus a 32 character UUID stays well below the 255 bytes index name limit.
+INDEX_PREFIX_REGEX = re.compile(r"^[a-z0-9][a-z0-9_-]{0,62}$")
+
+
+def get_index_prefix() -> str:
+    """Returns the configured OpenSearch index prefix.
+
+    Returns:
+        The value of OPENSEARCH_INDEX_PREFIX or an empty string if not set.
+    """
+    return current_app.config.get("OPENSEARCH_INDEX_PREFIX") or ""
+
+
+def is_valid_index_prefix(prefix: Optional[str]) -> bool:
+    """Checks whether a value is a valid OpenSearch index prefix.
+
+    Args:
+        prefix: The configured prefix. None or an empty string mean no prefix.
+
+    Returns:
+        True if the prefix is unset or valid, False otherwise.
+    """
+    if prefix is None or prefix == "":
+        return True
+    return isinstance(prefix, str) and bool(INDEX_PREFIX_REGEX.fullmatch(prefix))
+
+
+def generate_index_name() -> str:
+    """Generates a name for a new OpenSearch index.
+
+    Only used when Timesketch itself creates a new index. Names of existing
+    indices are always taken from the database.
+
+    Returns:
+        A string in the format <OPENSEARCH_INDEX_PREFIX><uuid4 hex>.
+    """
+    return f"{get_index_prefix()}{uuid.uuid4().hex}"
 
 
 def random_color():
