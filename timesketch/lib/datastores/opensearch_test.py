@@ -16,11 +16,13 @@
 # pylint: disable=protected-access
 
 from unittest import mock
+from opensearchpy.exceptions import AuthorizationException
 from opensearchpy.exceptions import ConnectionTimeout
 from opensearchpy.exceptions import TransportError
 
 from timesketch.lib.datastores.opensearch import OpenSearchDataStore
 from timesketch.lib.testlib import BaseTest
+from timesketch.lib.errors import DatastoreAuthorizationError
 from timesketch.lib.errors import DatastoreTimeoutError
 from timesketch.lib.errors import UnsupportedDatastoreVersionError
 
@@ -511,3 +513,67 @@ class OpenSearchDataStoreTest(BaseTest):
 
         ds = OpenSearchDataStore(host="127.0.0.1", port=9200)
         self.assertEqual(ds.version, "2.19.5")
+
+    @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
+    def test_create_index_authorization_error_on_exists(self, mock_client):
+        """Test that a 403 when checking the index raises a clear error."""
+        mock_es_instance = mock_client.return_value
+        mock_es_instance.indices.exists.side_effect = AuthorizationException(
+            403, "security_exception", {}
+        )
+        ds = OpenSearchDataStore(host="127.0.0.1", port=9200)
+
+        with self.assertLogs("timesketch.opensearch", level="ERROR"):
+            with self.assertRaises(DatastoreAuthorizationError) as cm:
+                ds.create_index(index_name="legacyindex")
+
+        self.assertIn("[legacyindex]", str(cm.exception))
+        self.assertIn("HTTP 403", str(cm.exception))
+        self.assertNotIn("OPENSEARCH_INDEX_PREFIX", str(cm.exception))
+        mock_es_instance.indices.create.assert_not_called()
+
+    @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
+    def test_create_index_authorization_error_on_create(self, mock_client):
+        """Test that a 403 when creating the index mentions the prefix."""
+        self.app.config["OPENSEARCH_INDEX_PREFIX"] = "timesketch-"
+        mock_es_instance = mock_client.return_value
+        mock_es_instance.indices.exists.return_value = False
+        mock_es_instance.indices.create.side_effect = AuthorizationException(
+            403, "security_exception", {}
+        )
+        ds = OpenSearchDataStore(host="127.0.0.1", port=9200)
+
+        with self.assertLogs("timesketch.opensearch", level="ERROR"):
+            with self.assertRaises(DatastoreAuthorizationError) as cm:
+                ds.create_index(index_name="otherindex")
+
+        self.assertIn("[otherindex]", str(cm.exception))
+        self.assertIn("OPENSEARCH_INDEX_PREFIX 'timesketch-'", str(cm.exception))
+
+    @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
+    def test_create_index_existing_index(self, mock_client):
+        """Test that existing indices are not created again."""
+        mock_es_instance = mock_client.return_value
+        mock_es_instance.indices.exists.return_value = True
+        ds = OpenSearchDataStore(host="127.0.0.1", port=9200)
+
+        self.assertEqual(ds.create_index(index_name="existing"), "existing")
+        mock_es_instance.indices.create.assert_not_called()
+
+    @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
+    def test_create_index_without_name(self, mock_client):
+        """Test that a new prefixed index name is generated for every call."""
+        self.app.config["OPENSEARCH_INDEX_PREFIX"] = "timesketch-"
+        mock_es_instance = mock_client.return_value
+        mock_es_instance.indices.exists.return_value = False
+        ds = OpenSearchDataStore(host="127.0.0.1", port=9200)
+
+        first_index_name = ds.create_index()
+        second_index_name = ds.create_index()
+
+        self.assertRegex(first_index_name, r"^timesketch-[0-9a-f]{32}$")
+        self.assertRegex(second_index_name, r"^timesketch-[0-9a-f]{32}$")
+        self.assertNotEqual(first_index_name, second_index_name)
+        mock_es_instance.indices.create.assert_any_call(
+            index=first_index_name, body=mock.ANY
+        )

@@ -63,6 +63,7 @@ from timesketch.lib.definitions import DEFAULT_SOURCE_FIELDS
 from timesketch import version
 from timesketch.app import create_app
 from timesketch.app import create_celery_app
+from timesketch.app import get_index_prefix_warning
 from timesketch.lib import sigma_util
 from timesketch.models import db_session, drop_all, init_db, BaseModel
 from timesketch.models.sketch import Sketch
@@ -1136,6 +1137,8 @@ def info():
           "-dirty" suffix if there are uncommitted changes).
         - Versions of essential tools like psort (from Plaso), Node.js, npm, yarn,
           Python, and pip.
+        - The configured OpenSearch index prefix and a warning if existing
+          search indices do not use it.
     """
     print(f"Timesketch version: {version.get_version()}")  # Displays Timesketch version
 
@@ -1230,6 +1233,16 @@ def info():
         print(f"OpenSearch version: {es.version}")
     except Exception as e:  # pylint: disable=broad-except
         print(f"OpenSearch: Not running or not configured ({e})")
+
+    # Get OpenSearch index prefix and check that all indices use it.
+    index_prefix = current_app.config.get("OPENSEARCH_INDEX_PREFIX") or ""
+    print(f"OpenSearch index prefix: {index_prefix!r}")
+    try:
+        index_prefix_warning = get_index_prefix_warning(index_prefix)
+        if index_prefix_warning:
+            print(f"WARNING: {index_prefix_warning}")
+    except Exception as e:  # pylint: disable=broad-except
+        print(f"Unable to check search index prefixes ({e})")
 
     # Get Redis version
     try:
