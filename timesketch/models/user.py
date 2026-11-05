@@ -92,6 +92,19 @@ class User(UserMixin, BaseModel):
         "Group", secondary=user_group, backref=backref("users", lazy="dynamic")
     )
 
+    @property
+    def is_active(self):
+        """Whether the user account is enabled.
+
+        Flask-Login refuses to log in inactive users, and treats them as not
+        authenticated, so disabled users can neither log in nor keep using an
+        existing session. Users without a stored status are treated as active.
+
+        Returns:
+            Boolean, False if the user has been disabled.
+        """
+        return self.active is not False
+
     def set_password(self, plaintext, rounds=12):
         """Sets the password for the user. The password hash is created with the
         Bcrypt python library (http://www.mindrot.org/projects/py-bcrypt/).

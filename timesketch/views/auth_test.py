@@ -24,6 +24,7 @@ from timesketch.lib.definitions import HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR
 from timesketch.lib.definitions import HTTP_STATUS_CODE_UNAUTHORIZED
 from timesketch.lib.google_auth import CSRF_KEY
 from timesketch.lib.testlib import BaseTest
+from timesketch.models import db_session
 from timesketch.models.user import Group
 from timesketch.models.user import User
 
@@ -556,3 +557,95 @@ class GoogleOpenIdConnectViewTest(BaseTest):
         user = User.query.filter_by(username="newuser@example.com").first()
         self.assertEqual([group.name for group in user.groups], ["Analysts"])
         self.assertIn("Ignored 3 non-string value(s)", "\n".join(logs.output))
+
+
+class DisabledUserTest(BaseTest):
+    """Test that disabled users cannot log in or use existing sessions."""
+
+    API_URL = "/api/v1/users/me/"
+
+    def _set_active(self, username, active):
+        """Enables or disables a user."""
+        user = User.query.filter_by(username=username).first()
+        user.active = active
+        db_session.add(user)
+        db_session.commit()
+
+    @staticmethod
+    def _get_session_user_id(client):
+        """Returns the user ID stored in the session of a test client."""
+        with client.session_transaction() as session:
+            return session.get("_user_id")
+
+    def _api_callback_login(self, client):
+        """Logs in through the API callback with mocked token responses."""
+        self.app.config["GOOGLE_OIDC_CLIENT_ID"] = "test_client_id"
+        self.app.config["GOOGLE_OIDC_API_CLIENT_ID"] = "test_api_client_id"
+        token_info = {
+            "scope": (
+                "openid https://www.googleapis.com/auth/userinfo.profile "
+                "https://www.googleapis.com/auth/userinfo.email"
+            ),
+            "email_verified": True,
+            "azp": "test_client_id",
+            "aud": "test_client_id",
+            "email": "test1",
+        }
+        with mock.patch("timesketch.views.auth.requests.post") as mock_post, mock.patch(
+            "timesketch.views.auth.get_oauth2_discovery_document"
+        ) as mock_discovery, mock.patch("timesketch.views.auth.validate_jwt"):
+            mock_discovery.return_value = {"issuer": "https://accounts.google.com"}
+            mock_post.return_value = mock.Mock(status_code=200, json=lambda: token_info)
+            return client.get(
+                "/login/api_callback/?id_token=test_id_token",
+                headers={"Authorization": "Bearer test_access_token"},
+            )
+
+    def test_active_user_property(self):
+        """Test the is_active property of the user model."""
+        self.assertTrue(self.user1.is_active)
+        self.user1.active = False
+        self.assertFalse(self.user1.is_active)
+        self.assertFalse(self.user1.is_authenticated)
+
+    def test_existing_session(self):
+        """Test that the session of a disabled user is no longer valid."""
+        self.login()
+        self.assert200(self.client.get(self.API_URL))
+
+        self._set_active("test1", False)
+        response = self.client.get(self.API_URL)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+
+    def test_password_login(self):
+        """Test that a disabled user cannot log in with a password."""
+        self._set_active("test1", False)
+        self.login()
+        self.assertIsNone(self._get_session_user_id(self.client))
+        response = self.client.get(self.API_URL)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+
+        self._set_active("test1", True)
+        self.login()
+        self.assert200(self.client.get(self.API_URL))
+
+    def test_remember_cookie(self):
+        """Test that the remember cookie of a disabled user is not valid."""
+        response = self._api_callback_login(self.client)
+        self.assert200(response)
+        remember_cookie = self.client.get_cookie("remember_token")
+        self.assertIsNotNone(remember_cookie)
+
+        self._set_active("test1", False)
+        client = self.app.test_client()
+        client.set_cookie("remember_token", remember_cookie.value)
+        response = client.get(self.API_URL)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_REDIRECT)
+
+    def test_api_callback_login(self):
+        """Test that a disabled user cannot log in through the API callback."""
+        self._set_active("test1", False)
+        response = self._api_callback_login(self.client)
+        self.assertNotEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertIsNone(self._get_session_user_id(self.client))
+        self.assertIsNone(self.client.get_cookie("remember_token"))
