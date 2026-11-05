@@ -35,6 +35,10 @@ class LLMProvider:
 
     NAME = "name"
 
+    # Only providers that implement generate_stream_from_logs should set this,
+    # so the log analyzer can report a clear error for the others.
+    SUPPORTS_STREAMING = False
+
     def __init__(
         self,
         config: dict,
