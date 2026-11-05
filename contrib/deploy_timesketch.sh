@@ -110,6 +110,10 @@ curl -s $GITHUB_BASE_URL/data/llm_starred_events_report/prompt.txt > timesketch/
 curl -s $GITHUB_BASE_URL/data/nl2q/data_types.csv > timesketch/etc/timesketch/nl2q/data_types.csv
 curl -s $GITHUB_BASE_URL/data/nl2q/prompt_nl2q > timesketch/etc/timesketch/nl2q/prompt_nl2q
 curl -s $GITHUB_BASE_URL/data/nl2q/examples_nl2q > timesketch/etc/timesketch/nl2q/examples_nl2q
+
+# These files will contain the generated secret key and database password, so
+# make them readable by root only before the secrets are written to them.
+chmod 600 timesketch/etc/timesketch/timesketch.conf timesketch/config.env
 echo "OK"
 
 # Create a minimal Timesketch config
