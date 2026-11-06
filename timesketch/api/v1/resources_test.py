@@ -18,6 +18,7 @@ import shutil
 import tempfile
 import json
 from unittest import mock
+import opensearchpy
 from werkzeug.exceptions import Forbidden
 
 from timesketch.lib.definitions import HTTP_STATUS_CODE_BAD_REQUEST
@@ -1644,6 +1645,90 @@ class TimelineListResourceTest(BaseTest):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+
+
+class TimelineResourceTest(BaseTest):
+    """Test TimelineResource."""
+
+    resource_url = "/api/v1/sketches/1/timelines/1/"
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_get_timeline_fields_count_owner(self):
+        """Test that GET timeline returns fields_count in meta for owner."""
+        self.login()
+        response = self.client.get(self.resource_url)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertEqual(response.json["meta"]["fields_count"], 2)
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_get_timeline_fields_count_collaborator(self):
+        """Test GET timeline returns fields_count without SearchIndex ACL."""
+        self.sketch1.grant_permission(permission="read", user=self.user2)
+        db_session.commit()
+        self.assertFalse(
+            self.searchindex.has_permission(user=self.user2, permission="read")
+        )
+
+        self.login(username="test2")
+        searchindex_response = self.client.get("/api/v1/searchindices/1/")
+        self.assertEqual(searchindex_response.status_code, HTTP_STATUS_CODE_FORBIDDEN)
+
+        response = self.client.get(self.resource_url)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertEqual(response.json["meta"]["fields_count"], 2)
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_get_timeline_fields_count_index_not_found(self):
+        """Test GET timeline sets fields_count to 0 if OpenSearch index is missing."""
+        self.login()
+        initial_status = self.searchindex.get_status.status
+        with mock.patch(
+            "timesketch.lib.testlib.MockOpenSearchIndices.get_mapping",
+            side_effect=opensearchpy.NotFoundError(404, "index_not_found_exception"),
+        ):
+            response = self.client.get(self.resource_url)
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertEqual(response.json["meta"]["fields_count"], 0)
+        self.assertEqual(self.searchindex.get_status.status, initial_status)
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_get_timeline_fields_count_empty_index_and_opensearch_error(self):
+        """Test GET timeline handles empty index_name and OpenSearchException."""
+        self.login()
+        with mock.patch(
+            "timesketch.lib.testlib.MockOpenSearchIndices.get_mapping",
+            side_effect=opensearchpy.exceptions.SerializationError("invalid json"),
+        ):
+            err_response = self.client.get(self.resource_url)
+        self.assertEqual(err_response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertIsNone(err_response.json["meta"]["fields_count"])
+
+        self.searchindex.index_name = ""
+        db_session.commit()
+        with mock.patch(
+            "timesketch.lib.testlib.MockOpenSearchIndices.get_mapping"
+        ) as mock_get_mapping:
+            empty_idx_res = self.client.get(self.resource_url)
+        self.assertEqual(empty_idx_res.status_code, HTTP_STATUS_CODE_OK)
+        self.assertIsNone(empty_idx_res.json["meta"]["fields_count"])
+        mock_get_mapping.assert_not_called()
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_get_timeline_fields_count_failed_and_archived(self):
+        """Test GET timeline skips OpenSearch on failed or archived timelines."""
+        self.login()
+        for status in ("fail", "archived", "deleted"):
+            with self.subTest(status=status):
+                self.timeline.set_status(status)
+                db_session.commit()
+                with mock.patch(
+                    "timesketch.lib.testlib.MockOpenSearchIndices.get_mapping"
+                ) as mock_get_mapping:
+                    response = self.client.get(self.resource_url)
+                self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+                self.assertIsNone(response.json["meta"]["lines_indexed"])
+                self.assertIsNone(response.json["meta"]["fields_count"])
+                mock_get_mapping.assert_not_called()
 
 
 class SigmaRuleResourceTest(BaseTest):

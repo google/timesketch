@@ -18,7 +18,9 @@ import tempfile
 import uuid
 from click.testing import CliRunner
 
+from timesketch_api_client import client as ts_api_client
 from timesketch_cli_client.commands.sketch import sketch_group
+from timesketch_cli_client.commands.timelines import timelines_group
 from timesketch_cli_client.cli import cli
 
 from . import interface
@@ -257,6 +259,103 @@ class CliClientE2ETest(interface.BaseEndToEndTest):
         self.assertions.assertIn(
             "not found or you do not have permission", result_force.output
         )
+
+    def test_cli_timelines_describe_collaborator(self):
+        """Tests 'timesketch timelines describe' for a non-owner collaborator."""
+        assert self.api is not None
+        sketch_name = f"cli_timelines_describe_collab_{uuid.uuid4().hex}"
+        owner_sketch = self.api.create_sketch(name=sketch_name)
+        timeline = self.import_timeline("evtx_part.csv", sketch=owner_sketch)
+        self.assertions.assertTrue(timeline)
+        assert timeline and timeline.index is not None
+
+        # Share sketch with test2 (grants sketch read/write, not SearchIndex ACL).
+        collaborator_url = (
+            f"{self.api.api_root}/sketches/{owner_sketch.id}/collaborators/"
+        )
+        res = self.api.session.post(
+            collaborator_url,
+            json={"users": ["test2"]},
+        )
+        self.assertions.assertEqual(res.status_code, 200)
+
+        # Positive control: sketch/index owner can describe the timeline.
+        owner_ctx = E2ECliContextObject(
+            api_client=self.api,
+            sketch_instance=owner_sketch,
+            output_format="text",
+        )
+        owner_result = self.runner.invoke(
+            timelines_group, ["describe", str(timeline.id)], obj=owner_ctx
+        )
+        self.assertions.assertEqual(
+            owner_result.exit_code,
+            0,
+            f"Owner 'timelines describe' failed.\nOutput:\n{owner_result.output}\n"
+            f"Exception:\n{owner_result.exception}",
+        )
+        self.assertions.assertIn(f"Name: {timeline.name}", owner_result.output)
+        self.assertions.assertIn("Status: ready", owner_result.output)
+        self.assertions.assertIn("Datasources:", owner_result.output)
+        self.assertions.assertIn("evtx_part.csv", owner_result.output)
+        owner_fields_line = next(
+            (
+                line
+                for line in owner_result.output.splitlines()
+                if line.startswith("Number of fields: ")
+            ),
+            None,
+        )
+        self.assertions.assertIsNotNone(owner_fields_line, msg=owner_result.output)
+        assert owner_fields_line is not None
+        owner_fields_count = int(owner_fields_line.split(": ", 1)[1])
+        self.assertions.assertGreater(owner_fields_count, 0)
+        owner_events_line = next(
+            (
+                line
+                for line in owner_result.output.splitlines()
+                if line.startswith("Event count: ")
+            ),
+            None,
+        )
+        self.assertions.assertIsNotNone(owner_events_line, msg=owner_result.output)
+        assert owner_events_line is not None
+        self.assertions.assertGreater(int(owner_events_line.split(": ", 1)[1]), 0)
+
+        # Collaborator (non-owner of SearchIndex) describes the same timeline.
+        user2_api = ts_api_client.TimesketchApi(
+            host_uri=interface.HOST_URI,
+            username="test2",
+            password="test2",
+        )
+        direct_index_res = user2_api.session.get(
+            f"{user2_api.api_root}/searchindices/{timeline.index.id}/"
+        )
+        self.assertions.assertEqual(direct_index_res.status_code, 403)
+
+        collab_sketch = user2_api.get_sketch(owner_sketch.id)
+        collab_ctx = E2ECliContextObject(
+            api_client=user2_api,
+            sketch_instance=collab_sketch,
+            output_format="text",
+        )
+        collab_result = self.runner.invoke(
+            timelines_group, ["describe", str(timeline.id)], obj=collab_ctx
+        )
+        self.assertions.assertEqual(
+            collab_result.exit_code,
+            0,
+            f"Collaborator 'timelines describe' failed.\n"
+            f"Output:\n{collab_result.output}\n"
+            f"Exception:\n{collab_result.exception}",
+        )
+        self.assertions.assertIn(f"Name: {timeline.name}", collab_result.output)
+        self.assertions.assertIn(f"Index: {timeline.index_name}", collab_result.output)
+        self.assertions.assertIn("Status: ready", collab_result.output)
+        self.assertions.assertIn(owner_events_line, collab_result.output)
+        self.assertions.assertIn(owner_fields_line, collab_result.output)
+        self.assertions.assertIn("Datasources:", collab_result.output)
+        self.assertions.assertIn("evtx_part.csv", collab_result.output)
 
 
 # Register the new test class with the test manager
