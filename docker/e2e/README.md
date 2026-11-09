@@ -53,7 +53,7 @@ docker compose -f docker/e2e/docker-compose.yml --profile ui run --rm -i=false -
   python3 /usr/local/src/timesketch/end_to_end_tests/tools/run_in_container.py ui_test
 ```
 
-Milestone step screenshots and a static HTML storyboard (`/tmp/timesketch-ui-artifacts/steps/index.html`)
+Milestone step screenshots and a Markdown summary (`/tmp/timesketch-ui-artifacts/steps/summary.md`)
 are written on every run, and full-page failure screenshots plus Playwright trace
 bundles (`.zip`) are saved to `/tmp/timesketch-ui-artifacts` if any assertion fails.
 

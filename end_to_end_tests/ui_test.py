@@ -15,12 +15,9 @@
 
 from collections.abc import Iterator
 import contextlib
-import datetime
-import html
 import logging
 import os
 import re
-import time
 from typing import Any
 from typing import Optional
 import urllib.parse
@@ -35,10 +32,10 @@ try:
         sync_playwright,
     )
 except ImportError:
-    expect = None  # type: ignore[assignment]
+    expect: Any = None  # type: ignore[no-redef]
     Page = Any  # type: ignore[assignment,misc]
     Response = Any  # type: ignore[assignment,misc]
-    sync_playwright = None  # type: ignore[assignment]
+    sync_playwright: Any = None  # type: ignore[no-redef]
 
 from . import interface
 from . import manager
@@ -51,7 +48,6 @@ EXPECTED_CSV_EVENTS = 4
 CSV_INDEX_TIMEOUT_SECONDS = 60
 EXPECTED_PLASO_EVENTS = 3205
 PLASO_INDEX_TIMEOUT_SECONDS = 300
-POLL_INTERVAL_SECONDS = 2
 
 
 class UiEndToEndTest(interface.BaseEndToEndTest):
@@ -73,7 +69,7 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
 
     def __init__(self) -> None:
         super().__init__()
-        self._step_screenshots: list[dict[str, str]] = []
+        self._step_screenshots: dict[str, str] = {}
         self._auth_storage_state: Any = None
         self._pending_plaso_sketch_id: Optional[int] = None
 
@@ -91,7 +87,7 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
     def _capture_step_screenshot(
         self, page: Page, step_slug: str, title: str, description: str
     ) -> str:
-        """Captures a milestone PNG screenshot and refreshes the HTML storyboard.
+        """Captures a milestone PNG screenshot and updates steps/summary.md.
 
         Args:
             page (playwright.sync_api.Page): Active Playwright page.
@@ -108,128 +104,29 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
         png_path = os.path.join(steps_dir, filename)
         page.screenshot(path=png_path, full_page=True)
 
-        entry = {
-            "slug": step_slug,
-            "filename": filename,
-            "title": title,
-            "description": description,
-            "url": page.url,
-            "captured_at": datetime.datetime.now(datetime.timezone.utc).strftime(
-                "%Y-%m-%d %H:%M:%S UTC"
-            ),
-        }
-        self._step_screenshots = [
-            existing
-            for existing in self._step_screenshots
-            if existing["slug"] != step_slug
-        ]
-        self._step_screenshots.append(entry)
-        self._write_step_storyboard(steps_dir)
-        return png_path
-
-    def _write_step_storyboard(self, steps_dir: str) -> None:
-        """Writes steps/index.html and steps/summary.md for PR reviewers.
-
-        Args:
-            steps_dir (str): Directory containing captured milestone PNG files.
-        """
-        cards_html = []
-        md_rows = [
+        parsed_path = urllib.parse.urlsplit(page.url).path or "/"
+        self._step_screenshots[step_slug] = (
+            f"| **{title}** | `{parsed_path}` | `steps/{filename}` | {description} |"
+        )
+        summary_lines = [
             "### Playwright UI E2E Milestone Storyboard",
             "",
             "| Step | Route | Screenshot | Description |",
             "| :--- | :--- | :--- | :--- |",
+            *self._step_screenshots.values(),
+            "",
         ]
-        for step in self._step_screenshots:
-            title_esc = html.escape(step["title"])
-            desc_esc = html.escape(step["description"])
-            url_esc = html.escape(step["url"])
-            time_esc = html.escape(step["captured_at"])
-            file_esc = html.escape(step["filename"])
-            parsed_path = urllib.parse.urlsplit(step["url"]).path or "/"
-
-            cards_html.append(f"""      <section class="step-card">
-        <div class="step-header">
-          <h2>{title_esc}</h2>
-          <span class="meta">{url_esc} &middot; {time_esc}</span>
-        </div>
-        <p class="desc">{desc_esc}</p>
-        <a href="{file_esc}" target="_blank" rel="noopener">
-          <img src="{file_esc}" alt="{title_esc}" loading="lazy" />
-        </a>
-      </section>""")
-            md_rows.append(
-                f"| **{step['title']}** | `{parsed_path}` | "
-                f"`steps/{step['filename']}` | {step['description']} |"
-            )
-
-        md_rows.extend(
-            [
-                "",
-                "Open `steps/index.html` from the **`ui-e2e-artifacts`** bundle "
-                "to inspect full-resolution screenshots.",
-                "",
-            ]
-        )
-
-        storyboard_html = "\n".join(
-            [
-                "<!DOCTYPE html>",
-                '<html lang="en">',
-                "  <head>",
-                '    <meta charset="utf-8" />',
-                "    <title>Timesketch UI E2E Storyboard</title>",
-                "    <style>",
-                "      body { font-family: system-ui, -apple-system, sans-serif;",
-                "             margin: 0; padding: 24px; background: #0f172a;",
-                "             color: #e2e8f0; }",
-                "      main { max-width: 1200px; margin: 0 auto; }",
-                "      h1 { margin: 0 0 8px; font-size: 1.5rem; }",
-                "      .lead { margin: 0 0 24px; color: #94a3b8; }",
-                "      .step-card { background: #1e293b; border: 1px solid #334155;",
-                "                   border-radius: 10px; padding: 16px;",
-                "                   margin-bottom: 24px; }",
-                "      .step-header { display: flex; flex-wrap: wrap;",
-                "                     justify-content: space-between; gap: 8px;",
-                "                     align-items: baseline; }",
-                "      .step-header h2 { margin: 0; font-size: 1.1rem; }",
-                "      .meta { font-family: monospace; font-size: 0.85rem;",
-                "              color: #94a3b8; }",
-                "      .desc { margin: 8px 0 12px; color: #cbd5e1; }",
-                "      img { width: 100%; height: auto; border-radius: 6px;",
-                "            border: 1px solid #475569; display: block; }",
-                "    </style>",
-                "  </head>",
-                "  <body>",
-                "    <main>",
-                "      <h1>Timesketch Playwright UI E2E Storyboard</h1>",
-                '      <p class="lead">Click any milestone screenshot to open '
-                "the full-size PNG.</p>",
-                *cards_html,
-                "    </main>",
-                "  </body>",
-                "</html>",
-                "",
-            ]
-        )
-
-        index_path = os.path.join(steps_dir, "index.html")
         summary_path = os.path.join(steps_dir, "summary.md")
-        with open(index_path, "w", encoding="utf-8") as html_fh:
-            html_fh.write(storyboard_html)
         with open(summary_path, "w", encoding="utf-8") as md_fh:
-            md_fh.write("\n".join(md_rows))
+            md_fh.write("\n".join(summary_lines))
+        return png_path
 
     @contextlib.contextmanager
-    def _browser_page(
-        self, test_label: str, use_saved_auth: bool = False
-    ) -> Iterator[Page]:
+    def _browser_page(self, test_label: str) -> Iterator[Page]:
         """Yields an isolated Playwright Page with network, JS, and trace guards.
 
         Args:
             test_label (str): Identifier used for failure screenshot/trace files.
-            use_saved_auth (bool): Seed context with cached login session state
-                when available so post-login tests skip '/login/' roundtrips.
 
         Yields:
             playwright.sync_api.Page: Fresh browser page with 1440x900 viewport.
@@ -245,23 +142,23 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
 
         artifact_dir = self._artifact_dir()
         os.makedirs(artifact_dir, exist_ok=True)
-        page_errors: list[str] = []
-        server_errors: list[str] = []
-        asset_errors: list[str] = []
+        errors: list[str] = []
 
         def _on_response(response: Response) -> None:
             path = urllib.parse.urlsplit(response.url).path
             if path.startswith("/api/v1/") and response.status >= 500:
-                server_errors.append(
-                    f"{response.request.method} {path} -> HTTP {response.status}"
+                errors.append(
+                    f"API 5xx: {response.request.method} {path} -> "
+                    f"HTTP {response.status}"
                 )
             elif path.startswith("/dist/") and response.status >= 400:
-                asset_errors.append(
-                    f"{response.request.method} {path} -> HTTP {response.status}"
+                errors.append(
+                    f"Asset error: {response.request.method} {path} -> "
+                    f"HTTP {response.status}"
                 )
 
         context_kwargs: dict[str, Any] = {"viewport": {"width": 1440, "height": 900}}
-        if use_saved_auth and self._auth_storage_state is not None:
+        if self._auth_storage_state is not None:
             context_kwargs["storage_state"] = self._auth_storage_state
 
         with sync_playwright() as pw:
@@ -269,27 +166,14 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
             context = browser.new_context(**context_kwargs)
             context.tracing.start(screenshots=True, snapshots=True, sources=True)
             page = context.new_page()
-            page.on("pageerror", lambda exc: page_errors.append(str(exc)))
+            page.on("pageerror", lambda exc: errors.append(f"JS error: {exc}"))
             page.on("response", _on_response)
             try:
                 yield page
                 self.assertions.assertEqual(
-                    page_errors,
+                    errors,
                     [],
-                    f"Uncaught browser JavaScript errors during {test_label}: "
-                    f"{page_errors}",
-                )
-                self.assertions.assertEqual(
-                    server_errors,
-                    [],
-                    f"Backend HTTP 5xx API responses during {test_label}: "
-                    f"{server_errors}",
-                )
-                self.assertions.assertEqual(
-                    asset_errors,
-                    [],
-                    f"Broken /dist/ static asset responses during {test_label}: "
-                    f"{asset_errors}",
+                    f"Browser errors during {test_label}: {errors}",
                 )
                 context.tracing.stop()
             except Exception:
@@ -330,7 +214,6 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
             username (str): Account username to submit.
             password (str): Account password to submit.
         """
-        assert expect is not None
         page.goto(f"{interface.HOST_URI}/login/", wait_until="domcontentloaded")
         page.locator('input[name="username"]').fill(username)
         page.locator('input[name="password"]').fill(password)
@@ -340,15 +223,6 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
             page.get_by_role("heading", name="Start new investigation")
         ).to_be_visible(timeout=30000)
         self._auth_storage_state = page.context.storage_state()
-
-    def _ensure_authenticated(self, page: Page) -> None:
-        """Logs in via UI only if storage_state was not already cached.
-
-        Args:
-            page (playwright.sync_api.Page): Active Playwright page.
-        """
-        if self._auth_storage_state is None:
-            self._login_via_ui(page)
 
     def _create_blank_sketch_via_ui(self, page: Page, sketch_name: str) -> int:
         """Creates a blank sketch from the Home dialog and returns its sketch ID.
@@ -360,7 +234,6 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
         Returns:
             int: Newly created Timesketch sketch ID parsed from the SPA route.
         """
-        assert expect is not None
         page.get_by_role("button", name="Blank sketch").click()
         name_input = page.get_by_placeholder("Name your sketch")
         expect(name_input).to_be_visible(timeout=15000)
@@ -391,10 +264,8 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
         Returns:
             int: Newly created sketch ID.
         """
-        assert expect is not None
         sketch_name = f"{sketch_prefix}_{uuid.uuid4().hex[:8]}"
-        api_sketch = self.api.create_sketch(name=sketch_name)
-        sketch_id = api_sketch.id
+        sketch_id = self.api.create_sketch(name=sketch_name).id
         page.goto(
             f"{interface.HOST_URI}/sketch/{sketch_id}/explore",
             wait_until="domcontentloaded",
@@ -422,7 +293,6 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
         Returns:
             str: Auto-populated timeline name stem.
         """
-        assert expect is not None
         self.assertions.assertTrue(
             os.path.isfile(file_path), f"Upload fixture missing at {file_path}"
         )
@@ -459,66 +329,6 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
         expect(page.locator("#tsSearchInput")).to_be_visible(timeout=30000)
         return expected_tl_name
 
-    def _wait_for_timeline_ready(
-        self,
-        sketch_id: int,
-        expected_name: str,
-        timeout_seconds: int = PLASO_INDEX_TIMEOUT_SECONDS,
-    ) -> Any:
-        """Polls the Timesketch API until the uploaded timeline finishes indexing.
-
-        Args:
-            sketch_id (int): Target sketch identifier.
-            expected_name (str): Expected timeline name created by WebUpload.
-            timeout_seconds (int): Max seconds to wait for ready status.
-
-        Returns:
-            timesketch_api_client.timeline.Timeline: Ready timeline instance.
-
-        Raises:
-            RuntimeError: If timeline indexing fails or exceeds timeout.
-        """
-        sketch = self.api.get_sketch(sketch_id)
-        deadline = time.monotonic() + timeout_seconds
-
-        while time.monotonic() < deadline:
-            sketch.lazyload_data(refresh_cache=True)
-            timelines = sketch.list_timelines()
-            target = None
-            for candidate in timelines:
-                if candidate.name == expected_name:
-                    target = candidate
-                    break
-
-            if target is not None:
-                target.lazyload_data(refresh_cache=True)
-                tl_status = target.status
-                if tl_status == "fail":
-                    raise RuntimeError(
-                        f"WebUpload timeline '{expected_name}' failed "
-                        f"(timeline={tl_status})."
-                    )
-                # Only query target.index.status after timeline reaches 'ready':
-                # GET /api/v1/searchindices/<id>/ marks the SearchIndex 'fail'
-                # if called while Celery's run_plaso is still running pinfo.py
-                # prior to creating the OpenSearch index.
-                if tl_status == "ready":
-                    idx_status = target.index.status if target.index else None
-                    if idx_status == "fail":
-                        raise RuntimeError(
-                            f"WebUpload timeline '{expected_name}' index "
-                            f"failed (timeline={tl_status}, index={idx_status})."
-                        )
-                    if idx_status == "ready":
-                        return target
-
-            time.sleep(POLL_INTERVAL_SECONDS)
-
-        raise RuntimeError(
-            f"Timed out after {timeout_seconds}s waiting for WebUpload "
-            f"timeline '{expected_name}' in sketch {sketch_id}."
-        )
-
     def _await_chip_and_run_wildcard_search(
         self,
         page: Page,
@@ -536,7 +346,6 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
             expected_events (int): Expected total event count in UI and API.
             timeout_seconds (int): Max seconds to wait for timeline indexing.
         """
-        assert expect is not None
         search_input = page.locator("#tsSearchInput")
         expect(search_input).to_be_visible(timeout=30000)
 
@@ -548,10 +357,6 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
         expect(
             processed_chip.locator(".timeline-name-ellipsis:not(.disabled)")
         ).to_be_visible(timeout=timeout_seconds * 1000)
-
-        self._wait_for_timeline_ready(
-            sketch_id, expected_tl_name, timeout_seconds=timeout_seconds
-        )
 
         with page.expect_response(
             lambda resp: f"/api/v1/sketches/{sketch_id}/explore/" in resp.url
@@ -572,11 +377,12 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
             0,
             "Expected rendered event rows in Explore data table.",
         )
+        events = self.api.get_sketch(sketch_id).explore("*", as_pandas=True)
+        self.assertions.assertEqual(len(events), expected_events)
 
     def test_01_ui_reachable_and_login_guard(self) -> None:
         """Unauthenticated root redirects to /login/ and serves static UI assets."""
         with self._browser_page("test_01_ui_reachable") as page:
-            assert expect is not None
             response = page.goto(
                 f"{interface.HOST_URI}/", wait_until="domcontentloaded"
             )
@@ -612,7 +418,6 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
     def test_02_login_and_create_blank_sketch(self) -> None:
         """Rejects invalid credentials, logs in, and creates a blank sketch."""
         with self._browser_page("test_02_login_and_sketch") as page:
-            assert expect is not None
             page.goto(f"{interface.HOST_URI}/login/", wait_until="domcontentloaded")
             page.locator('input[name="username"]').fill(interface.USERNAME)
             page.locator('input[name="password"]').fill(
@@ -650,8 +455,7 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
         plaso_filename = interface.get_plaso_filename()
         plaso_path = os.path.join(interface.TEST_DATA_DIR, plaso_filename)
 
-        with self._browser_page("test_03_kickoff_plaso", use_saved_auth=True) as page:
-            self._ensure_authenticated(page)
+        with self._browser_page("test_03_kickoff_plaso") as page:
             sketch_id = self._open_new_empty_sketch_in_ui(page, "ui_e2e_plaso")
             self._submit_timeline_upload_via_ui(
                 page,
@@ -670,11 +474,7 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
         """Uploads a 4-row CSV for rapid UI/auto-poll/Explore feedback."""
         csv_path = os.path.join(interface.TEST_DATA_DIR, CSV_FIXTURE_FILENAME)
 
-        with self._browser_page(
-            "test_04_fast_csv_explore", use_saved_auth=True
-        ) as page:
-            assert expect is not None
-            self._ensure_authenticated(page)
+        with self._browser_page("test_04_fast_csv_explore") as page:
             sketch_id = self._open_new_empty_sketch_in_ui(page, "ui_e2e_csv")
             expected_tl_name = self._submit_timeline_upload_via_ui(page, csv_path)
 
@@ -699,28 +499,19 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
                 "auto-enabled by the live SPA poll, and queried in Explore.",
             )
 
-            api_sketch = self.api.get_sketch(sketch_id)
-            events = api_sketch.explore("*", as_pandas=True)
-            self.assertions.assertEqual(len(events), EXPECTED_CSV_EVENTS)
-
     def test_05_await_parallel_plaso_and_search_events(self) -> None:
         """Awaits the background Plaso timeline and queries all 3,205 events."""
         plaso_filename = interface.get_plaso_filename()
-        plaso_path = os.path.join(interface.TEST_DATA_DIR, plaso_filename)
         expected_tl_name = os.path.splitext(plaso_filename)[0]
+        self.assertions.assertIsNotNone(self._pending_plaso_sketch_id)
+        assert self._pending_plaso_sketch_id is not None
+        sketch_id = self._pending_plaso_sketch_id
 
-        with self._browser_page("test_05_await_plaso", use_saved_auth=True) as page:
-            self._ensure_authenticated(page)
-            if self._pending_plaso_sketch_id is None:
-                sketch_id = self._open_new_empty_sketch_in_ui(page, "ui_e2e_plaso")
-                self._submit_timeline_upload_via_ui(page, plaso_path)
-            else:
-                sketch_id = self._pending_plaso_sketch_id
-                page.goto(
-                    f"{interface.HOST_URI}/sketch/{sketch_id}/explore",
-                    wait_until="domcontentloaded",
-                )
-
+        with self._browser_page("test_05_await_plaso") as page:
+            page.goto(
+                f"{interface.HOST_URI}/sketch/{sketch_id}/explore",
+                wait_until="domcontentloaded",
+            )
             self._await_chip_and_run_wildcard_search(
                 page,
                 sketch_id=sketch_id,
@@ -735,10 +526,6 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
                 "Background Plaso timeline (evtx_20260720.plaso) finished "
                 "indexing and rendered 3,205 searchable EVTX events in Explore.",
             )
-
-            api_sketch = self.api.get_sketch(sketch_id)
-            events = api_sketch.explore("*", as_pandas=True)
-            self.assertions.assertEqual(len(events), EXPECTED_PLASO_EVENTS)
 
 
 if sync_playwright is not None:
