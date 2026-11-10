@@ -141,4 +141,33 @@ describe('EventList.vue', () => {
     // Assert dialog is shown
     expect(wrapper.vm.showExportLimitDialog).toBe(true)
   })
+
+  it('sanitizes AI summary HTML before rendering via v-html', async () => {
+    state.settings.eventSummarization = true
+    const wrapper = mount(EventList, {
+      localVue,
+      vuetify,
+      store,
+      propsData: {
+        queryRequest: {}
+      },
+      stubs: ['ts-bar-chart', 'ts-event-detail', 'ts-event-tag-menu', 'ts-event-tag-dialog', 'ts-event-action-menu', 'ts-event-tags', 'ts-explore-welcome-card', 'ts-search-not-found-card']
+    })
+
+    await wrapper.setData({
+      isSummaryLoading: false,
+      eventList: {
+        meta: {
+          summary: 'Suspicious login from <strong>10.0.0.1</strong><img src="x" onerror="alert(1)"><script>alert(2)</script>'
+        },
+        objects: [{ _id: '1', _source: { message: 'login' } }]
+      }
+    })
+
+    const summaryCard = wrapper.find('.ts-ai-summary-text')
+    expect(summaryCard.exists()).toBe(true)
+    expect(summaryCard.html()).toContain('<strong>10.0.0.1</strong>')
+    expect(summaryCard.html()).not.toContain('onerror')
+    expect(summaryCard.html()).not.toContain('<script>')
+  })
 })
