@@ -713,7 +713,10 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
             )
 
             # 2. Star, tag ('suspicious'), and comment on the event in UI.
-            target_row.locator('[title="Toggle star status"]').click()
+            # toggleStar updates the star icon optimistically before POST completes;
+            # wait for its response to avoid an OpenSearch 409 conflict when tagging.
+            with page.expect_response(lambda r: "/event/annotate/" in r.url):
+                target_row.locator('[title="Toggle star status"]').click()
 
             target_row.locator('[title="Modify tags"]').click()
             page.locator('[title="Add quick tag"]').filter(
