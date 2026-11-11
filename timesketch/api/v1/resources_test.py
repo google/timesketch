@@ -35,6 +35,8 @@ from timesketch.api.v1.resources import scenarios
 from timesketch.models.sketch import Scenario
 from timesketch.models.sketch import InvestigativeQuestion
 from timesketch.models.sketch import InvestigativeQuestionApproach
+from timesketch.models.sketch import Analysis
+from timesketch.models.sketch import DataSource
 from timesketch.models.sketch import Facet
 from timesketch.models.sketch import Timeline
 from timesketch.models.sketch import SearchIndex
@@ -1644,6 +1646,238 @@ class TimelineListResourceTest(BaseTest):
             content_type="application/json",
         )
         self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+
+
+class TimelineResourceTest(BaseTest):
+    """Test TimelineResource delete and archive interactions."""
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore")
+    def test_delete_timeline_removes_db_row_and_closes_unshared_index(
+        self, mock_datastore_cls
+    ):
+        """Deleting a timeline removes its DB row and closes unshared index."""
+        mock_datastore = mock.MagicMock()
+        mock_datastore_cls.return_value = mock_datastore
+        self.login()
+
+        sketch = Sketch(name="delete_tl_sketch", description="desc", user=self.user1)
+        db_session.add(sketch)
+        db_session.commit()
+        sketch.grant_permission(permission="read", user=self.user1)
+        sketch.grant_permission(permission="write", user=self.user1)
+
+        searchindex = SearchIndex(
+            name="unshared_idx",
+            description="desc",
+            index_name="unshared_idx_hex",
+            user=self.user1,
+        )
+        searchindex.set_status("ready")
+        db_session.add(searchindex)
+
+        timeline = Timeline(
+            name="tl_to_delete",
+            sketch=sketch,
+            user=self.user1,
+            searchindex=searchindex,
+        )
+        timeline.set_status("ready")
+        db_session.add(timeline)
+        db_session.commit()
+
+        datasource = DataSource(
+            timeline=timeline,
+            user=self.user1,
+            provider="cli",
+            original_filename="events.csv",
+        )
+        datasource.set_status("ready")
+        analysis = Analysis(
+            name="test_analyzer",
+            description="desc",
+            analyzer_name="test",
+            parameters="{}",
+            user=self.user1,
+            sketch=sketch,
+            timeline=timeline,
+        )
+        facet = Facet(
+            name="test_facet",
+            display_name="Test Facet",
+            sketch=sketch,
+            user=self.user1,
+        )
+        facet.timelines.append(timeline)
+        db_session.add_all([datasource, analysis, facet])
+        db_session.commit()
+
+        timeline_id = timeline.id
+        searchindex_id = searchindex.id
+        datasource_id = datasource.id
+        analysis_id = analysis.id
+        facet_id = facet.id
+
+        response = self.client.delete(
+            f"/api/v1/sketches/{sketch.id}/timelines/{timeline_id}/"
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+
+        # Timeline and DataSource are deleted; SearchIndex stays archived.
+        self.assertIsNone(Timeline.get_by_id(timeline_id))
+        self.assertIsNone(DataSource.get_by_id(datasource_id))
+        self.assertIsNone(Analysis.get_by_id(analysis_id).timeline_id)
+        self.assertEqual(Facet.get_by_id(facet_id).timelines, [])
+
+        persisted_index = SearchIndex.get_by_id(searchindex_id)
+        self.assertIsNotNone(persisted_index)
+        self.assertEqual(persisted_index.get_status.status, "archived")
+        self.assertEqual(persisted_index.timelines.count(), 0)
+        mock_datastore.client.indices.close.assert_called_once_with(
+            index="unshared_idx_hex"
+        )
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore")
+    def test_delete_failed_timeline_on_shared_index_allows_sketch_archive(
+        self, mock_datastore_cls
+    ):
+        """Deleting a failed timeline on a shared index allows closing on archive."""
+        mock_datastore = mock.MagicMock()
+        mock_datastore_cls.return_value = mock_datastore
+        self.login()
+
+        sketch = Sketch(name="shared_archive_sketch", description="d", user=self.user1)
+        sketch.set_status("ready")
+        db_session.add(sketch)
+        db_session.commit()
+        sketch.grant_permission(permission="read", user=self.user1)
+        sketch.grant_permission(permission="write", user=self.user1)
+        sketch.grant_permission(permission="delete", user=self.user1)
+
+        shared_index = SearchIndex(
+            name="shared_idx",
+            description="desc",
+            index_name="shared_idx_hex",
+            user=self.user1,
+        )
+        shared_index.set_status("ready")
+        db_session.add(shared_index)
+
+        tl_ready = Timeline(
+            name="tl_ready",
+            sketch=sketch,
+            user=self.user1,
+            searchindex=shared_index,
+        )
+        tl_ready.set_status("ready")
+        tl_failed = Timeline(
+            name="tl_failed",
+            sketch=sketch,
+            user=self.user1,
+            searchindex=shared_index,
+        )
+        tl_failed.set_status("fail")
+        db_session.add_all([tl_ready, tl_failed])
+        db_session.commit()
+
+        failed_id = tl_failed.id
+
+        # 1. Archiving fails while the failed timeline is still in the sketch.
+        archive_url = f"/api/v1/sketches/{sketch.id}/archive/"
+        response = self.client.post(
+            archive_url,
+            data=json.dumps({"action": "archive"}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_BAD_REQUEST)
+
+        # 2. Delete the failed timeline; shared index stays open for tl_ready.
+        response = self.client.delete(
+            f"/api/v1/sketches/{sketch.id}/timelines/{failed_id}/"
+        )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_OK)
+        self.assertIsNone(Timeline.get_by_id(failed_id))
+        mock_datastore.client.indices.close.assert_not_called()
+
+        # 3. Archiving now succeeds and closes the shared OpenSearch index.
+        response = self.client.post(
+            archive_url,
+            data=json.dumps({"action": "archive"}),
+            content_type="application/json",
+        )
+        self.assert200(response)
+        self.assertEqual(Sketch.get_by_id(sketch.id).get_status.status, "archived")
+        self.assertEqual(
+            SearchIndex.get_by_id(shared_index.id).get_status.status, "archived"
+        )
+        mock_datastore.client.indices.close.assert_called_once_with(
+            index="shared_idx_hex"
+        )
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore")
+    def test_archive_sketch_ignores_legacy_orphaned_and_deleted_sketch_timelines(
+        self, mock_datastore_cls
+    ):
+        """Archiving closes index even if legacy orphaned timelines exist in DB."""
+        mock_datastore = mock.MagicMock()
+        mock_datastore_cls.return_value = mock_datastore
+        self.login()
+
+        sketch = Sketch(name="active_sketch", description="d", user=self.user1)
+        sketch.set_status("ready")
+        deleted_sketch = Sketch(name="deleted_sketch", description="d", user=self.user1)
+        deleted_sketch.set_status("deleted")
+        db_session.add_all([sketch, deleted_sketch])
+        db_session.commit()
+        sketch.grant_permission(permission="read", user=self.user1)
+        sketch.grant_permission(permission="write", user=self.user1)
+        sketch.grant_permission(permission="delete", user=self.user1)
+
+        shared_index = SearchIndex(
+            name="legacy_shared_idx",
+            description="desc",
+            index_name="legacy_shared_idx_hex",
+            user=self.user1,
+        )
+        shared_index.set_status("ready")
+        db_session.add(shared_index)
+
+        tl_active = Timeline(
+            name="tl_active",
+            sketch=sketch,
+            user=self.user1,
+            searchindex=shared_index,
+        )
+        tl_active.set_status("ready")
+        tl_orphan = Timeline(
+            name="tl_legacy_orphan",
+            sketch=None,
+            user=self.user1,
+            searchindex=shared_index,
+        )
+        tl_orphan.set_status("fail")
+        tl_in_deleted_sketch = Timeline(
+            name="tl_in_deleted_sketch",
+            sketch=deleted_sketch,
+            user=self.user1,
+            searchindex=shared_index,
+        )
+        tl_in_deleted_sketch.set_status("ready")
+        db_session.add_all([tl_active, tl_orphan, tl_in_deleted_sketch])
+        db_session.commit()
+
+        response = self.client.post(
+            f"/api/v1/sketches/{sketch.id}/archive/",
+            data=json.dumps({"action": "archive"}),
+            content_type="application/json",
+        )
+        self.assert200(response)
+        self.assertEqual(Sketch.get_by_id(sketch.id).get_status.status, "archived")
+        self.assertEqual(
+            SearchIndex.get_by_id(shared_index.id).get_status.status, "archived"
+        )
+        mock_datastore.client.indices.close.assert_called_once_with(
+            index="legacy_shared_idx_hex"
+        )
 
 
 class SigmaRuleResourceTest(BaseTest):
