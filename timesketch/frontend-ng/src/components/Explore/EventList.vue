@@ -874,7 +874,7 @@ export default {
       return emojis.filter((emoji) => Object.prototype.hasOwnProperty.call(this.meta.emojis, emoji))
     },
     sanitizeEmoji(emoji) {
-      return DOMPurify.sanitize(emoji + ';')
+      return DOMPurify.sanitize(emoji + ';', { ALLOWED_TAGS: [] })
     },
     getTimelineColor(event) {
       let timeline = this.getTimeline(event)

@@ -160,6 +160,6 @@ describe('EventList.vue', () => {
     expect(wrapper.vm.getValidEmojis(rawEmojis)).toEqual(['&#x2620'])
     expect(wrapper.vm.getValidEmojis(null)).toEqual([])
     expect(wrapper.vm.sanitizeEmoji('&#x2620')).toBe('&#x2620;')
-    expect(wrapper.vm.sanitizeEmoji('<img src=x onerror="alert(1)">')).not.toContain('onerror')
+    expect(wrapper.vm.sanitizeEmoji('<img src=x onerror="alert(1)">')).toBe(';')
   })
 })

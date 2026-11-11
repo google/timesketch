@@ -986,7 +986,7 @@ export default {
       )
     },
     sanitizeEmoji(emoji) {
-      return DOMPurify.sanitize(emoji + ";")
+      return DOMPurify.sanitize(emoji + ";", { ALLOWED_TAGS: [] })
     },
     getTimelineColor(event) {
       let timeline = this.getTimeline(event)
