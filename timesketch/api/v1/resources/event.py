@@ -159,6 +159,7 @@ class EventCreateResource(resources.ResourceMixin, Resource):
                 "Unable to add an event where the attributes are not a dict object.",
             )
 
+        lib_utils.scrub_special_tags(attributes)
         event.update(attributes)
 
         tag = form.get("tag", [])

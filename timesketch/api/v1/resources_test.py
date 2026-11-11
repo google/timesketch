@@ -1617,6 +1617,35 @@ class EventCreateResourceTest(BaseTest):
         self.assertIn("Failed to add event to sketch 1", response.json["message"])
         self.assertIn("OpenSearch denied access", response.json["message"])
 
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    def test_manual_events_scrub_special_tags(self):
+        """Test that special fields like __ts_emojis are scrubbed from attributes."""
+        self.login()
+        with mock.patch.object(MockDataStore, "import_event") as mock_import_event:
+            response = self.client.post(
+                self.resource_url,
+                data=json.dumps(
+                    {
+                        "message": "manual event",
+                        "date_string": "2024-01-01T00:00:00Z",
+                        "attributes": {
+                            "__ts_emojis": ["&#x2620"],
+                            "__ts_timeline_id": 999,
+                            "_id": "custom_id",
+                            "custom_attr": "allowed_value",
+                        },
+                    }
+                ),
+                content_type="application/json",
+            )
+        self.assertEqual(response.status_code, HTTP_STATUS_CODE_CREATED)
+        mock_import_event.assert_called_once()
+        imported_event = mock_import_event.call_args[0][1]
+        self.assertNotIn("__ts_emojis", imported_event)
+        self.assertNotIn("__ts_timeline_id", imported_event)
+        self.assertNotIn("_id", imported_event)
+        self.assertEqual(imported_event["custom_attr"], "allowed_value")
+
 
 class TimelineListResourceTest(BaseTest):
     """Test TimelineList resource."""

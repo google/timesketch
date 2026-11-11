@@ -21,6 +21,7 @@ from timesketch.lib.testlib import BaseTest
 from timesketch.lib.utils import get_validated_indices
 from timesketch.lib.utils import random_color
 from timesketch.lib.utils import read_and_validate_csv
+from timesketch.lib.utils import read_and_validate_jsonl
 from timesketch.lib.utils import check_mapping_errors
 from timesketch.lib.utils import _convert_timestamp_to_datetime
 from timesketch.lib.utils import _validate_csv_fields
@@ -533,6 +534,27 @@ class TestUtils(BaseTest):
         # Test NaN
         dt_nan = _convert_timestamp_to_datetime(float("nan"))
         self.assertTrue(pd.isna(dt_nan))
+
+    def test_scrub_special_tags_in_csv_and_jsonl(self):
+        """Test that __ts_emojis and other special fields are scrubbed on import."""
+        jsonl_line = (
+            '{"message": "test", "datetime": "2026-11-08T12:00:00", '
+            '"timestamp_desc": "audit", "host": "lab", '
+            '"__ts_emojis": ["&#x2620"], "__ts_timeline_id": 42, "_id": "spoof"}\n'
+        )
+        jsonl_result = next(read_and_validate_jsonl(io.StringIO(jsonl_line)))
+        self.assertNotIn("__ts_emojis", jsonl_result)
+        self.assertNotIn("__ts_timeline_id", jsonl_result)
+        self.assertNotIn("_id", jsonl_result)
+        self.assertEqual(jsonl_result["host"], "lab")
+
+        csv_data = (
+            "message,datetime,timestamp_desc,__ts_emojis,host\n"
+            "test,2026-11-08T12:00:00Z,audit,&#x2620,lab\n"
+        )
+        csv_result = next(read_and_validate_csv(io.StringIO(csv_data)))
+        self.assertNotIn("__ts_emojis", csv_result)
+        self.assertEqual(csv_result["host"], "lab")
 
 
 class TestIndexPrefixUtils(BaseTest):
