@@ -392,11 +392,16 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
             sketch_id (int): Target sketch identifier.
         """
         if self._blank_sketch_id is not None:
-            manual_resp = self.api.get_sketch(self._blank_sketch_id).explore("*")
+            manual_resp = self.api.get_sketch(self._blank_sketch_id).explore(
+                "*", return_fields="message,host,__ts_emojis"
+            )
             manual_objects = manual_resp.get("objects", [])
             self.assertions.assertEqual(len(manual_objects), 1)
             manual_source = manual_objects[0].get("_source", {})
             self.assertions.assertNotIn("__ts_emojis", manual_source)
+            self.assertions.assertEqual(
+                manual_source.get("message"), "benign audit event"
+            )
             self.assertions.assertEqual(manual_source.get("host"), "lab")
 
         explore_pattern = f"**/api/v1/sketches/{sketch_id}/explore/"
