@@ -524,7 +524,7 @@ limitations under the License.
 </template>
 
 <script>
-import DOMPurify from 'dompurify'
+import DOMPurify from 'dompurify';
 import ApiClient from '../../utils/RestApiClient.js'
 import EventBus from '../../event-bus.js'
 import EventMixin from '../../mixins/EventMixin'
@@ -684,7 +684,7 @@ export default {
       return hasStarChip || hasStarQuery
     },
     sanitizedSummary() {
-      return DOMPurify.sanitize(this.eventList.meta.summary || '')
+      return DOMPurify.sanitize(this.eventList?.meta?.summary || '');
     },
     summaryInfoMessage() {
       const totalEvents = this.eventList.meta.summary_event_count

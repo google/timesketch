@@ -748,7 +748,7 @@ export default {
   },
   computed: {
     sanitizedSummary() {
-      return DOMPurify.sanitize(this.eventList.meta.summary || "")
+      return DOMPurify.sanitize(this.eventList?.meta?.summary || "");
     },
     summaryInfoMessage() {
       const totalEvents = this.eventList.meta.summary_event_count

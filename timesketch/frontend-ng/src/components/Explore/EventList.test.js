@@ -143,7 +143,7 @@ describe('EventList.vue', () => {
   })
 
   it('sanitizes AI summary HTML before rendering via v-html', async () => {
-    state.settings.eventSummarization = true
+    state.settings.eventSummarization = true;
     const wrapper = mount(EventList, {
       localVue,
       vuetify,
@@ -152,7 +152,7 @@ describe('EventList.vue', () => {
         queryRequest: {}
       },
       stubs: ['ts-bar-chart', 'ts-event-detail', 'ts-event-tag-menu', 'ts-event-tag-dialog', 'ts-event-action-menu', 'ts-event-tags', 'ts-explore-welcome-card', 'ts-search-not-found-card']
-    })
+    });
 
     await wrapper.setData({
       isSummaryLoading: false,
@@ -162,12 +162,12 @@ describe('EventList.vue', () => {
         },
         objects: [{ _id: '1', _source: { message: 'login' } }]
       }
-    })
+    });
 
-    const summaryCard = wrapper.find('.ts-ai-summary-text')
-    expect(summaryCard.exists()).toBe(true)
-    expect(summaryCard.html()).toContain('<strong>10.0.0.1</strong>')
-    expect(summaryCard.html()).not.toContain('onerror')
-    expect(summaryCard.html()).not.toContain('<script>')
-  })
+    const summaryCard = wrapper.find('.ts-ai-summary-text');
+    expect(summaryCard.exists()).toBe(true);
+    expect(summaryCard.html()).toContain('<strong>10.0.0.1</strong>');
+    expect(summaryCard.html()).not.toContain('onerror');
+    expect(summaryCard.html()).not.toContain('<script>');
+  });
 })
