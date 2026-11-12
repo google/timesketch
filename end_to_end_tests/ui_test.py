@@ -30,6 +30,7 @@ try:
     from playwright.sync_api import expect  # type: ignore[import-not-found]
     from playwright.sync_api import Page  # type: ignore[import-not-found]
     from playwright.sync_api import Response  # type: ignore[import-not-found]
+    from playwright.sync_api import Route  # type: ignore[import-not-found]
     from playwright.sync_api import (  # type: ignore[import-not-found]
         sync_playwright,
     )
@@ -37,6 +38,7 @@ except ImportError:
     expect: Any = None  # type: ignore[no-redef]
     Page = Any  # type: ignore[assignment,misc]
     Response = Any  # type: ignore[assignment,misc]
+    Route = Any  # type: ignore[assignment,misc]
     sync_playwright: Any = None  # type: ignore[no-redef]
 
 from . import interface
@@ -83,6 +85,7 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
         self._step_screenshots: dict[str, str] = {}
         self._auth_storage_state: Any = None
         self._user2_storage_state: Any = None
+        self._blank_sketch_id: Optional[int] = None
         self._csv_sketch_id: Optional[int] = None
         self._pending_plaso_sketch_id: Optional[int] = None
 
@@ -91,6 +94,7 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
         self._step_screenshots.clear()
         self._auth_storage_state = None
         self._user2_storage_state = None
+        self._blank_sketch_id = None
         self._csv_sketch_id = None
         self._pending_plaso_sketch_id = None
 
@@ -400,6 +404,61 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
         events = self.api.get_sketch(sketch_id).explore("*", as_pandas=True)
         self.assertions.assertEqual(len(events), expected_events)
 
+    def _assert_emoji_rendering_and_xss_guard(self, page: Page, sketch_id: int) -> None:
+        """Checks valid emoji rendering and XSS filtering in Explore EventList.
+
+        Args:
+            page (playwright.sync_api.Page): Active page on '/sketch/<id>/explore'.
+            sketch_id (int): Target sketch identifier.
+        """
+        if self._blank_sketch_id is not None:
+            manual_resp = self.api.get_sketch(self._blank_sketch_id).explore(
+                "*", return_fields="message,host,__ts_emojis"
+            )
+            manual_objects = manual_resp.get("objects", [])
+            self.assertions.assertEqual(len(manual_objects), 1)
+            manual_source = manual_objects[0].get("_source", {})
+            self.assertions.assertNotIn("__ts_emojis", manual_source)
+            self.assertions.assertEqual(
+                manual_source.get("message"), "benign audit event"
+            )
+            self.assertions.assertEqual(manual_source.get("host"), "lab")
+
+        explore_pattern = f"**/api/v1/sketches/{sketch_id}/explore/"
+
+        def _inject_emojis(route: Route) -> None:
+            response = route.fetch()
+            payload = response.json()
+            objects = payload.get("objects", [])
+            if objects:
+                objects[0].setdefault("_source", {})["__ts_emojis"] = [
+                    "&#x2620",
+                    "<img src=x onerror=\"document.title='XSS_EMOJI_MARKER'\">",
+                ]
+            route.fulfill(response=response, json=payload)
+
+        page.route(explore_pattern, _inject_emojis)
+        try:
+            search_input = page.locator("#tsSearchInput")
+            with page.expect_response(
+                lambda resp: f"/api/v1/sketches/{sketch_id}/explore/" in resp.url
+                and resp.request.method == "POST",
+                timeout=60000,
+            ) as explore_info:
+                search_input.fill("zmap")
+                search_input.press("Enter")
+
+            self.assertions.assertEqual(explore_info.value.status, 200)
+            emoji_span = page.locator(
+                '.ts-event-field-container span[title="Suspicious entry"]'
+            ).first
+            expect(emoji_span).to_be_visible(timeout=15000)
+            expect(emoji_span).to_have_text("\u2620")
+            expect(page.locator(".ts-event-field-container img")).to_have_count(0)
+            expect(page).not_to_have_title("XSS_EMOJI_MARKER")
+        finally:
+            page.unroute(explore_pattern)
+
     def _submit_manual_event_via_ui(self, page: Page, message: str) -> None:
         """Opens AddManualEvent.vue and submits a manual event.
 
@@ -496,6 +555,19 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
 
             api_sketch = self.api.get_sketch(sketch_id)
             self.assertions.assertEqual(api_sketch.name, sketch_name)
+            api_sketch.add_event(
+                "benign audit event",
+                "2026-11-08T12:00:00",
+                "audit",
+                attributes={
+                    "__ts_emojis": [
+                        "&#x2620",
+                        "<img src=x onerror=\"document.title='XSS_EMOJI_MARKER'\">",
+                    ],
+                    "host": "lab",
+                },
+            )
+            self._blank_sketch_id = sketch_id
 
     def test_03_upload_plaso_timeline_via_ui(self) -> None:
         """Starts browser Plaso upload immediately so Celery runs in parallel."""
@@ -540,6 +612,7 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
             expect(page.get_by_text("apt-get install zmap")).to_be_visible(
                 timeout=15000
             )
+            self._assert_emoji_rendering_and_xss_guard(page, sketch_id)
             self._capture_step_screenshot(
                 page,
                 "05_explore_csv_events",

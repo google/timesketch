@@ -39,7 +39,14 @@ from timesketch.lib import errors
 logger = logging.getLogger("timesketch.utils")
 
 # Fields to scrub from timelines.
-FIELDS_TO_REMOVE = ["_id", "_type", "_index", "_source", "__ts_timeline_id"]
+FIELDS_TO_REMOVE = [
+    "_id",
+    "_type",
+    "_index",
+    "_source",
+    "__ts_timeline_id",
+    "__ts_emojis",
+]
 
 # Number of rows processed at once when ingesting a CSV file.
 DEFAULT_CHUNK_SIZE = 10000
@@ -161,11 +168,14 @@ def query_results_to_dataframe(result, sketch):
     return data_frame
 
 
-def _scrub_special_tags(dict_obj):
+def scrub_special_tags(dict_obj):
     """Remove OpenSearch specific fields from a dict."""
     for field in FIELDS_TO_REMOVE:
         if field in dict_obj:
             _ = dict_obj.pop(field)
+
+
+_scrub_special_tags = scrub_special_tags
 
 
 def _convert_timestamp_to_datetime(timestamp: int) -> pandas.Timestamp:

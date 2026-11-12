@@ -474,9 +474,9 @@ limitations under the License.
                 <span v-if="displayOptions.showEmojis && index === 3">
                   <span
                     class="mr-2"
-                    v-for="emoji in item._source.__ts_emojis"
+                    v-for="emoji in getValidEmojis(item._source.__ts_emojis)"
                     :key="emoji"
-                    v-html="emoji + ';'"
+                    v-html="sanitizeEmoji(emoji)"
                     :title="meta.emojis[emoji]"
                   >
                   </span>
@@ -869,6 +869,15 @@ export default {
           this.expandedRows.push(prevEvent)
         }
       })
+    },
+    getValidEmojis(emojis) {
+      if (!Array.isArray(emojis) || !this.meta || !this.meta.emojis) {
+        return [];
+      }
+      return emojis.filter((emoji) => Object.prototype.hasOwnProperty.call(this.meta.emojis, emoji));
+    },
+    sanitizeEmoji(emoji) {
+      return DOMPurify.sanitize(emoji + ';', { ALLOWED_TAGS: [] });
     },
     getTimelineColor(event) {
       let timeline = this.getTimeline(event)
