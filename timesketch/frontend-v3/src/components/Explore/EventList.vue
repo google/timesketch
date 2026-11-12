@@ -130,7 +130,7 @@ limitations under the License.
             <div class="ts-summary-placeholder-line shimmer short"></div>
             <div class="ts-summary-placeholder-line shimmer long"></div>
           </div>
-          <div v-else v-html="eventList.meta.summary"></div>
+          <div v-else v-html="sanitizedSummary"></div>
         </v-card-text>
       </v-card>
     </div> -->
@@ -591,6 +591,7 @@ limitations under the License.
 </template>
 
 <script>
+import DOMPurify from "dompurify";
 import ApiClient from "@/utils/RestApiClient.js";
 import EventBus from "@/event-bus.js";
 import { useAppStore } from "@/stores/app";
@@ -746,6 +747,9 @@ export default {
     }
   },
   computed: {
+    sanitizedSummary() {
+      return DOMPurify.sanitize(this.eventList?.meta?.summary || "");
+    },
     summaryInfoMessage() {
       const totalEvents = this.eventList.meta.summary_event_count
       const uniqueEvents = this.eventList.meta.summary_unique_event_count
