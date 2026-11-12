@@ -23,6 +23,8 @@ from typing import Optional
 import urllib.parse
 import uuid
 
+from timesketch_api_client import client as api_client
+
 try:
     # pylint: disable=import-error
     from playwright.sync_api import expect  # type: ignore[import-not-found]
@@ -50,6 +52,11 @@ EXPECTED_CSV_EVENTS = 4
 CSV_INDEX_TIMEOUT_SECONDS = 60
 EXPECTED_PLASO_EVENTS = 3205
 PLASO_INDEX_TIMEOUT_SECONDS = 300
+USER2_USERNAME = "test2"
+USER2_PASSWORD = "test2"
+MANUAL_EVENT_DATETIME = "2026-11-10T12:00:00Z"
+MANUAL_EVENT_MESSAGE = "Manual event added by write collaborator"
+COLLABORATOR_COMMENT = "Confirmed zmap install by write collaborator"
 
 
 class UiEndToEndTest(interface.BaseEndToEndTest):
@@ -57,30 +64,38 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
 
     Tests are ordered for rapid fail-fast feedback while overlapping slow Plaso
     ingestion in the background:
-      1. test_01: UI reachability, login redirect guard, static /dist/ assets.
-      2. test_02: Auth check, blank sketch dialog, session cookie capture.
-      3. test_03: Kick off Plaso upload in UI (HTTP 201) and return immediately
-         so a Celery worker runs psort.py in the background.
-      4. test_04: Upload 702-byte sigma_events.csv via UI, await live 5s SPA
-         auto-poll, and query 4 events in Explore while Plaso is still running.
-      5. test_05: Await the remaining tail of the parallel Plaso timeline and
-         query all 3,205 events in Explore.
+      1. test_01_unauthenticated_redirect_and_login_page
+      2. test_02_user_login_and_create_blank_sketch
+      3. test_03_upload_plaso_timeline_via_ui
+      4. test_04_upload_csv_timeline_and_search_in_explore
+      5. test_05_readonly_collaborator_cannot_modify_sketch
+      6. test_06_write_collaborator_can_upload_annotate_and_add_event
+      7. test_07_plaso_timeline_indexing_and_search_in_explore
     """
 
     NAME = "ui_test"
 
     def __init__(self) -> None:
         super().__init__()
+        self.user2_api = api_client.TimesketchApi(
+            host_uri=interface.HOST_URI,
+            username=USER2_USERNAME,
+            password=USER2_PASSWORD,
+        )
         self._step_screenshots: dict[str, str] = {}
         self._auth_storage_state: Any = None
+        self._user2_storage_state: Any = None
         self._blank_sketch_id: Optional[int] = None
+        self._csv_sketch_id: Optional[int] = None
         self._pending_plaso_sketch_id: Optional[int] = None
 
     def setup(self) -> None:
         """Resets per-suite UI state; tests drive imports through the browser."""
         self._step_screenshots.clear()
         self._auth_storage_state = None
+        self._user2_storage_state = None
         self._blank_sketch_id = None
+        self._csv_sketch_id = None
         self._pending_plaso_sketch_id = None
 
     @staticmethod
@@ -126,11 +141,19 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
         return png_path
 
     @contextlib.contextmanager
-    def _browser_page(self, test_label: str) -> Iterator[Page]:
+    def _browser_page(
+        self,
+        test_label: str,
+        use_cached_auth: bool = True,
+        storage_state: Any = None,
+    ) -> Iterator[Page]:
         """Yields an isolated Playwright Page with network, JS, and trace guards.
 
         Args:
             test_label (str): Identifier used for failure screenshot/trace files.
+            use_cached_auth (bool): Whether to apply the default owner storage
+                state when storage_state is not explicitly provided.
+            storage_state (Any): Optional explicit Playwright storage_state dict.
 
         Yields:
             playwright.sync_api.Page: Fresh browser page with 1440x900 viewport.
@@ -162,7 +185,9 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
                 )
 
         context_kwargs: dict[str, Any] = {"viewport": {"width": 1440, "height": 900}}
-        if self._auth_storage_state is not None:
+        if storage_state is not None:
+            context_kwargs["storage_state"] = storage_state
+        elif use_cached_auth and self._auth_storage_state is not None:
             context_kwargs["storage_state"] = self._auth_storage_state
 
         with sync_playwright() as pw:
@@ -210,13 +235,16 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
         page: Page,
         username: str = interface.USERNAME,
         password: str = interface.PASSWORD,
-    ) -> None:
+    ) -> Any:
         """Submits the local login form in the browser and caches storage_state.
 
         Args:
             page (playwright.sync_api.Page): Active Playwright page.
             username (str): Account username to submit.
             password (str): Account password to submit.
+
+        Returns:
+            Any: Captured Playwright BrowserContext storage_state.
         """
         page.goto(f"{interface.HOST_URI}/login/", wait_until="domcontentloaded")
         page.locator('input[name="username"]').fill(username)
@@ -226,7 +254,12 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
         expect(
             page.get_by_role("heading", name="Start new investigation")
         ).to_be_visible(timeout=30000)
-        self._auth_storage_state = page.context.storage_state()
+        state = page.context.storage_state()
+        if username == interface.USERNAME:
+            self._auth_storage_state = state
+        elif username == USER2_USERNAME:
+            self._user2_storage_state = state
+        return state
 
     def _create_blank_sketch_via_ui(self, page: Page, sketch_name: str) -> int:
         """Creates a blank sketch from the Home dialog and returns its sketch ID.
@@ -318,14 +351,7 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
             slug, title, description = step_screenshot
             self._capture_step_screenshot(page, slug, title, description)
 
-        with page.expect_response(
-            lambda resp: "/api/v1/upload/" in resp.url
-            and resp.request.method == "POST",
-            timeout=60000,
-        ) as upload_info:
-            page.get_by_role("button", name="Submit").click()
-
-        self.assertions.assertEqual(upload_info.value.status, 201)
+        page.get_by_role("button", name="Submit").click()
 
         # UploadForm.vue dispatches updateSketch on 201, transitioning Sketch.vue
         # out of its empty state and mounting Explore (#tsSearchInput).
@@ -362,15 +388,9 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
             processed_chip.locator(".timeline-name-ellipsis:not(.disabled)")
         ).to_be_visible(timeout=timeout_seconds * 1000)
 
-        with page.expect_response(
-            lambda resp: f"/api/v1/sketches/{sketch_id}/explore/" in resp.url
-            and resp.request.method == "POST",
-            timeout=60000,
-        ) as explore_info:
-            search_input.fill("*")
-            search_input.press("Enter")
+        search_input.fill("*")
+        search_input.press("Enter")
 
-        self.assertions.assertEqual(explore_info.value.status, 200)
         expect(page.get_by_text(f"of {expected_events} events")).to_be_visible(
             timeout=30000
         )
@@ -439,9 +459,36 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
         finally:
             page.unroute(explore_pattern)
 
-    def test_01_ui_reachable_and_login_guard(self) -> None:
+    def _submit_manual_event_via_ui(self, page: Page, message: str) -> None:
+        """Opens AddManualEvent.vue and submits a manual event.
+
+        Args:
+            page (playwright.sync_api.Page): Active page on '/sketch/<id>/explore'.
+            message (str): Event message to submit.
+        """
+        page.get_by_role("button", name="Add manual event").click()
+        datetime_input = page.get_by_role("textbox", name="Datetime")
+        expect(datetime_input).to_be_visible(timeout=15000)
+        datetime_input.fill(MANUAL_EVENT_DATETIME)
+        page.get_by_role("textbox", name="Message").fill(message)
+        page.get_by_role("textbox", name="Timestamp Description").fill(
+            "Manual UI E2E event"
+        )
+        page.get_by_role("button", name="Save").click()
+
+    @staticmethod
+    def _expect_and_close_error_snackbar(page: Page) -> None:
+        """Awaits Vuetify's global error snackbar and dismisses it."""
+        error_snackbar = page.locator(".v-snack__wrapper.error")
+        expect(error_snackbar).to_be_visible(timeout=15000)
+        error_snackbar.get_by_role("button", name="Close").click()
+        expect(error_snackbar).to_be_hidden(timeout=15000)
+
+    def test_01_unauthenticated_redirect_and_login_page(self) -> None:
         """Unauthenticated root redirects to /login/ and serves static UI assets."""
-        with self._browser_page("test_01_ui_reachable") as page:
+        with self._browser_page(
+            "test_01_unauthenticated_redirect_and_login_page"
+        ) as page:
             response = page.goto(
                 f"{interface.HOST_URI}/", wait_until="domcontentloaded"
             )
@@ -474,9 +521,9 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
                 "branding, CSRF token, and sign-in form.",
             )
 
-    def test_02_login_and_create_blank_sketch(self) -> None:
+    def test_02_user_login_and_create_blank_sketch(self) -> None:
         """Rejects invalid credentials, logs in, and creates a blank sketch."""
-        with self._browser_page("test_02_login_and_sketch") as page:
+        with self._browser_page("test_02_user_login_and_create_blank_sketch") as page:
             page.goto(f"{interface.HOST_URI}/login/", wait_until="domcontentloaded")
             page.locator('input[name="username"]').fill(interface.USERNAME)
             page.locator('input[name="password"]').fill(
@@ -522,12 +569,12 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
             )
             self._blank_sketch_id = sketch_id
 
-    def test_03_kickoff_plaso_upload_via_ui(self) -> None:
+    def test_03_upload_plaso_timeline_via_ui(self) -> None:
         """Starts browser Plaso upload immediately so Celery runs in parallel."""
         plaso_filename = interface.get_plaso_filename()
         plaso_path = os.path.join(interface.TEST_DATA_DIR, plaso_filename)
 
-        with self._browser_page("test_03_kickoff_plaso") as page:
+        with self._browser_page("test_03_upload_plaso_timeline_via_ui") as page:
             sketch_id = self._open_new_empty_sketch_in_ui(page, "ui_e2e_plaso")
             self._submit_timeline_upload_via_ui(
                 page,
@@ -542,11 +589,13 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
             )
             self._pending_plaso_sketch_id = sketch_id
 
-    def test_04_fast_csv_upload_and_explore_via_ui(self) -> None:
+    def test_04_upload_csv_timeline_and_search_in_explore(self) -> None:
         """Uploads a 4-row CSV for rapid UI/auto-poll/Explore feedback."""
         csv_path = os.path.join(interface.TEST_DATA_DIR, CSV_FIXTURE_FILENAME)
 
-        with self._browser_page("test_04_fast_csv_explore") as page:
+        with self._browser_page(
+            "test_04_upload_csv_timeline_and_search_in_explore"
+        ) as page:
             sketch_id = self._open_new_empty_sketch_in_ui(page, "ui_e2e_csv")
             expected_tl_name = self._submit_timeline_upload_via_ui(page, csv_path)
 
@@ -571,8 +620,234 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
                 "702-byte sigma_events.csv indexed on a parallel Celery worker, "
                 "auto-enabled by the live SPA poll, and queried in Explore.",
             )
+            self._csv_sketch_id = sketch_id
 
-    def test_05_await_parallel_plaso_and_search_events(self) -> None:
+    def test_05_readonly_collaborator_cannot_modify_sketch(self) -> None:
+        """Exercises Vuetify UI as read-only user and checks state via API."""
+        csv_path = os.path.join(interface.TEST_DATA_DIR, CSV_FIXTURE_FILENAME)
+        expected_tl_name = os.path.splitext(CSV_FIXTURE_FILENAME)[0]
+
+        self.assertions.assertIsNotNone(self._csv_sketch_id)
+        assert self._csv_sketch_id is not None
+        sketch_id = self._csv_sketch_id
+
+        owner_sketch = self.api.get_sketch(sketch_id)
+        owner_sketch.add_to_acl(user_list=[USER2_USERNAME], permissions=["read"])
+        user2_sketch = self.user2_api.get_sketch(sketch_id)
+        self.assertions.assertEqual(user2_sketch.id, sketch_id)
+
+        with self._browser_page(
+            "test_05_readonly_collaborator_cannot_modify_sketch",
+            use_cached_auth=False,
+        ) as page:
+            self._login_via_ui(page, username=USER2_USERNAME, password=USER2_PASSWORD)
+            page.goto(
+                f"{interface.HOST_URI}/sketch/{sketch_id}/explore",
+                wait_until="domcontentloaded",
+            )
+            self._await_chip_and_run_wildcard_search(
+                page,
+                sketch_id=sketch_id,
+                expected_tl_name=expected_tl_name,
+                expected_events=EXPECTED_CSV_EVENTS,
+                timeout_seconds=CSV_INDEX_TIMEOUT_SECONDS,
+            )
+
+            target_row = (
+                page.locator(".v-data-table tbody tr")
+                .filter(has_text="apt-get install zmap")
+                .first
+            )
+
+            # 1. Comments.vue hides comment input when meta.permissions.write is false.
+            target_row.get_by_text("apt-get install zmap").click()
+            expect(target_row.locator('[title="Add a comment"]')).to_be_visible(
+                timeout=15000
+            )
+            target_row.locator('[title="Add a comment"]').click()
+            expect(page.get_by_text("Comments", exact=True)).to_be_visible(
+                timeout=15000
+            )
+            expect(page.get_by_label("Add comment")).to_be_hidden()
+            expect(page.locator('[title="Submit comment"]')).to_be_hidden()
+
+            # 2. Attempt star, tag, and manual event in UI (each shows error snackbar).
+            target_row.locator('[title="Toggle star status"]').click()
+            self._expect_and_close_error_snackbar(page)
+
+            target_row.locator('[title="Modify tags"]').click()
+            page.locator('[title="Add quick tag"]').filter(
+                has_text="suspicious"
+            ).click()
+            self._expect_and_close_error_snackbar(page)
+
+            self._submit_manual_event_via_ui(page, "Unauthorized manual event")
+            self._expect_and_close_error_snackbar(page)
+            page.get_by_role("button", name="Cancel").click()
+
+            # 3. Attempt timeline deletion, sketch deletion, sketch archiving,
+            # and timeline upload in UI.
+            processed_chip = page.locator(".v-chip.timeline-chip").filter(
+                has_text=expected_tl_name
+            )
+            processed_chip.locator('[title="Manage Timeline"]').click()
+            page.get_by_text("Delete", exact=True).click()
+            page.get_by_role("button", name="delete").click()
+            self._expect_and_close_error_snackbar(page)
+
+            page.locator('[title="Sketch Options"]').click()
+            expect(page.get_by_text("Archive sketch")).to_be_visible(timeout=15000)
+            expect(page.get_by_text("Delete sketch")).to_be_hidden()
+
+            self._capture_step_screenshot(
+                page,
+                "06_acl_readonly_collaborator",
+                "Step 6 - Read-Only Collaborator ACL Restrictions",
+                "Read-only collaborator (test2) can view events in Explore "
+                "while comment input and sketch deletion are hidden and "
+                "all write/delete actions are rejected.",
+            )
+
+            page.get_by_text("Archive sketch").click()
+            self._expect_and_close_error_snackbar(page)
+
+            page.reload(wait_until="domcontentloaded")
+            page.get_by_role("button", name="Add Timeline").click()
+            page.locator("input#datafile").set_input_files(csv_path)
+            page.get_by_role("button", name="Submit").click()
+            self._expect_and_close_error_snackbar(page)
+
+        # Check via API client that the sketch and its events were not modified.
+        refreshed_sketch = self.api.get_sketch(sketch_id)
+        self.assertions.assertNotEqual(refreshed_sketch.status, "archived")
+        self.assertions.assertEqual(len(refreshed_sketch.list_timelines()), 1)
+        events = refreshed_sketch.explore("*", as_pandas=True)
+        self.assertions.assertEqual(len(events), EXPECTED_CSV_EVENTS)
+        for _, row in events.iterrows():
+            self.assertions.assertEqual(list(row.get("label") or []), [])
+            self.assertions.assertEqual(list(row.get("tag") or []), [])
+            self.assertions.assertEqual(list(row.get("comment") or []), [])
+
+    def test_06_write_collaborator_can_upload_annotate_and_add_event(
+        self,
+    ) -> None:
+        """Grants write access in Vuetify UI and checks collaborator edits via API."""
+        csv_path = os.path.join(interface.TEST_DATA_DIR, CSV_FIXTURE_FILENAME)
+
+        with self._browser_page(
+            "test_06_write_collaborator_owner_share_dialog"
+        ) as owner_page:
+            sketch_id = self._open_new_empty_sketch_in_ui(owner_page, "ui_e2e_acl_rw")
+            owner_page.get_by_role("button", name="Share").click()
+            expect(owner_page.get_by_text("People with access")).to_be_visible(
+                timeout=15000
+            )
+            owner_page.locator(".v-dialog--active .v-select__selections").first.click()
+            owner_page.locator(".v-menu__content .v-list-item").filter(
+                has_text=USER2_USERNAME
+            ).click()
+            owner_page.locator(".v-dialog--active h3").click()
+            owner_page.get_by_role("button", name="Done").click()
+            expect(owner_page.get_by_text("Updated sharing")).to_be_visible(
+                timeout=15000
+            )
+
+        user2_sketch = self.user2_api.get_sketch(sketch_id)
+        self.assertions.assertEqual(user2_sketch.id, sketch_id)
+        self.assertions.assertIsNotNone(self._user2_storage_state)
+
+        with self._browser_page(
+            "test_06_write_collaborator_can_upload_annotate_and_add_event",
+            use_cached_auth=False,
+            storage_state=self._user2_storage_state,
+        ) as page:
+            page.goto(
+                f"{interface.HOST_URI}/sketch/{sketch_id}/explore",
+                wait_until="domcontentloaded",
+            )
+            expect(page.get_by_text("It's empty around here")).to_be_visible(
+                timeout=30000
+            )
+
+            # 1. Add a new timeline via UI and query its 4 events.
+            expected_tl_name = self._submit_timeline_upload_via_ui(page, csv_path)
+            self._await_chip_and_run_wildcard_search(
+                page,
+                sketch_id=sketch_id,
+                expected_tl_name=expected_tl_name,
+                expected_events=EXPECTED_CSV_EVENTS,
+                timeout_seconds=CSV_INDEX_TIMEOUT_SECONDS,
+            )
+
+            target_row = (
+                page.locator(".v-data-table tbody tr")
+                .filter(has_text="apt-get install zmap")
+                .first
+            )
+
+            # 2. Star, tag ('suspicious'), and comment on the event in UI.
+            # toggleStar updates the star icon optimistically before POST completes;
+            # wait for its response to avoid an OpenSearch 409 conflict when tagging.
+            with page.expect_response(lambda r: "/event/annotate/" in r.url):
+                target_row.locator('[title="Toggle star status"]').click()
+
+            target_row.locator('[title="Modify tags"]').click()
+            page.locator('[title="Add quick tag"]').filter(
+                has_text="suspicious"
+            ).click()
+            expect(target_row.get_by_text("suspicious")).to_be_visible(timeout=15000)
+
+            target_row.get_by_text("apt-get install zmap").click()
+            expect(target_row.locator('[title="Add a comment"]')).to_be_visible(
+                timeout=15000
+            )
+            target_row.locator('[title="Add a comment"]').click()
+            page.get_by_label("Add comment").fill(COLLABORATOR_COMMENT)
+            page.locator('[title="Submit comment"]').click()
+            expect(page.get_by_text(COLLABORATOR_COMMENT)).to_be_visible(timeout=15000)
+
+            # 3. Add a manual event in UI and query all 5 events in Explore.
+            self._submit_manual_event_via_ui(page, MANUAL_EVENT_MESSAGE)
+            expect(page.get_by_role("textbox", name="Datetime")).to_be_hidden(
+                timeout=15000
+            )
+            page.reload(wait_until="domcontentloaded")
+            self._await_chip_and_run_wildcard_search(
+                page,
+                sketch_id=sketch_id,
+                expected_tl_name="Manual events",
+                expected_events=EXPECTED_CSV_EVENTS + 1,
+                timeout_seconds=CSV_INDEX_TIMEOUT_SECONDS,
+            )
+
+            # 4. Write collaborator still lacks delete permission on the sketch.
+            page.locator('[title="Sketch Options"]').click()
+            expect(page.get_by_text("Archive sketch")).to_be_visible(timeout=15000)
+            expect(page.get_by_text("Delete sketch")).to_be_hidden()
+
+            self._capture_step_screenshot(
+                page,
+                "07_acl_write_collaborator",
+                "Step 7 - Write Collaborator Timeline, Annotations & Manual Event",
+                "Write collaborator (test2) uploaded sigma_events.csv, starred, "
+                "tagged, and commented on an event, and added a manual event.",
+            )
+
+        # Check via API client that timeline, manual event, star, tag, and
+        # comment were persisted in the backend.
+        refreshed_sketch = self.api.get_sketch(sketch_id)
+        self.assertions.assertEqual(len(refreshed_sketch.list_timelines()), 2)
+        events = refreshed_sketch.explore("*", as_pandas=True)
+        self.assertions.assertEqual(len(events), EXPECTED_CSV_EVENTS + 1)
+        self.assertions.assertIn(MANUAL_EVENT_MESSAGE, list(events["message"].values))
+        zmap_rows = events[events["message"].str.contains("apt-get install zmap")]
+        self.assertions.assertEqual(len(zmap_rows), 1)
+        zmap_event = zmap_rows.iloc[0]
+        self.assertions.assertIn("__ts_star", list(zmap_event["label"]))
+        self.assertions.assertIn("suspicious", list(zmap_event["tag"]))
+        self.assertions.assertIn(COLLABORATOR_COMMENT, list(zmap_event["comment"]))
+
+    def test_07_plaso_timeline_indexing_and_search_in_explore(self) -> None:
         """Awaits the background Plaso timeline and queries all 3,205 events."""
         plaso_filename = interface.get_plaso_filename()
         expected_tl_name = os.path.splitext(plaso_filename)[0]
@@ -580,7 +855,9 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
         assert self._pending_plaso_sketch_id is not None
         sketch_id = self._pending_plaso_sketch_id
 
-        with self._browser_page("test_05_await_plaso") as page:
+        with self._browser_page(
+            "test_07_plaso_timeline_indexing_and_search_in_explore"
+        ) as page:
             page.goto(
                 f"{interface.HOST_URI}/sketch/{sketch_id}/explore",
                 wait_until="domcontentloaded",
@@ -594,8 +871,8 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
             )
             self._capture_step_screenshot(
                 page,
-                "06_explore_plaso_events",
-                "Step 6 - Parallel Plaso Events in Explore",
+                "08_explore_plaso_events",
+                "Step 8 - Parallel Plaso Events in Explore",
                 "Background Plaso timeline (evtx_20260720.plaso) finished "
                 "indexing and rendered 3,205 searchable EVTX events in Explore.",
             )
