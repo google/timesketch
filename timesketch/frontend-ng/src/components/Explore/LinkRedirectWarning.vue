@@ -28,13 +28,13 @@ limitations under the License.
         <div v-if="contextValue">
           <b>Value:</b><br/>
           <code class="code">
-            {{ getContextValue }}
+            {{ contextValue }}
           </code>
         </div>
         <div>
           <b>External website:</b><br/>
           <code class="code">
-            {{ getContextUrl }}
+            {{ contextUrl }}
           </code>
         </div>
 
@@ -51,8 +51,10 @@ limitations under the License.
         <v-btn
           color="primary"
           text
-          :href="contextUrl"
+          :href="safeContextUrl"
+          :disabled="!safeContextUrl"
           target="_blank"
+          rel="noopener noreferrer"
           @click="clearAndCancel"
         >
           continue
@@ -62,24 +64,30 @@ limitations under the License.
   </template>
 
   <script>
-  import DOMPurify from 'dompurify';
-
   export default {
-    props: ['contextValue', 'contextUrl' ],
+    props: ['contextValue', 'contextUrl'],
     methods: {
       clearAndCancel: function () {
-        this.$emit('cancel')
+        this.$emit('cancel');
       },
     },
     computed: {
-      getContextValue() {
-        return DOMPurify.sanitize(this.contextValue)
+      safeContextUrl() {
+        if (typeof this.contextUrl !== 'string') {
+          return null;
+        }
+        try {
+          const parsed = new URL(this.contextUrl);
+          if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+            return parsed.href;
+          }
+        } catch {
+          return null;
+        }
+        return null;
       },
-      getContextUrl() {
-        return DOMPurify.sanitize(this.contextUrl)
-      }
-    }
-  }
+    },
+  };
   </script>
 
   <style scoped lang="scss"></style>

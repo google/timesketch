@@ -87,9 +87,7 @@ limitations under the License.
                   <td>
                     <span v-if="key === 'references'">
                       <ul v-for="ref in value" :key="ref">
-                        <li>
-                          <a :href="ref" target="new">{{ ref }}</a>
-                        </li>
+                        <li>{{ ref }}</li>
                       </ul>
                     </span>
                     <span v-else-if="key === 'falsepositives'">
