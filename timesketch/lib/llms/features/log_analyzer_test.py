@@ -17,6 +17,7 @@ import json
 from unittest import mock
 
 from timesketch.lib.llms.features import log_analyzer
+from timesketch.lib.llms.providers import interface
 from timesketch.lib.testlib import BaseTest
 
 
@@ -136,3 +137,93 @@ class TestLogAnalyzerFeature(BaseTest):
         mock_provider.generate_stream_from_logs.assert_called_once()
         _, call_kwargs = mock_provider.generate_stream_from_logs.call_args
         self.assertEqual(call_kwargs.get("prompt"), custom_prompt)
+
+    @mock.patch(
+        "timesketch.lib.llms.features.log_analyzer.InvestigativeQuestionConclusion"
+    )
+    @mock.patch("timesketch.lib.llms.features.log_analyzer.InvestigativeQuestion")
+    @mock.patch("timesketch.lib.llms.features.log_analyzer.db_session")
+    @mock.patch("timesketch.lib.llms.features.log_analyzer.Event")
+    def test_process_response_accepts_timesketch_priority_names(
+        self, mock_event, mock_db_session, mock_question_cls, mock_conclusion_cls
+    ):
+        """Timesketch priority names are applied, not silently dropped."""
+        mock_event.get_or_create.return_value = mock.Mock(searchindex_id=1)
+        mock_conclusion_cls.query.filter_by.return_value.first.return_value = None
+
+        for priority in ("low", "medium", "high"):
+            question = mock.Mock()
+            question.display_name = ""
+            question.get_labels = []
+            mock_question_cls.get_or_create.return_value = question
+
+            feature = log_analyzer.LogAnalyzer()
+            result = feature.process_response(
+                llm_response={
+                    "record_ids": ["test_id_1"],
+                    "annotations": [
+                        {
+                            "investigative_question": "test question",
+                            "conclusions": ["test conclusion"],
+                            "priority": priority,
+                        }
+                    ],
+                },
+                sketch=mock.Mock(id=1, active_timelines=[]),
+            )
+
+            self.assertEqual(result.get("status"), "success")
+            question.add_label.assert_called_once_with(f"__ts_priority_{priority}")
+            self.assertEqual(feature._errors_encountered, [])
+
+    @mock.patch(
+        "timesketch.lib.llms.features.log_analyzer.InvestigativeQuestionConclusion"
+    )
+    @mock.patch("timesketch.lib.llms.features.log_analyzer.InvestigativeQuestion")
+    @mock.patch("timesketch.lib.llms.features.log_analyzer.db_session")
+    @mock.patch("timesketch.lib.llms.features.log_analyzer.Event")
+    def test_process_response_reports_unknown_priority(
+        self, mock_event, mock_db_session, mock_question_cls, mock_conclusion_cls
+    ):
+        """A priority we have no mapping for is still reported."""
+        mock_event.get_or_create.return_value = mock.Mock(searchindex_id=1)
+        mock_conclusion_cls.query.filter_by.return_value.first.return_value = None
+        question = mock.Mock()
+        question.display_name = ""
+        question.get_labels = []
+        mock_question_cls.get_or_create.return_value = question
+
+        feature = log_analyzer.LogAnalyzer()
+        feature.process_response(
+            llm_response={
+                "record_ids": ["test_id_1"],
+                "annotations": [
+                    {
+                        "investigative_question": "test question",
+                        "conclusions": ["test conclusion"],
+                        "priority": "defcon-1",
+                    }
+                ],
+            },
+            sketch=mock.Mock(id=1, active_timelines=[]),
+        )
+
+        question.add_label.assert_not_called()
+        self.assertIn(
+            "Unknown priority value: defcon-1", feature._errors_encountered
+        )
+
+    def test_execute_rejects_provider_without_streaming_support(self):
+        """A provider that cannot stream gets the readable error, not AttributeError."""
+
+        class NoStreamingProvider(interface.LLMProvider):
+            NAME = "no_streaming_provider"
+
+        feature = log_analyzer.LogAnalyzer()
+        with self.assertRaises(ValueError) as error:
+            feature.execute(
+                sketch=mock.Mock(id=1),
+                form={},
+                llm_provider=NoStreamingProvider({}),
+            )
+        self.assertIn("does not support streaming", str(error.exception))

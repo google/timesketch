@@ -365,10 +365,14 @@ class LogAnalyzer(LLMFeatureInterface):
                             "message": "...", "linked_event_id": "..."}
         """
         sketch = kwargs.get("sketch")
-        # Mapping from Sec-Gemini priority values to Timesketch internal priority names.
+        # Providers may report either the Sec-Gemini severity names or the
+        # Timesketch priority names directly.
         LLM_PRIORITY_TO_TS_PRIORITY = {
             "notice": "low",
             "critical": "high",
+            "low": "low",
+            "medium": "medium",
+            "high": "high",
         }
         TS_PRIORITY_SCORES = {"low": 1, "medium": 2, "high": 3}
 
@@ -507,10 +511,9 @@ class LogAnalyzer(LLMFeatureInterface):
                     question.add_label(new_priority_label)
             elif priority_value:
                 # Log if we receive a priority we don't have a mapping for.
-                if priority_value not in ["low", "medium", "high"]:
-                    self._errors_encountered.append(
-                        f"Unknown priority value: {priority_value}"
-                    )
+                self._errors_encountered.append(
+                    f"Unknown priority value: {priority_value}"
+                )
 
             questions_created_this_finding += 1
             question.add_attribute("source", "AI_GENERATED")
