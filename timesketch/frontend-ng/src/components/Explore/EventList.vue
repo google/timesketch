@@ -869,12 +869,12 @@ export default {
     },
     getValidEmojis(emojis) {
       if (!Array.isArray(emojis) || !this.meta || !this.meta.emojis) {
-        return []
+        return [];
       }
-      return emojis.filter((emoji) => Object.prototype.hasOwnProperty.call(this.meta.emojis, emoji))
+      return emojis.filter((emoji) => Object.prototype.hasOwnProperty.call(this.meta.emojis, emoji));
     },
     sanitizeEmoji(emoji) {
-      return DOMPurify.sanitize(emoji + ';', { ALLOWED_TAGS: [] })
+      return DOMPurify.sanitize(emoji + ';', { ALLOWED_TAGS: [] });
     },
     getTimelineColor(event) {
       let timeline = this.getTimeline(event)

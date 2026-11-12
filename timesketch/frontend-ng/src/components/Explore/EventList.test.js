@@ -145,7 +145,7 @@ describe('EventList.vue', () => {
   it('filters and sanitizes emojis against meta.emojis allowlist', () => {
     state.meta.emojis = {
       '&#x2620': 'Suspicious entry',
-    }
+    };
     const wrapper = mount(EventList, {
       localVue,
       vuetify,
@@ -154,12 +154,12 @@ describe('EventList.vue', () => {
         queryRequest: {}
       },
       stubs: ['ts-bar-chart', 'ts-event-detail', 'ts-event-tag-menu', 'ts-event-tag-dialog', 'ts-event-action-menu', 'ts-event-tags', 'ts-explore-welcome-card', 'ts-search-not-found-card']
-    })
+    });
 
-    const rawEmojis = ['&#x2620', '<img src=x onerror="alert(1)">', 'toString']
-    expect(wrapper.vm.getValidEmojis(rawEmojis)).toEqual(['&#x2620'])
-    expect(wrapper.vm.getValidEmojis(null)).toEqual([])
-    expect(wrapper.vm.sanitizeEmoji('&#x2620')).toBe('&#x2620;')
-    expect(wrapper.vm.sanitizeEmoji('<img src=x onerror="alert(1)">')).toBe(';')
-  })
+    const rawEmojis = ['&#x2620', '<img src=x onerror="alert(1)">', 'toString'];
+    expect(wrapper.vm.getValidEmojis(rawEmojis)).toEqual(['&#x2620']);
+    expect(wrapper.vm.getValidEmojis(null)).toEqual([]);
+    expect(wrapper.vm.sanitizeEmoji('&#x2620')).toBe('&#x2620;');
+    expect(wrapper.vm.sanitizeEmoji('<img src=x onerror="alert(1)">')).toBe(';');
+  });
 })
