@@ -65,3 +65,29 @@ class TestHashlookup(BaseTest):
         )
         url = f"https://test.com/sha256/{SHA256_N_HASH}"
         mock_requests_get.assert_called_with(url, timeout=30)
+
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
+    @mock.patch("requests.get")
+    def test_hash_wrong_length_is_skipped(self, mock_requests_get):
+        """Test that a non-SHA256 hash is skipped and later events processed."""
+        analyzer = hashlookup_analyzer.HashlookupAnalyzer("test_index", 1)
+        analyzer.hashlookup_url = "https://test.com/"
+        analyzer.datastore.client = mock.Mock()
+        mock_requests_get.return_value.status_code = 200
+        mock_requests_get.return_value.json.return_value = {"FileName": "test.txt"}
+
+        md5_event = copy.deepcopy(MockDataStore.event_dict)
+        md5_event["_source"].update({"hash": "d41d8cd98f00b204e9800998ecf8427e"})
+        analyzer.datastore.import_event("test_index", md5_event["_source"], "0")
+
+        event = copy.deepcopy(MockDataStore.event_dict)
+        event["_source"].update(MATCHING_HASH)
+        analyzer.datastore.import_event("test_index", event["_source"], "1")
+
+        message = analyzer.run()
+        self.assertEqual(
+            message,
+            ("Hashlookup Matches: 1"),
+        )
+        url = f"https://test.com/sha256/{SHA256_HASH}"
+        mock_requests_get.assert_called_once_with(url, timeout=30)

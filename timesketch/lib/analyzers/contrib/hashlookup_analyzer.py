@@ -114,7 +114,6 @@ class HashlookupAnalyzer(interface.BaseAnalyzer):
                     hash_value,
                     len(hash_value),
                 )
-                error_hash_counter += 1
                 continue
 
             if hash_value not in self.request_set:
