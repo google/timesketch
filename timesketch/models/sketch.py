@@ -403,7 +403,7 @@ class SearchTemplate(
     query_string = Column(UnicodeText())
     query_filter = Column(UnicodeText())
     query_dsl = Column(UnicodeText())
-    template_uuid = Column(Unicode(255), unique=True, default=str(uuid4()))
+    template_uuid = Column(Unicode(255), unique=True, default=lambda: str(uuid4()))
     template_json = Column(UnicodeText())
     user_id = Column(Integer, ForeignKey("user.id"))
     views = relationship("View", backref="searchtemplate", lazy="select")
