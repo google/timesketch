@@ -197,7 +197,10 @@ def tag_mod(
         # if tag is a string with commas, make it a list
         if "," in tag:
             tags = tag.split(",")
-            return_value = sketch.untag_events([event_id], timeline.index_name, tags)
+            return_value = sketch.untag_events(
+                [{"_id": event_id, "_index": timeline.index_name}], tags
+            )
+            click.echo(return_value)
         else:
             return_value = sketch.untag_event(event_id, timeline.index_name, tag)
             click.echo(return_value)
