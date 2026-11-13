@@ -17,6 +17,7 @@ import json
 from unittest import mock
 
 from timesketch.lib.llms.features import log_analyzer
+from timesketch.lib.llms.providers import interface as provider_interface
 from timesketch.lib.testlib import BaseTest
 
 
@@ -24,10 +25,10 @@ class TestLogAnalyzerFeature(BaseTest):
     """Tests for the LogAnalyzer feature."""
 
     @mock.patch("timesketch.lib.llms.features.log_analyzer.LogAnalyzer.datastore")
-    def test_execute_with_summaries_format(self, mock_datastore):
+    def test_execute_with_findings_format(self, mock_datastore):
         """
         Tests that the execute method correctly parses the new format
-        with a 'summaries' key.
+        with a 'findings' key.
         """
         # Mock the LLM provider to return a response in the new format.
         mock_provider = mock.Mock()
@@ -78,6 +79,19 @@ class TestLogAnalyzerFeature(BaseTest):
         )
         self.assertNotIn("log_records", llm_response_arg)
         self.assertEqual(call_kwargs.get("sketch"), mock_sketch)
+
+    def test_execute_rejects_provider_without_streaming_support(self):
+        """Providers inherit a readable non-streaming default."""
+        provider = provider_interface.LLMProvider(config={})
+        mock_sketch = mock.Mock()
+        mock_sketch.id = 1
+        feature = log_analyzer.LogAnalyzer()
+
+        with self.assertRaisesRegex(
+            ValueError,
+            'LLM provider "name" does not support streaming operations!',
+        ):
+            feature.execute(sketch=mock_sketch, form={}, llm_provider=provider)
 
     @mock.patch("timesketch.lib.llms.features.log_analyzer.LogAnalyzer.datastore")
     def test_execute_with_empty_findings(self, mock_datastore):
