@@ -17,9 +17,10 @@ This library contains classes that define how to serialize the different
 credential objects Timesketch supports.
 """
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import json
+from typing import Any
 
 from google.oauth2 import credentials
 
@@ -30,32 +31,36 @@ class TimesketchCredentials:
     # The type of credential object.
     TYPE = ""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the credential object."""
-        self._credential = None
+        self._credential: Any = None
 
     @property
-    def credential(self):
+    def credential(self) -> Any:
         """Returns the credentials back."""
         return self._credential
 
     @credential.setter
-    def credential(self, credential_obj):
-        """Sets the credential object."""
+    def credential(self, credential_obj: Any) -> None:
+        """Sets the credential object.
+
+        Args:
+            credential_obj: The credential object.
+        """
         self._credential = credential_obj
 
-    def serialize(self):
+    def serialize(self) -> bytes:
         """Return serialized bytes object."""
         data = self.to_bytes()
         type_string = bytes(self.TYPE, "utf-8").rjust(10)[:10]
 
         return type_string + data
 
-    def deserialize(self, data):
+    def deserialize(self, data: bytes) -> None:
         """Deserialize a credential object from bytes.
 
         Args:
-            data (bytes): serialized credential object.
+            data: serialized credential object.
         """
         type_data = data[:10]
         type_string = type_data.decode("utf-8").strip()
@@ -64,15 +69,15 @@ class TimesketchCredentials:
 
         self.from_bytes(data[10:])
 
-    def to_bytes(self):
+    def to_bytes(self) -> bytes:
         """Convert the credential object into bytes for storage."""
         raise NotImplementedError
 
-    def from_bytes(self, data):
+    def from_bytes(self, data: bytes) -> None:
         """Deserialize a credential object from bytes.
 
         Args:
-            data (bytes): serialized credential object.
+            data: serialized credential object.
         """
         raise NotImplementedError
 
@@ -82,11 +87,11 @@ class TimesketchPwdCredentials(TimesketchCredentials):
 
     TYPE = "timesketch"
 
-    def from_bytes(self, data):
+    def from_bytes(self, data: bytes) -> None:
         """Deserialize a credential object from bytes.
 
         Args:
-            data (bytes): serialized credential object.
+            data: serialized credential object.
 
         Raises:
             TypeError: if the data is not in bytes.
@@ -99,13 +104,13 @@ class TimesketchPwdCredentials(TimesketchCredentials):
         except ValueError as exc:
             raise TypeError("Unable to parse the byte string.") from exc
 
-        if not "username" in data_dict:
+        if "username" not in data_dict:
             raise TypeError("Username is not set.")
-        if not "password" in data_dict:
+        if "password" not in data_dict:
             raise TypeError("Password is not set.")
         self._credential = data_dict
 
-    def to_bytes(self):
+    def to_bytes(self) -> bytes:
         """Convert the credential object into bytes for storage."""
         if not self._credential:
             return b""
@@ -119,11 +124,11 @@ class TimesketchOAuthCredentials(TimesketchCredentials):
 
     TYPE = "oauth"
 
-    def from_bytes(self, data):
+    def from_bytes(self, data: bytes) -> None:
         """Deserialize a credential object from bytes.
 
         Args:
-            data (bytes): serialized credential object.
+            data: serialized credential object.
 
         Raises:
             TypeError: if the data is not in bytes.
@@ -145,7 +150,7 @@ class TimesketchOAuthCredentials(TimesketchCredentials):
             client_secret=token_dict.get("_client_secret"),
         )
 
-    def to_bytes(self):
+    def to_bytes(self) -> bytes:
         """Convert the credential object into bytes for storage."""
         if not self._credential:
             return b""
