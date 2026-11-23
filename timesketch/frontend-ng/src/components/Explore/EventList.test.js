@@ -191,4 +191,44 @@ describe('EventList.vue', () => {
     expect(wrapper.vm.sanitizeEmoji('&#x2620')).toBe('&#x2620;');
     expect(wrapper.vm.sanitizeEmoji('<img src=x onerror="alert(1)">')).toBe(';');
   });
+
+  it('passes searchMode to ts-search-not-found-card on empty search results', async () => {
+    const wrapper = mount(EventList, {
+      localVue,
+      vuetify,
+      store,
+      propsData: {
+        queryRequest: {},
+        searchMode: 'wildcard',
+      },
+      stubs: {
+        'ts-bar-chart': true,
+        'ts-event-detail': true,
+        'ts-event-tag-menu': true,
+        'ts-event-tag-dialog': true,
+        'ts-event-action-menu': true,
+        'ts-event-tags': true,
+        'ts-explore-welcome-card': true,
+        'ts-search-not-found-card': {
+          name: 'TsSearchNotFoundCard',
+          props: ['searchMode'],
+          template: '<div class="not-found-stub" :data-mode="searchMode"></div>',
+        },
+      },
+    });
+
+    await wrapper.setData({
+      searchInProgress: false,
+      currentQueryString: '8.8.8.8',
+      searchError: '',
+      eventList: {
+        meta: {},
+        objects: [],
+      },
+    });
+
+    const notFound = wrapper.find('.not-found-stub');
+    expect(notFound.exists()).toBe(true);
+    expect(notFound.attributes('data-mode')).toBe('wildcard');
+  });
 })
