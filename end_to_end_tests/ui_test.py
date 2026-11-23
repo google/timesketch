@@ -49,6 +49,9 @@ logger = logging.getLogger("timesketch.e2e.ui_test")
 DEFAULT_ARTIFACT_DIR = "/tmp/timesketch-ui-artifacts"
 CSV_FIXTURE_FILENAME = "sigma_events.csv"
 EXPECTED_CSV_EVENTS = 4
+IP_CSV_FIXTURE_FILENAME = "ip_events.csv"
+EXPECTED_IP_CSV_EVENTS = 3
+TEST_IP_EMBEDDED = "8.8.8.8"
 CSV_INDEX_TIMEOUT_SECONDS = 60
 EXPECTED_PLASO_EVENTS = 3205
 PLASO_INDEX_TIMEOUT_SECONDS = 300
@@ -71,6 +74,7 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
       5. test_05_readonly_collaborator_cannot_modify_sketch
       6. test_06_write_collaborator_can_upload_annotate_and_add_event
       7. test_07_plaso_timeline_indexing_and_search_in_explore
+      8. test_08_threat_intel_ip_clickthrough_in_wildcard_mode
     """
 
     NAME = "ui_test"
@@ -876,6 +880,82 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
                 "Background Plaso timeline (evtx_20260720.plaso) finished "
                 "indexing and rendered 3,205 searchable EVTX events in Explore.",
             )
+
+    def test_08_threat_intel_ip_clickthrough_in_wildcard_mode(self) -> None:
+        """Checks Threat Intelligence IP click-through while in Wildcard mode."""
+        ip_csv_path = os.path.join(interface.TEST_DATA_DIR, IP_CSV_FIXTURE_FILENAME)
+
+        with self._browser_page(
+            "test_08_threat_intel_ip_clickthrough_in_wildcard_mode"
+        ) as page:
+            if self._auth_storage_state is None:
+                self._login_via_ui(page)
+            sketch_id = self._open_new_empty_sketch_in_ui(page, "ui_e2e_ti_ip_wc")
+            expected_tl_name = self._submit_timeline_upload_via_ui(page, ip_csv_path)
+            self._await_chip_and_run_wildcard_search(
+                page,
+                sketch_id=sketch_id,
+                expected_tl_name=expected_tl_name,
+                expected_events=EXPECTED_IP_CSV_EVENTS,
+                timeout_seconds=CSV_INDEX_TIMEOUT_SECONDS,
+            )
+
+            self.api.get_sketch(sketch_id).add_attribute(
+                name="intelligence",
+                value={
+                    "data": [
+                        {
+                            "ioc": TEST_IP_EMBEDDED,
+                            "type": "ipv4",
+                            "tags": ["suspicious"],
+                            "externalURI": "",
+                        }
+                    ]
+                },
+                ontology="intelligence",
+            )
+
+            page.reload(wait_until="domcontentloaded")
+            search_input = page.locator("#tsSearchInput")
+            expect(search_input).to_be_visible(timeout=30000)
+
+            # Baseline: Query String mode finds both events containing the IP.
+            search_input.fill(f'"{TEST_IP_EMBEDDED}"')
+            search_input.press("Enter")
+            expect(page.get_by_text("of 2 events")).to_be_visible(timeout=15000)
+
+            # Switch to Wildcard mode (default on deployments with
+            # OPENSEARCH_WILDCARD_DEFAULT=True).
+            with page.expect_response(
+                lambda resp: f"/api/v1/sketches/{sketch_id}/explore/" in resp.url
+                and resp.request.method == "POST",
+                timeout=30000,
+            ):
+                page.get_by_role("button", name="QS").click()
+                page.locator(".v-menu__content .v-list-item").filter(
+                    has_text="Wildcard"
+                ).click()
+            expect(page.get_by_role("button", name="WC")).to_be_visible(timeout=15000)
+
+            # Click through from the Threat Intelligence panel for the IP IOC.
+            # The left navigation drawer starts collapsed (icon-only); clicking
+            # the shield-search icon opens both the drawer and the panel.
+            nav = page.get_by_role("navigation")
+            nav.locator(".mdi-shield-search").first.click()
+            expect(nav.get_by_text(TEST_IP_EMBEDDED, exact=True)).to_be_visible(
+                timeout=15000
+            )
+            with page.expect_response(
+                lambda resp: f"/api/v1/sketches/{sketch_id}/explore/" in resp.url
+                and resp.request.method == "POST",
+                timeout=30000,
+            ) as explore_info:
+                nav.locator('[title="Search this indicator"]').first.click()
+            self.assertions.assertEqual(explore_info.value.status, 200)
+
+            expect(page.get_by_role("button", name="QS")).to_be_visible(timeout=15000)
+            expect(page.get_by_text("of 2 events")).to_be_visible(timeout=15000)
+            expect(page.get_by_text("No Results Found")).to_be_hidden()
 
 
 if sync_playwright is not None:

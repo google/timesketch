@@ -461,6 +461,9 @@ export default {
       if (this.$route.name !== 'Explore') {
         this.$router.push({ name: 'Explore', params: { sketchId: this.sketch.id } })
       }
+      if (searchEvent.searchMode) {
+        this.localSearchMode = searchEvent.searchMode
+      }
       if (searchEvent.queryString) {
         this.currentQueryString = searchEvent.queryString
       }
