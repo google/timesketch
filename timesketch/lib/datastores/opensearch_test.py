@@ -316,6 +316,102 @@ class OpenSearchDataStoreTest(BaseTest):
         mock_es.indices.get_mapping.assert_not_called()
 
     @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
+    def test_get_wildcard_fields_mixed_indices(self, mock_client):
+        """Test that mixed wildcard and non-wildcard indices disable wildcard mode."""
+        ds = OpenSearchDataStore(host="127.0.0.1", port=9200)
+        mock_es = mock_client.return_value
+        ds.client = mock_es
+
+        mock_mappings = {
+            "idx_wildcard": {
+                "mappings": {
+                    "properties": {
+                        "message": {
+                            "type": "text",
+                            "fields": {
+                                "keyword": {"type": "keyword"},
+                                "wildcard": {"type": "wildcard"},
+                            },
+                        },
+                    }
+                }
+            },
+            "idx_no_wildcard": {
+                "mappings": {
+                    "properties": {
+                        "message": {
+                            "type": "text",
+                            "fields": {
+                                "keyword": {"type": "keyword"},
+                            },
+                        },
+                        "client_ip": {
+                            "type": "text",
+                            "fields": {
+                                "keyword": {"type": "keyword"},
+                            },
+                        },
+                    }
+                }
+            },
+        }
+        mock_es.indices.get_mapping.return_value = mock_mappings
+
+        # Wildcard mode must not be advertised across a mixed set of indices
+        # where an index lacks .wildcard subfields; otherwise wildcard queries
+        # silently return zero hits for every event in idx_no_wildcard.
+        fields = ds.get_wildcard_fields(["idx_wildcard", "idx_no_wildcard"])
+        self.assertEqual(fields, [])
+
+    @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
+    def test_get_wildcard_fields_multiple_wildcard_indices(self, mock_client):
+        """Test union of wildcard fields when all indices support wildcards."""
+        ds = OpenSearchDataStore(host="127.0.0.1", port=9200)
+        mock_es = mock_client.return_value
+        ds.client = mock_es
+
+        mock_mappings = {
+            "idx_evtx": {
+                "mappings": {
+                    "properties": {
+                        "message": {
+                            "type": "text",
+                            "fields": {"wildcard": {"type": "wildcard"}},
+                        },
+                        "xml_string": {
+                            "type": "text",
+                            "fields": {"wildcard": {"type": "wildcard"}},
+                        },
+                    }
+                }
+            },
+            "idx_http": {
+                "mappings": {
+                    "properties": {
+                        "message": {
+                            "type": "text",
+                            "fields": {"wildcard": {"type": "wildcard"}},
+                        },
+                        "url": {
+                            "type": "text",
+                            "fields": {"wildcard": {"type": "wildcard"}},
+                        },
+                    }
+                }
+            },
+        }
+        mock_es.indices.get_mapping.return_value = mock_mappings
+
+        fields = ds.get_wildcard_fields(["idx_evtx", "idx_http"])
+        self.assertCountEqual(fields, ["message", "xml_string", "url"])
+
+        # An index missing from mappings must also disable wildcard mode.
+        fields_missing = ds.get_wildcard_fields(
+            ["idx_evtx", "idx_missing"], mappings=mock_mappings
+        )
+        self.assertEqual(fields_missing, [])
+
+    @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
     def test_build_wildcard_query_dsl_global_search(self, mock_client):
         """Test global wildcard query dsl generation."""
         mock_es = mock_client.return_value

@@ -809,13 +809,19 @@ class OpenSearchDataStore:
     ) -> list[str]:
         """Gets a list of all fields mapped to a wildcard subfield.
 
+        Every queried index must have at least one wildcard-mapped field; if
+        any index lacks wildcard mappings, an empty list is returned so
+        wildcard mode is not enabled on mixed sketches where non-wildcard
+        indices would silently return zero hits.
+
         Args:
             indices (list): List of active index names to inspect.
             mappings (dict): Optional pre-fetched OpenSearch mappings.
 
         Returns:
             list: A list of field names (e.g. ['message']) that support
-                wildcard searches.
+                wildcard searches across all indices, or an empty list if any
+                index does not support wildcard searches.
         """
         if not indices:
             return []
@@ -858,31 +864,37 @@ class OpenSearchDataStore:
                         nested_props, fields_set, prefix=f"{field_name}."
                     )
 
-        # Extract field mapping properties across indices
-        wildcard_fields = None
+        # Extract field mapping properties across indices. Every queried index
+        # must have wildcard mappings; if any index lacks wildcard fields,
+        # return [] so wildcard search is not enabled on mixed sketches where
+        # non-wildcard indices would silently return zero hits.
+        wildcard_fields = set()
 
         for index_name in indices:
-            properties = (
-                mappings.get(index_name, {}).get("mappings", {}).get("properties")
-            )
+            index_mappings = mappings.get(index_name, {}).get("mappings", {})
+            properties = index_mappings.get("properties")
             if not isinstance(properties, dict):
                 properties = next(
-                    iter(mappings.get(index_name, {}).get("mappings", {}).values()),
-                    {},
-                ).get("properties")
+                    (
+                        v.get("properties")
+                        for v in index_mappings.values()
+                        if isinstance(v, dict)
+                    ),
+                    None,
+                )
 
             if not isinstance(properties, dict):
-                continue
+                return []
 
             current_wildcard_fields = set()
             recurse_properties(properties, current_wildcard_fields)
 
-            if wildcard_fields is None:
-                wildcard_fields = current_wildcard_fields
-            else:
-                wildcard_fields.update(current_wildcard_fields)
+            if not current_wildcard_fields:
+                return []
 
-        return list(wildcard_fields) if wildcard_fields else []
+            wildcard_fields.update(current_wildcard_fields)
+
+        return list(wildcard_fields)
 
     def _compile_term_to_dsl(self, token: str, wildcard_fields: set) -> dict:
         """Compiles a single search token into a native OpenSearch query node.
