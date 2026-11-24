@@ -225,15 +225,14 @@ class WildcardQueryTest(interface.BaseEndToEndTest):
 
         # Wait for OpenSearch refresh so the manual event is searchable.
         qs_field_results = {}
-        fresh_sketch = self.api.get_sketch(mixed_sketch.id)
         for _ in range(5):
-            fresh_sketch = self.api.get_sketch(mixed_sketch.id)
-            qs_field_results = fresh_sketch.explore(
+            qs_field_results = self.api.get_sketch(mixed_sketch.id).explore(
                 query_string=f'client_ip:"{test_ip}"',
             )
             if qs_field_results.get("objects"):
                 break
             time.sleep(2)
+        fresh_sketch = self.api.get_sketch(mixed_sketch.id)
 
         # Baseline: Query String mode finds the IP event via both field and global
         # wildcard queries.
@@ -246,11 +245,10 @@ class WildcardQueryTest(interface.BaseEndToEndTest):
 
         # Mixed wildcard/non-wildcard indices must not advertise wildcard mode
         # and must reject wildcard queries rather than silently returning 0 hits.
-        supports_wildcard = fresh_sketch.data.get("meta", {}).get(
-            "supports_wildcard", False
-        )
-        self.assertions.assertFalse(supports_wildcard)
-        with self.assertions.assertRaises(RuntimeError):
+        self.assertions.assertFalse(fresh_sketch.data["meta"]["supports_wildcard"])
+        with self.assertions.assertRaisesRegex(
+            RuntimeError, "do not support wildcard search mode"
+        ):
             fresh_sketch.explore_wildcard(
                 query_string=f"*{test_ip}*",
             )

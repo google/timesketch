@@ -809,19 +809,20 @@ class OpenSearchDataStore:
     ) -> list[str]:
         """Gets a list of all fields mapped to a wildcard subfield.
 
-        Every queried index must have at least one wildcard-mapped field; if
-        any index lacks wildcard mappings, an empty list is returned so
-        wildcard mode is not enabled on mixed sketches where non-wildcard
-        indices would silently return zero hits.
+        Every queried index must either have at least one wildcard-mapped field
+        or be an empty/still-buffering index configured with a wildcard
+        dynamic_templates rule and no non-wildcard text fields yet. Otherwise,
+        an empty list is returned so wildcard mode is not enabled on mixed
+        sketches where non-wildcard indices would silently return zero hits.
 
         Args:
             indices (list): List of active index names to inspect.
             mappings (dict): Optional pre-fetched OpenSearch mappings.
 
         Returns:
-            list: A list of field names (e.g. ['message']) that support
-                wildcard searches across all indices, or an empty list if any
-                index does not support wildcard searches.
+            list: Union of wildcard-mapped field names across indices
+                (e.g. ['message']), or an empty list if any index lacks
+                wildcard support or no wildcard-mapped fields exist yet.
         """
         if not indices:
             return []
@@ -864,32 +865,61 @@ class OpenSearchDataStore:
                         nested_props, fields_set, prefix=f"{field_name}."
                     )
 
-        # Extract field mapping properties across indices. Every queried index
-        # must have wildcard mappings; if any index lacks wildcard fields,
-        # return [] so wildcard search is not enabled on mixed sketches where
-        # non-wildcard indices would silently return zero hits.
-        wildcard_fields = set()
+        def has_text_field(props) -> bool:
+            for val in props.values():
+                if not isinstance(val, dict):
+                    continue
+                if val.get("type") == "text":
+                    return True
+                nested_props = val.get("properties")
+                if isinstance(nested_props, dict) and has_text_field(nested_props):
+                    return True
+            return False
+
+        def has_wildcard_dynamic_template(templates) -> bool:
+            for template in templates or []:
+                for spec in template.values():
+                    mapping = spec.get("mapping", {})
+                    if mapping.get("type") == "wildcard" or any(
+                        sub.get("type") == "wildcard"
+                        for sub in mapping.get("fields", {}).values()
+                    ):
+                        return True
+            return False
+
+        # Require wildcard support on every queried index, then collect union.
+        wildcard_fields: set[str] = set()
 
         for index_name in indices:
             index_mappings = mappings.get(index_name, {}).get("mappings", {})
+            mapping_root = index_mappings
             properties = index_mappings.get("properties")
+            # Fallback for legacy ES 6.x type-nested mappings.
             if not isinstance(properties, dict):
-                properties = next(
+                mapping_root = next(
                     (
-                        v.get("properties")
+                        v
                         for v in index_mappings.values()
-                        if isinstance(v, dict)
+                        if isinstance(v, dict) and isinstance(v.get("properties"), dict)
                     ),
-                    None,
+                    {},
                 )
+                properties = mapping_root.get("properties")
 
             if not isinstance(properties, dict):
                 return []
 
-            current_wildcard_fields = set()
+            current_wildcard_fields: set[str] = set()
             recurse_properties(properties, current_wildcard_fields)
 
             if not current_wildcard_fields:
+                # Allow empty or still-buffering indices created with wildcard
+                # dynamic_templates (e.g. generic.mappings) that have no
+                # non-wildcard text fields yet.
+                if not has_text_field(properties) and has_wildcard_dynamic_template(
+                    mapping_root.get("dynamic_templates")
+                ):
+                    continue
                 return []
 
             wildcard_fields.update(current_wildcard_fields)

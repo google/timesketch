@@ -18,6 +18,7 @@ import contextlib
 import logging
 import os
 import re
+import time
 from typing import Any
 from typing import Optional
 import urllib.parse
@@ -885,8 +886,6 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
         manual_ip_message = f"Inbound probe from {TEST_IP_MANUAL}"
 
         with self._browser_page("test_08_mixed_timelines_wildcard_ip_search") as page:
-            if self._auth_storage_state is None:
-                self._login_via_ui(page)
             sketch_id = self._open_new_empty_sketch_in_ui(page, "ui_e2e_mixed_ip_wc")
             expected_tl_name = self._submit_timeline_upload_via_ui(page, csv_path)
             self._await_chip_and_run_wildcard_search(
@@ -903,6 +902,16 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
             expect(page.get_by_role("textbox", name="Datetime")).to_be_hidden(
                 timeout=15000
             )
+            # Wait for OpenSearch refresh so the manual event is searchable
+            # before reloading and asserting the combined event count.
+            for _ in range(5):
+                if (
+                    self.api.get_sketch(sketch_id)
+                    .explore(f'"{TEST_IP_MANUAL}"')
+                    .get("objects")
+                ):
+                    break
+                time.sleep(2)
             page.reload(wait_until="domcontentloaded")
             self._await_chip_and_run_wildcard_search(
                 page,

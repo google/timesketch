@@ -363,6 +363,12 @@ class OpenSearchDataStoreTest(BaseTest):
         fields = ds.get_wildcard_fields(["idx_wildcard", "idx_no_wildcard"])
         self.assertEqual(fields, [])
 
+        # An index missing from mappings must also disable wildcard mode.
+        fields_missing = ds.get_wildcard_fields(
+            ["idx_wildcard", "idx_missing"], mappings=mock_mappings
+        )
+        self.assertEqual(fields_missing, [])
+
     @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
     def test_get_wildcard_fields_multiple_wildcard_indices(self, mock_client):
         """Test union of wildcard fields when all indices support wildcards."""
@@ -405,11 +411,79 @@ class OpenSearchDataStoreTest(BaseTest):
         fields = ds.get_wildcard_fields(["idx_evtx", "idx_http"])
         self.assertCountEqual(fields, ["message", "xml_string", "url"])
 
-        # An index missing from mappings must also disable wildcard mode.
-        fields_missing = ds.get_wildcard_fields(
-            ["idx_evtx", "idx_missing"], mappings=mock_mappings
+    @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
+    def test_get_wildcard_fields_legacy_es6_and_empty_generic_index(self, mock_client):
+        """Test ES 6.x fallback with metadata dict and empty generic.mappings index."""
+        ds = OpenSearchDataStore(host="127.0.0.1", port=9200)
+        ds.client = mock_client.return_value
+
+        generic_templates = [
+            {
+                "strings": {
+                    "match_mapping_type": "string",
+                    "mapping": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {"type": "keyword", "ignore_above": 256},
+                            "wildcard": {"type": "wildcard", "ignore_above": 32766},
+                        },
+                    },
+                }
+            }
+        ]
+        mock_mappings = {
+            "idx_es6": {
+                "mappings": {
+                    "_default_": {"dynamic_templates": []},
+                    "generic_event": {
+                        "properties": {
+                            "message": {
+                                "type": "text",
+                                "fields": {"wildcard": {"type": "wildcard"}},
+                            }
+                        }
+                    },
+                }
+            },
+            "idx_empty_generic": {
+                "mappings": {
+                    "dynamic_templates": generic_templates,
+                    "properties": {
+                        "datetime": {"type": "date"},
+                        "timesketch_label": {"type": "nested"},
+                    },
+                }
+            },
+            "idx_legacy_text_with_template": {
+                "mappings": {
+                    "dynamic_templates": generic_templates,
+                    "properties": {
+                        "message": {"type": "text"},
+                    },
+                }
+            },
+        }
+
+        # ES 6.x doc type after _default_ dict must still be discovered, and an
+        # empty generic.mappings index alongside it must not disable wildcard.
+        fields = ds.get_wildcard_fields(
+            ["idx_es6", "idx_empty_generic"], mappings=mock_mappings
         )
-        self.assertEqual(fields_missing, [])
+        self.assertCountEqual(fields, ["message"])
+
+        # An empty generic.mappings index alone has no searchable wildcard fields.
+        self.assertEqual(
+            ds.get_wildcard_fields(["idx_empty_generic"], mappings=mock_mappings), []
+        )
+
+        # An index with existing non-wildcard text fields must disable wildcard
+        # even if a wildcard dynamic_template is present.
+        self.assertEqual(
+            ds.get_wildcard_fields(
+                ["idx_es6", "idx_legacy_text_with_template"], mappings=mock_mappings
+            ),
+            [],
+        )
 
     @mock.patch("timesketch.lib.datastores.opensearch.OpenSearch")
     def test_build_wildcard_query_dsl_global_search(self, mock_client):
