@@ -40,14 +40,14 @@ describe('SearchNotFoundCard.vue', () => {
     });
   });
 
-  const mountCard = (searchMode) =>
+  const mountCard = (props = {}) =>
     mount(SearchNotFoundCard, {
       localVue,
       vuetify,
       store,
       propsData: {
         currentQueryString: '8.8.8.8',
-        searchMode,
+        ...props,
       },
       stubs: {
         'ts-search-guide-card': {
@@ -59,14 +59,14 @@ describe('SearchNotFoundCard.vue', () => {
     });
 
   it('forwards wildcard searchMode and shows wildcard suggestions', () => {
-    const wrapper = mountCard('wildcard');
+    const wrapper = mountCard({ searchMode: 'wildcard' });
     expect(wrapper.find('.guide-stub').attributes('data-mode')).toBe('wildcard');
     expect(wrapper.text()).toContain('Wrap search terms with wildcards');
     expect(wrapper.text()).toContain('*searchterm*');
   });
 
   it('defaults to query_string searchMode and shows classic suggestions', () => {
-    const wrapper = mountCard('query_string');
+    const wrapper = mountCard();
     expect(wrapper.find('.guide-stub').attributes('data-mode')).toBe('query_string');
     expect(wrapper.text()).toContain('Try different keywords');
     expect(wrapper.text()).not.toContain('Wrap search terms with wildcards');
