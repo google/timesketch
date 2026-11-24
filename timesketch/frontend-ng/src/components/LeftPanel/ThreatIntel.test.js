@@ -68,15 +68,15 @@ describe('LeftPanel/ThreatIntel.vue', () => {
     vi.clearAllMocks();
   });
 
-  it('emits query_string searchMode for single IOC search', () => {
+  it('emits query_string searchMode and escapes quotes/spaces for single IOC search', () => {
     const wrapper = mount(ThreatIntel, { localVue, vuetify, store });
-    wrapper.vm.generateSearchQuery('8.8.8.8');
+    wrapper.vm.generateSearchQuery('cmd.exe /c "whoami"');
 
     expect(EventBus.$emit).toHaveBeenCalledWith(
       'setQueryAndFilter',
       expect.objectContaining({
         doSearch: true,
-        queryString: '"8.8.8.8"',
+        queryString: '"cmd.exe\\ /c\\ \\"whoami\\""',
         searchMode: 'query_string',
       })
     );
@@ -84,13 +84,13 @@ describe('LeftPanel/ThreatIntel.vue', () => {
 
   it('emits query_string searchMode and escapes values for tag IOC search', () => {
     const wrapper = mount(ThreatIntel, { localVue, vuetify, store });
-    wrapper.vm.searchForIOC({ iocs: ['8.8.8.8', 'C:\\Windows\\cmd.exe'] });
+    wrapper.vm.searchForIOC({ iocs: ['8.8.8.8', 'C:\\Windows\\cmd.exe', 'cmd /c "test"'] });
 
     expect(EventBus.$emit).toHaveBeenCalledWith(
       'setQueryAndFilter',
       expect.objectContaining({
         doSearch: true,
-        queryString: '"8.8.8.8" OR "C:\\\\Windows\\\\cmd.exe"',
+        queryString: '"8.8.8.8" OR "C:\\\\Windows\\\\cmd.exe" OR "cmd\\ /c\\ \\"test\\""',
         searchMode: 'query_string',
       })
     );

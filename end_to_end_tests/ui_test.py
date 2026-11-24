@@ -888,8 +888,6 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
         with self._browser_page(
             "test_08_threat_intel_ip_clickthrough_in_wildcard_mode"
         ) as page:
-            if self._auth_storage_state is None:
-                self._login_via_ui(page)
             sketch_id = self._open_new_empty_sketch_in_ui(page, "ui_e2e_ti_ip_wc")
             expected_tl_name = self._submit_timeline_upload_via_ui(page, ip_csv_path)
             self._await_chip_and_run_wildcard_search(
@@ -936,6 +934,7 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
                     has_text="Wildcard"
                 ).click()
             expect(page.get_by_role("button", name="WC")).to_be_visible(timeout=15000)
+            expect(page.get_by_text("No Results Found")).to_be_visible(timeout=15000)
 
             # Click through from the Threat Intelligence panel for the IP IOC.
             # The left navigation drawer starts collapsed (icon-only); clicking

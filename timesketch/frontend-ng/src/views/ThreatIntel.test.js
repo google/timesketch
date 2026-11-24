@@ -25,7 +25,6 @@ import EventBus from '../event-bus.js';
 vi.mock('../utils/RestApiClient.js', () => ({
   default: {
     getTagMetadata: vi.fn(() => Promise.resolve({ data: { default: { weight: 0, type: 'default' } } })),
-    addSketchAttribute: vi.fn(() => Promise.resolve({})),
   },
 }));
 
@@ -57,6 +56,8 @@ describe('views/ThreatIntel.vue', () => {
                 data: [
                   { ioc: '8.8.8.8', type: 'ipv4', tags: ['suspicious'] },
                   { ioc: '8.8.4.4', type: 'ipv4', tags: ['suspicious'] },
+                  { ioc: 'cmd.exe /c "whoami"', type: 'other', tags: ['quoted'] },
+                  { ioc: 'C:\\Windows\\cmd.exe', type: 'fs_path', tags: ['quoted'] },
                 ],
               },
             },
@@ -78,15 +79,15 @@ describe('views/ThreatIntel.vue', () => {
       stubs: ['ts-indicator-dialog'],
     });
 
-  it('emits query_string searchMode for single IOC search', () => {
+  it('emits query_string searchMode and escapes quotes/spaces for single IOC search', () => {
     const wrapper = mountView();
-    wrapper.vm.generateSearchQuery('8.8.8.8');
+    wrapper.vm.generateSearchQuery('cmd.exe /c "whoami"');
 
     expect(EventBus.$emit).toHaveBeenCalledWith(
       'setQueryAndFilter',
       expect.objectContaining({
         doSearch: true,
-        queryString: '"8.8.8.8"',
+        queryString: '"cmd.exe\\ /c\\ \\"whoami\\""',
         searchMode: 'query_string',
       })
     );
@@ -104,5 +105,26 @@ describe('views/ThreatIntel.vue', () => {
         searchMode: 'query_string',
       })
     );
+  });
+
+  it('resolves string tags and escapes quotes, backslashes, and spaces', () => {
+    const wrapper = mountView();
+    wrapper.vm.searchForIOC('quoted');
+
+    expect(EventBus.$emit).toHaveBeenCalledWith(
+      'setQueryAndFilter',
+      expect.objectContaining({
+        doSearch: true,
+        queryString: '"cmd.exe\\ /c\\ \\"whoami\\"" OR "C:\\\\Windows\\\\cmd.exe"',
+        searchMode: 'query_string',
+      })
+    );
+  });
+
+  it('ignores unknown or null tags without emitting', () => {
+    const wrapper = mountView();
+    wrapper.vm.searchForIOC({ name: 'unknown' });
+    wrapper.vm.searchForIOC(null);
+    expect(EventBus.$emit).not.toHaveBeenCalled();
   });
 });

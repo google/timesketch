@@ -261,9 +261,8 @@ export default {
       }
     },
     generateSearchQuery(value, field) {
-      let query = `"${value}"`
-      // Escape special OpenSearch characters: \, [space]
-      query = query.replace(/[\\\s]/g, '\\$&')
+      // Escape special OpenSearch characters: \, ", [space]
+      let query = `"${String(value).replace(/[\\"\s]/g, '\\$&')}"`
       if (field !== undefined) {
         query = `${field}:${query}`
       }
@@ -279,7 +278,7 @@ export default {
         return
       }
       let opensearchQuery = tag.iocs
-        .map((v) => `"${v}"`.replace(/[\\\s]/g, '\\$&'))
+        .map((v) => `"${String(v).replace(/[\\"\s]/g, '\\$&')}"`)
         .reduce((a, b) => `${a} OR ${b}`)
       let eventData = {}
       eventData.doSearch = true
