@@ -232,6 +232,7 @@ export default {
       eventData.doSearch = true
       eventData.queryString = query
       eventData.queryFilter = defaultQueryFilter()
+      // Use Query String (QS) search mode rather than Wildcard (WC) mode.
       eventData.searchMode = 'query_string'
       EventBus.$emit('setQueryAndFilter', eventData)
     },
@@ -248,6 +249,7 @@ export default {
       eventData.doSearch = true
       eventData.queryString = opensearchQuery
       eventData.queryFilter = defaultQueryFilter()
+      // Use Query String (QS) search mode rather than Wildcard (WC) mode.
       eventData.searchMode = 'query_string'
       EventBus.$emit('setQueryAndFilter', eventData)
     },
