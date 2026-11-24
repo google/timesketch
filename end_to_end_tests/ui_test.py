@@ -74,7 +74,7 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
       5. test_05_readonly_collaborator_cannot_modify_sketch
       6. test_06_write_collaborator_can_upload_annotate_and_add_event
       7. test_07_plaso_timeline_indexing_and_search_in_explore
-      8. test_08_threat_intel_ip_clickthrough_in_wildcard_mode
+      9. test_09_threat_intel_ip_clickthrough_in_wildcard_mode
     """
 
     NAME = "ui_test"
@@ -881,12 +881,12 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
                 "indexing and rendered 3,205 searchable EVTX events in Explore.",
             )
 
-    def test_08_threat_intel_ip_clickthrough_in_wildcard_mode(self) -> None:
+    def test_09_threat_intel_ip_clickthrough_in_wildcard_mode(self) -> None:
         """Checks Threat Intelligence IP click-through while in Wildcard mode."""
         ip_csv_path = os.path.join(interface.TEST_DATA_DIR, IP_CSV_FIXTURE_FILENAME)
 
         with self._browser_page(
-            "test_08_threat_intel_ip_clickthrough_in_wildcard_mode"
+            "test_09_threat_intel_ip_clickthrough_in_wildcard_mode"
         ) as page:
             sketch_id = self._open_new_empty_sketch_in_ui(page, "ui_e2e_ti_ip_wc")
             expected_tl_name = self._submit_timeline_upload_via_ui(page, ip_csv_path)
