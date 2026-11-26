@@ -82,3 +82,18 @@ services:
       - opensearch
     volumes:
       - ../../api_client/python:/home/jovyan/timesketch_api_client
+
+  marimo:
+    container_name: marimo
+    build:
+      context: build/
+      dockerfile: Dockerfile-marimo
+      additional_contexts:
+        - timesketch_api_client=../../api_client/
+    ports:
+      - 127.0.0.1:8845:8081
+    restart: on-failure
+    links:
+      - opensearch
+    volumes:
+      - ../../api_client/python:/home/marimo/timesketch_api_client

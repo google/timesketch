@@ -1,0 +1,29 @@
+FROM python:3.11-slim
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gcc python3-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN useradd -m -u 1000 -g 100 marimo && \
+    mkdir -p /work && chown 1000:100 /work
+
+ENV HOME=/home/marimo
+WORKDIR /work
+
+COPY --chown=1000:100 --from=timesketch_api_client python $HOME/timesketch_api_client
+
+RUN pip install --no-cache-dir marimo altair numpy pandas mitreattack-python && \
+    pip install --no-cache-dir -e $HOME/timesketch_api_client
+
+RUN apt-get purge -y gcc python3-dev && apt-get autoremove -y
+
+USER marimo
+
+COPY --chown=1000:100 timesketchrc $HOME/.timesketchrc
+COPY --chown=1000:100 timesketch_token $HOME/.timesketch.token
+COPY --chown=1000:100 timesketch_marimo.py $HOME/timesketch_marimo.py
+COPY --chown=1000:100 Template.py /work/Template.py
+
+ENV PYTHONPATH=/home/marimo
+
+ENTRYPOINT ["marimo", "edit", "--headless", "--no-token", "--host", "0.0.0.0", "--port", "8081", "--base-url", "/marimo", "/work"]

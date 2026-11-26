@@ -27,3 +27,10 @@ jobs:
           build-args: |
             BRANCH=${{ github.head_ref }}
           build-contexts: timesketch_api_client=api_client/
+
+      - name: Build Marimo Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: docker/dev/build
+          file: docker/dev/build/Dockerfile-marimo
+          build-contexts: timesketch_api_client=api_client/

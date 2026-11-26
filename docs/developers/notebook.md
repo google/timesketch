@@ -62,3 +62,21 @@ effect. In the menu select `Kernel | Restart`, now you should be able to go back
 into the notebook and make use of the latest changes in the API client.
 
 ![Restarting Kernel](/assets/images/kernel_restart.png)
+
+## Marimo (alongside Jupyter)
+
+A [marimo](https://marimo.io) container runs next to the Jupyter notebook. Jupyter is
+unchanged; use whichever you prefer.
+
+| Tool | Deployed URL | Dev URL | Workspace |
+| --- | --- | --- | --- |
+| Jupyter | `/notebook/` | `http://localhost:8844` | `/root/work` |
+| Marimo | `/marimo/` | `http://localhost:8845/marimo/` | `/root/work-marimo` |
+
+Marimo notebooks are plain `.py` files. Start from `Template.py`, which uses the
+`timesketch_marimo` helper module to select a sketch. The connected sketch is
+returned from a cell rather than bound as a global, so other cells use it by
+declaring `sketch` as a parameter. To convert an existing notebook run
+`marimo convert notebook.ipynb -o notebook.py`.
+
+Note that `picatrix` is not installed in the marimo image, as it depends on IPython.

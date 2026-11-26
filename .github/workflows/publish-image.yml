@@ -61,3 +61,19 @@ jobs:
           push: true
           tags: ${{ steps.meta-notebook.outputs.tags }}
           labels: ${{ steps.meta-notebook.outputs.labels }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta-marimo
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-marimo
+
+      - name: Build and publish Marimo Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: docker/dev/build
+          file: docker/dev/build/Dockerfile-marimo
+          build-contexts: timesketch_api_client=api_client/
+          push: true
+          tags: ${{ steps.meta-marimo.outputs.tags }}
+          labels: ${{ steps.meta-marimo.outputs.labels }}
