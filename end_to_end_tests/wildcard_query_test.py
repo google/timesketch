@@ -16,6 +16,8 @@
 # pylint: disable=wrong-import-position
 """End to end tests of exact-match wildcard search and comparison metrics."""
 
+import time
+
 from click.testing import CliRunner
 
 from timesketch_cli_client.commands.search import search_wildcard
@@ -205,6 +207,51 @@ class WildcardQueryTest(interface.BaseEndToEndTest):
             limit=20,
         )
         self.assertions.assertEqual(len(mixed_grouping_results.get("objects", [])), 13)
+
+    def test_wildcard_ip_search_mixed_indices(self):
+        """Test IP wildcard search when a sketch mixes wildcard and manual indices."""
+        test_ip = "8.8.8.8"
+        mixed_sketch = self.api.create_sketch(
+            name="Wildcard IP Mixed Index Test",
+            description="Sketch mixing wildcard-mapped CSV and manual event indices",
+        )
+        self.import_timeline("evtx_direct.csv", sketch=mixed_sketch)
+        mixed_sketch.add_event(
+            message=f"Connection from {test_ip} to internal host",
+            date="2025-10-01T00:00:00",
+            timestamp_desc="Connection time",
+            attributes={"client_ip": test_ip},
+        )
+
+        # Wait for OpenSearch refresh so the manual event is searchable.
+        qs_field_results = {}
+        for _ in range(5):
+            qs_field_results = self.api.get_sketch(mixed_sketch.id).explore(
+                query_string=f'client_ip:"{test_ip}"',
+            )
+            if qs_field_results.get("objects"):
+                break
+            time.sleep(2)
+        fresh_sketch = self.api.get_sketch(mixed_sketch.id)
+
+        # Baseline: Query String mode finds the IP event via both field and global
+        # wildcard queries.
+        self.assertions.assertEqual(len(qs_field_results.get("objects", [])), 1)
+
+        qs_global_results = fresh_sketch.explore(
+            query_string=f"*{test_ip}*",
+        )
+        self.assertions.assertEqual(len(qs_global_results.get("objects", [])), 1)
+
+        # Mixed wildcard/non-wildcard indices must not advertise wildcard mode
+        # and must reject wildcard queries rather than silently returning 0 hits.
+        self.assertions.assertFalse(fresh_sketch.data["meta"]["supports_wildcard"])
+        with self.assertions.assertRaisesRegex(
+            RuntimeError, "do not support wildcard search mode"
+        ):
+            fresh_sketch.explore_wildcard(
+                query_string=f"*{test_ip}*",
+            )
 
 
 manager.EndToEndTestManager.register_test(WildcardQueryTest)

@@ -415,16 +415,17 @@ export default {
     },
     searchMode: {
       get() {
+        if (!this.meta || !this.meta.supports_wildcard) {
+          return 'query_string'
+        }
         if (this.localSearchMode !== null) {
           return this.localSearchMode
         }
-        if (this.meta && this.meta.supports_wildcard) {
-          if (this.userSettings && this.userSettings.defaultSearchMethod) {
-            return this.userSettings.defaultSearchMethod
-          }
-          if (this.systemSettings && this.systemSettings.OPENSEARCH_WILDCARD_DEFAULT) {
-            return 'wildcard'
-          }
+        if (this.userSettings && this.userSettings.defaultSearchMethod) {
+          return this.userSettings.defaultSearchMethod
+        }
+        if (this.systemSettings && this.systemSettings.OPENSEARCH_WILDCARD_DEFAULT) {
+          return 'wildcard'
         }
         return 'query_string'
       },

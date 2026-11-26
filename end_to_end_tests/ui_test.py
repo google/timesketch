@@ -18,6 +18,7 @@ import contextlib
 import logging
 import os
 import re
+import time
 from typing import Any
 from typing import Optional
 import urllib.parse
@@ -49,6 +50,7 @@ logger = logging.getLogger("timesketch.e2e.ui_test")
 DEFAULT_ARTIFACT_DIR = "/tmp/timesketch-ui-artifacts"
 CSV_FIXTURE_FILENAME = "sigma_events.csv"
 EXPECTED_CSV_EVENTS = 4
+TEST_IP_MANUAL = "8.8.8.8"
 IP_CSV_FIXTURE_FILENAME = "ip_events.csv"
 EXPECTED_IP_CSV_EVENTS = 3
 TEST_IP_EMBEDDED = "8.8.8.8"
@@ -74,6 +76,7 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
       5. test_05_readonly_collaborator_cannot_modify_sketch
       6. test_06_write_collaborator_can_upload_annotate_and_add_event
       7. test_07_plaso_timeline_indexing_and_search_in_explore
+      8. test_08_mixed_timelines_wildcard_ip_search
       9. test_09_threat_intel_ip_clickthrough_in_wildcard_mode
     """
 
@@ -880,6 +883,61 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
                 "Background Plaso timeline (evtx_20260720.plaso) finished "
                 "indexing and rendered 3,205 searchable EVTX events in Explore.",
             )
+
+    def test_08_mixed_timelines_wildcard_ip_search(self) -> None:
+        """Checks *<ip>* search on a mixed wildcard/manual sketch."""
+        csv_path = os.path.join(interface.TEST_DATA_DIR, CSV_FIXTURE_FILENAME)
+        manual_ip_message = f"Inbound probe from {TEST_IP_MANUAL}"
+
+        with self._browser_page("test_08_mixed_timelines_wildcard_ip_search") as page:
+            sketch_id = self._open_new_empty_sketch_in_ui(page, "ui_e2e_mixed_ip_wc")
+            expected_tl_name = self._submit_timeline_upload_via_ui(page, csv_path)
+            self._await_chip_and_run_wildcard_search(
+                page,
+                sketch_id=sketch_id,
+                expected_tl_name=expected_tl_name,
+                expected_events=EXPECTED_CSV_EVENTS,
+                timeout_seconds=CSV_INDEX_TIMEOUT_SECONDS,
+            )
+
+            # Adding a manual event creates a timeline index without wildcard
+            # mappings alongside the wildcard-mapped CSV timeline.
+            self._submit_manual_event_via_ui(page, manual_ip_message)
+            expect(page.get_by_role("textbox", name="Datetime")).to_be_hidden(
+                timeout=15000
+            )
+            # Wait for OpenSearch refresh so the manual event is searchable
+            # before reloading and asserting the combined event count.
+            for _ in range(5):
+                if (
+                    self.api.get_sketch(sketch_id)
+                    .explore(f'"{TEST_IP_MANUAL}"')
+                    .get("objects")
+                ):
+                    break
+                time.sleep(2)
+            page.reload(wait_until="domcontentloaded")
+            self._await_chip_and_run_wildcard_search(
+                page,
+                sketch_id=sketch_id,
+                expected_tl_name="Manual events",
+                expected_events=EXPECTED_CSV_EVENTS + 1,
+                timeout_seconds=CSV_INDEX_TIMEOUT_SECONDS,
+            )
+
+            # Mixed wildcard and non-wildcard timelines must disable Wildcard
+            # mode and keep the sketch in Query String mode so *<ip>* matches.
+            qs_button = page.get_by_role("button", name="QS")
+            expect(qs_button).to_be_visible(timeout=15000)
+            expect(qs_button).to_have_attribute(
+                "title", "This sketch does not support wildcard searches"
+            )
+
+            search_input = page.locator("#tsSearchInput")
+            search_input.fill(f"*{TEST_IP_MANUAL}*")
+            search_input.press("Enter")
+            expect(page.get_by_text("of 1 events")).to_be_visible(timeout=15000)
+            expect(page.get_by_text(manual_ip_message)).to_be_visible(timeout=15000)
 
     def test_09_threat_intel_ip_clickthrough_in_wildcard_mode(self) -> None:
         """Checks Threat Intelligence IP click-through while in Wildcard mode."""
