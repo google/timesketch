@@ -251,9 +251,9 @@ export default {
         if (this.tagMetadata[tag]) {
           return _.extend(tagInfo, this.tagMetadata[tag])
         } else {
-          for (var regex in this.tagMetadata['regexes']) {
+          for (var regex in this.tagMetadata.regexes) {
             if (tag.match(regex)) {
-              return _.extend(tagInfo, this.tagMetadata['regexes'][regex])
+              return _.extend(tagInfo, this.tagMetadata.regexes[regex])
             }
           }
           return _.extend(tagInfo, this.tagMetadata.default)
@@ -261,9 +261,8 @@ export default {
       }
     },
     generateSearchQuery(value, field) {
-      let query = `"${value}"`
-      // Escape special OpenSearch characters: \, [space]
-      query = query.replace(/[\\\s]/g, '\\$&')
+      // Escape special OpenSearch characters: \, ", [space]
+      let query = `"${String(value).replace(/[\\"\s]/g, '\\$&')}"`
       if (field !== undefined) {
         query = `${field}:${query}`
       }
@@ -271,14 +270,23 @@ export default {
       eventData.doSearch = true
       eventData.queryString = query
       eventData.queryFilter = defaultQueryFilter()
+      // Use Query String (QS) search mode rather than Wildcard (WC) mode.
+      eventData.searchMode = 'query_string'
       EventBus.$emit('setQueryAndFilter', eventData)
     },
     searchForIOC(tag) {
-      let opensearchQuery = tag.iocs.map((v) => `"${v}"`).reduce((a, b) => `${a} OR ${b}`)
+      if (!tag || !tag.iocs || !tag.iocs.length) {
+        return
+      }
+      let opensearchQuery = tag.iocs
+        .map((v) => `"${String(v).replace(/[\\"\s]/g, '\\$&')}"`)
+        .reduce((a, b) => `${a} OR ${b}`)
       let eventData = {}
       eventData.doSearch = true
       eventData.queryString = opensearchQuery
       eventData.queryFilter = defaultQueryFilter()
+      // Use Query String (QS) search mode rather than Wildcard (WC) mode.
+      eventData.searchMode = 'query_string'
       EventBus.$emit('setQueryAndFilter', eventData)
     },
     addIndicator() {
