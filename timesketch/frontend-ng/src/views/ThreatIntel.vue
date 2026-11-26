@@ -149,13 +149,13 @@ export default {
       })
     },
     metadataForTag(tag) {
-      let metadata = this.tagMetadata['default'];
+      let metadata = this.tagMetadata.default
       if (this.tagMetadata[tag]) {
         metadata = this.tagMetadata[tag]
       } else {
-        for (var regex in this.tagMetadata['regexes']) {
+        for (var regex in this.tagMetadata.regexes) {
           if (tag.match(regex)) {
-            metadata = this.tagMetadata['regexes'][regex]
+            metadata = this.tagMetadata.regexes[regex]
           }
         }
       }
@@ -223,9 +223,8 @@ export default {
       }
     },
     generateSearchQuery(value, field) {
-      let query = `"${value}"`
-      // Escape special OpenSearch characters: \, [space]
-      query = query.replace(/[\\\s]/g, '\\$&')
+      // Escape special OpenSearch characters: \, ", [space]
+      let query = `"${String(value).replace(/[\\"\s]/g, '\\$&')}"`
       if (field !== undefined) {
         query = `${field}:${query}`
       }
@@ -233,15 +232,25 @@ export default {
       eventData.doSearch = true
       eventData.queryString = query
       eventData.queryFilter = defaultQueryFilter()
+      // Use Query String (QS) search mode rather than Wildcard (WC) mode.
+      eventData.searchMode = 'query_string'
       EventBus.$emit('setQueryAndFilter', eventData)
     },
     searchForIOC(tag) {
-      let tagDetails = this.tagInfo[tag] || {}
-      let opensearchQuery = tagDetails.iocs.map((v) => `"${v}"`).reduce((a, b) => `${a} OR ${b}`)
+      let tagKey = tag && typeof tag === 'object' ? tag.name : tag
+      let tagDetails = this.tagInfo[tagKey] || {}
+      if (!tagDetails.iocs || !tagDetails.iocs.length) {
+        return
+      }
+      let opensearchQuery = tagDetails.iocs
+        .map((v) => `"${String(v).replace(/[\\"\s]/g, '\\$&')}"`)
+        .reduce((a, b) => `${a} OR ${b}`)
       let eventData = {}
       eventData.doSearch = true
       eventData.queryString = opensearchQuery
       eventData.queryFilter = defaultQueryFilter()
+      // Use Query String (QS) search mode rather than Wildcard (WC) mode.
+      eventData.searchMode = 'query_string'
       EventBus.$emit('setQueryAndFilter', eventData)
     },
     saveIntelligence(indicator) {

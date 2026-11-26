@@ -1,0 +1,4 @@
+"message","timestamp","datetime","timestamp_desc","url","data_type"
+"Connection from 8.8.8.8:443 to internal host","1759276800000000","2025-10-01T00:00:00+00:00","Connection time","","network:connection"
+"HTTP request to https://8.8.8.8/login","1759276860000000","2025-10-01T00:01:00+00:00","HTTP request","https://8.8.8.8/login","http:request"
+"Health check from 8.8.4.4","1759276920000000","2025-10-01T00:02:00+00:00","Health check","","system:health"
