@@ -233,7 +233,10 @@ class Sketch(AccessControlMixin, LabelMixin, StatusMixin, CommentMixin, BaseMode
         active_sessions = []
         for session in self.analysissessions:
             for analysis in session.analyses:
-                if analysis.get_status.status in ("PENDING", "STARTED"):
+                if analysis.timeline_id is not None and analysis.get_status.status in (
+                    "PENDING",
+                    "STARTED",
+                ):
                     active_sessions.append(session)
                     # Break early on first running analysis as this is enough
                     # to mark the session as active.
@@ -780,7 +783,10 @@ class Facet(LabelMixin, StatusMixin, CommentMixin, GenericAttributeMixin, BaseMo
     user_id = Column(Integer, ForeignKey("user.id"))
     scenario_id = Column(Integer, ForeignKey("scenario.id"))
     timeframes = relationship("FacetTimeFrame", backref="facet", lazy="select")
-    timelines = relationship("Timeline", secondary=facet_timeline_association_table)
+    # backref ensures SQLAlchemy removes facet_timeline rows on Timeline delete.
+    timelines = relationship(
+        "Timeline", secondary=facet_timeline_association_table, backref="facets"
+    )
     questions = relationship("InvestigativeQuestion", backref="facet", lazy="select")
     conclusions = relationship("FacetConclusion", backref="facet", lazy="select")
     search_histories = relationship("SearchHistory", backref="facet", lazy="select")

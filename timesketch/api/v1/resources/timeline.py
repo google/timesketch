@@ -484,10 +484,12 @@ class TimelineResource(resources.ResourceMixin, Resource):
     def delete(self, sketch_id: int, timeline_id: int) -> int:
         """Handles DELETE requests to remove a timeline from a sketch.
 
-        This method dissociates a timeline from a specific sketch. If the
-        underlying search index associated with the timeline is not in use by any
-        other active timelines (across any sketch), the index will be closed
-        and archived to free up resources.
+        This method deletes the timeline database record from the sketch while
+        preserving the underlying OpenSearch events and SearchIndex record. If
+        the SearchIndex associated with the timeline is not in use by any other
+        active timelines (across any non-deleted sketch), the OpenSearch index
+        will be closed and the SearchIndex marked as archived to free up
+        resources.
 
         The method performs the following checks:
         1. Validates that the sketch and timeline exist.
@@ -506,7 +508,7 @@ class TimelineResource(resources.ResourceMixin, Resource):
         Returns:
             int: The HTTP status code indicating the outcome of the operation.
                 - HTTP_STATUS_CODE_OK (200): If the timeline was successfully
-                  deleted (and potentially archived).
+                  deleted (and its SearchIndex potentially archived).
 
         Raises:
             HTTP_STATUS_CODE_NOT_FOUND: If the sketch or timeline is not found,
@@ -612,11 +614,13 @@ class TimelineResource(resources.ResourceMixin, Resource):
                 logger.error(error_msg)
                 abort(HTTP_STATUS_CODE_INTERNAL_SERVER_ERROR, error_msg)
 
+        # Hard-delete the Timeline row (Sketch.timelines has no delete-orphan
+        # cascade); stage before set_status() so both commit in one transaction.
+        db_session.delete(timeline)
+        if close_index:
             searchindex.set_status(status="archived")
-            timeline.set_status(status="archived")
-
-        sketch.timelines.remove(timeline)
-        db_session.commit()
+        else:
+            db_session.commit()
 
         # Update the last activity of a sketch.
         utils.update_sketch_last_activity(sketch)

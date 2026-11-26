@@ -14,10 +14,12 @@
 """Tests for analysis interface."""
 
 import json
+from unittest import mock
 
 from timesketch.lib.testlib import BaseTest
 from timesketch.lib.testlib import MockDataStore
 from timesketch.lib.analyzers import interface
+from timesketch.models.sketch import Analysis
 from timesketch.models.sketch import Sketch
 from timesketch.models.sketch import Story
 from timesketch.models.sketch import View
@@ -91,3 +93,51 @@ class TestAnalysisSketch(BaseTest):
         self.assertIsInstance(indices, list)
         self.assertEqual(len(indices), 1)
         self.assertEqual(indices[0], "test")
+
+
+class _DummyAnalyzer(interface.BaseAnalyzer):
+    """Minimal analyzer subclass for testing BaseAnalyzer.run_wrapper."""
+
+    NAME = "dummy_analyzer"
+    DISPLAY_NAME = "Dummy Analyzer"
+    DESCRIPTION = "Minimal analyzer for unit testing."
+
+    def run(self):
+        """Return a dummy summary."""
+        return "ok"
+
+
+class TestBaseAnalyzerRunWrapper(BaseTest):
+    """Tests for BaseAnalyzer.run_wrapper edge cases."""
+
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
+    def test_run_wrapper_aborts_when_timeline_deleted(self):
+        """run_wrapper marks analysis ERROR instead of crashing if timeline is gone."""
+        analysis = Analysis(
+            name="dummy_analyzer",
+            description="desc",
+            analyzer_name="dummy_analyzer",
+            parameters="{}",
+            user=self.user1,
+            sketch=self.sketch1,
+            timeline=None,
+        )
+        analysis.set_status("PENDING")
+        analysis_id = analysis.id
+
+        analyzer = _DummyAnalyzer(index_name="test", sketch_id=self.sketch1.id)
+        result = analyzer.run_wrapper(analysis_id)
+
+        self.assertEqual(result, "Failed")
+        refreshed = Analysis.get_by_id(analysis_id)
+        self.assertEqual(refreshed.get_status.status, "ERROR")
+        self.assertEqual(
+            refreshed.result, "Timeline was deleted before analyzer started."
+        )
+
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
+    def test_run_wrapper_aborts_when_analysis_missing(self):
+        """run_wrapper returns Failed cleanly when analysis ID does not exist."""
+        analyzer = _DummyAnalyzer(index_name="test", sketch_id=self.sketch1.id)
+        result = analyzer.run_wrapper(999999)
+        self.assertEqual(result, "Failed")
