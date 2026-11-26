@@ -535,7 +535,7 @@ class SketchResource(resources.ResourceMixin, Resource):
         # Make the list of dicts unique
         mappings = {v["field"]: v for v in mappings}.values()
 
-        # Check if any field mapping or multi-field sub-field contains 'wildcard' type
+        # Check if all active indices support wildcard mappings
         supports_wildcard = False
         if sketch_indices:
             try:
