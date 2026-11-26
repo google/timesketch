@@ -19,6 +19,7 @@ limitations under the License.
     :show-tags="showTags"
     :show-data-types="showDataTypes"
     :show-saved-searches="showSavedSearches"
+    :search-mode="searchMode"
   >
     <template v-slot:header>
       <div class="pa-4 pb-0">
@@ -46,7 +47,13 @@ limitations under the License.
             </v-btn>
           </p>
           <p>Suggestions:</p>
-          <ul>
+          <ul v-if="searchMode === 'wildcard'">
+            <li>Wrap search terms with wildcards for substring matching (e.g. <code>*searchterm*</code>).</li>
+            <li>Do not escape special characters with backslashes. Matches are literal.</li>
+            <li>Try fewer terms<span v-if="filterChips.length"> or filter chips</span>.</li>
+            <li>Try some of the wildcard search examples below.</li>
+          </ul>
+          <ul v-else>
             <li>Try different keywords<span v-if="filterChips.length"> or filter terms</span>.</li>
             <li>Try more general keywords.</li>
             <li>Try fewer keywords<span v-if="filterChips.length"> or filter terms</span>.</li>
@@ -80,6 +87,10 @@ export default {
     disableSaveSearch: {
       type: Boolean,
       default: false,
+    },
+    searchMode: {
+      type: String,
+      default: 'query_string',
     },
   },
   components: {

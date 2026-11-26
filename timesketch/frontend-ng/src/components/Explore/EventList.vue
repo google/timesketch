@@ -97,6 +97,7 @@ limitations under the License.
         :currentQueryString="currentQueryString"
         :filterChips="filterChips"
         :disableSaveSearch="disableSaveSearch"
+        :search-mode="searchMode"
         @save-search-clicked="saveSearchMenu = true"
       ></ts-search-not-found-card>
     </div>
