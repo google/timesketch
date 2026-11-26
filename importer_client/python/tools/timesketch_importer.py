@@ -149,7 +149,8 @@ def upload_file(
         timeline = streamer.timeline
         task_id = streamer.celery_task_id
 
-        streamer.close()
+        # The streamer is closed by the context manager at the end of the
+        # with block, calling close() here would raise an error.
 
     logger.info("File upload completed.")
     return timeline, task_id

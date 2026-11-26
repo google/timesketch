@@ -89,6 +89,7 @@ class ImportStreamer(object):
     def __init__(self):
         """Initialize the upload streamer."""
         self._celery_task_id = ""
+        self._closed = False
         self._count = 0
         self._config_helper = None
         self._data_label = ""
@@ -906,7 +907,15 @@ class ImportStreamer(object):
         return run_analyzers(analyzer_names=analyzer_names, timeline_obj=self.timeline)
 
     def close(self):
-        """Close the streamer"""
+        """Close the streamer
+
+        Raises:
+            ValueError: if the streamer has already been closed.
+        """
+        if self._closed:
+            raise ValueError("ImportStreamer has already been closed.")
+        self._closed = True
+
         try:
             self._ready()
         except ValueError:
@@ -1085,4 +1094,9 @@ class ImportStreamer(object):
     # pylint: disable=unused-argument
     def __exit__(self, exception_type, exception_value, traceback):
         """Make it possible to use "with" statement."""
+        if self._closed and exception_type is not None:
+            # Do not replace an exception raised inside the with block with
+            # the "already closed" error of the redundant close() call.
+            return
+
         self.close()
