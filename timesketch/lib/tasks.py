@@ -1257,6 +1257,11 @@ def run_csv_jsonl(
                     )
         except (json.JSONDecodeError, OSError):
             logger.error("Unable to read in mapping", exc_info=True)
+        except RuntimeError as e:
+            # The datasource is already marked as processing, fail it so the
+            # timeline does not stay in processing forever.
+            _set_datasource_status(timeline_id, file_path, "fail", error_message=str(e))
+            raise
 
     opensearch = OpenSearchDataStore()
 

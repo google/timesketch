@@ -13,6 +13,9 @@
 # limitations under the License.
 """Tests for celery tasks."""
 
+import json
+import os
+import tempfile
 from unittest import mock
 
 from timesketch.lib.testlib import BaseTest
@@ -405,3 +408,46 @@ class TestTasks(BaseTest):
             )
             self.assertEqual(datasource.status[0].status, "fail")
             mock_storage_reader.Close.assert_called_once()
+
+    @mock.patch("timesketch.lib.tasks.OpenSearchDataStore")
+    def test_run_csv_jsonl_invalid_mapping_file_sets_fail(self, mock_opensearch_cls):
+        """Test run_csv_jsonl marks the datasource failed on a bad mapping file."""
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            mapping_path = os.path.join(tmp_dir, "mapping.json")
+            with open(mapping_path, "w", encoding="utf-8") as fh:
+                json.dump(["not", "a", "dict"], fh)
+            file_path = os.path.join(tmp_dir, "events.jsonl")
+            with open(file_path, "w", encoding="utf-8") as fh:
+                fh.write(
+                    '{"message": "m", "datetime": "2024-01-01T00:00:00", '
+                    '"timestamp_desc": "test"}\n'
+                )
+
+            datasource = DataSource(
+                timeline=self.timeline,
+                user=self.user1,
+                file_on_disk=file_path,
+                original_filename="events.jsonl",
+            )
+            db_session.add(datasource)
+            db_session.commit()
+
+            # Call the task body directly so it runs in the test app context
+            # and picks up the patched config.
+            with mock.patch.dict(
+                self.app.config, {"GENERIC_MAPPING_FILE": mapping_path}
+            ):
+                with self.assertRaises(RuntimeError) as context:
+                    tasks.run_csv_jsonl.run(
+                        file_path=file_path,
+                        events="",
+                        timeline_name="test_timeline",
+                        index_name="test_index_bad_mapping",
+                        source_type="jsonl",
+                        timeline_id=self.timeline.id,
+                    )
+
+        self.assertIn("the mappings are not a dict", str(context.exception))
+        self.assertEqual(datasource.get_status, "fail")
+        self.assertEqual(self.timeline.get_status.status, "fail")
+        mock_opensearch_cls.return_value.create_index.assert_not_called()
