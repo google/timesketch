@@ -1164,10 +1164,18 @@ class Search(resource.SketchResource):
                 source["_type"] = result.get("_type")
             if not return_fields or "_index" in return_field_list:
                 source["_index"] = result.get("_index")
+            raw_timeline_id = source.get("__ts_timeline_id")
+            timeline_id = raw_timeline_id
+            if timeline_id is not None:
+                try:
+                    timeline_id = int(timeline_id)
+                except (TypeError, ValueError):
+                    pass
+            timeline_name = timelines.get(timeline_id, raw_timeline_id)
             if not return_fields or "_source" in return_field_list:
-                source["_source"] = timelines.get(result.get("__ts_timeline_id"))
+                source["_source"] = timeline_name
             if not return_fields or "__ts_timeline_id" in return_field_list:
-                source["_source"] = timelines.get(result.get("__ts_timeline_id"))
+                source["__ts_timeline_id"] = timeline_name
 
             return_list.append(source)
 
