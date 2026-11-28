@@ -395,6 +395,154 @@ class SketchResourceTest(BaseTest):
         self.assert200(response)
         self.assertIn("archived", response.json["objects"][0]["status"][0]["status"])
 
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.archive.SketchArchiveResource."
+        "_export_tagged_events"
+    )
+    def test_archive_sketch_write_collaborator(self, _mock_export_tagged_events):
+        """Test write collaborator can archive, export archived, and unarchive."""
+        write_sketch = self._create_sketch(
+            name="write_collab_sketch", user=self.user1, acl=True
+        )
+        write_sketch.grant_permission("read", user=self.user2)
+        write_sketch.grant_permission("write", user=self.user2)
+        db_session.commit()
+
+        self.login(username="test2", password="test")
+        response = self.client.get(f"/api/v1/sketches/{write_sketch.id}/")
+        self.assert200(response)
+        perms = response.json["meta"]["permissions"]
+        self.assertTrue(perms["read"])
+        self.assertTrue(perms["write"])
+        self.assertFalse(perms["delete"])
+        self.assertFalse(perms["admin"])
+
+        archive_url = f"/api/v1/sketches/{write_sketch.id}/archive/"
+        response = self.client.post(archive_url, json={"action": "archive"})
+        self.assert200(response)
+        self.assertEqual(
+            Sketch.get_by_id(write_sketch.id).get_status.status, "archived"
+        )
+
+        response = self.client.post(archive_url, json={"action": "export"})
+        self.assert200(response)
+        self.assertEqual(
+            Sketch.get_by_id(write_sketch.id).get_status.status, "archived"
+        )
+
+        response = self.client.post(archive_url, json={"action": "unarchive"})
+        self.assert200(response)
+        self.assertEqual(Sketch.get_by_id(write_sketch.id).get_status.status, "ready")
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.archive.SketchArchiveResource."
+        "_export_tagged_events"
+    )
+    def test_archive_sketch_readonly_collaborator_forbidden(
+        self, _mock_export_tagged_events
+    ):
+        """Test read-only collaborator can export active, not archive/unarchive."""
+        ro_sketch = self._create_sketch(
+            name="readonly_collab_sketch", user=self.user1, acl=True
+        )
+        ro_sketch.grant_permission("read", user=self.user2)
+        db_session.commit()
+
+        self.login(username="test2", password="test")
+        ro_archive_url = f"/api/v1/sketches/{ro_sketch.id}/archive/"
+
+        response = self.client.post(ro_archive_url, json={"action": "export"})
+        self.assert200(response)
+
+        response = self.client.post(ro_archive_url, json={"action": "archive"})
+        self.assert403(response)
+        self.assertIn(
+            "User does not have sufficient access rights to archive a sketch.",
+            response.json["message"],
+        )
+        self.assertNotEqual(
+            Sketch.get_by_id(ro_sketch.id).get_status.status, "archived"
+        )
+
+        ro_sketch.set_status("archived")
+        db_session.commit()
+
+        response = self.client.post(ro_archive_url, json={"action": "unarchive"})
+        self.assert403(response)
+        self.assertIn(
+            "User does not have sufficient access rights to unarchive a sketch.",
+            response.json["message"],
+        )
+        self.assertEqual(Sketch.get_by_id(ro_sketch.id).get_status.status, "archived")
+
+        response = self.client.post(ro_archive_url, json={"action": "export"})
+        self.assert403(response)
+        self.assertIn(
+            "User does not have sufficient access rights to export an archived sketch.",
+            response.json["message"],
+        )
+        self.assertEqual(Sketch.get_by_id(ro_sketch.id).get_status.status, "archived")
+
+    @mock.patch("timesketch.api.v1.resources.OpenSearchDataStore", MockDataStore)
+    @mock.patch(
+        "timesketch.api.v1.resources.archive.SketchArchiveResource."
+        "_export_tagged_events"
+    )
+    def test_archive_sketch_admin_without_acl(self, _mock_export_tagged_events):
+        """Test admin archive/unarchive without ACL and export read boundary."""
+        admin_sketch = self._create_sketch(
+            name="admin_target_sketch", user=self.user1, acl=True
+        )
+        self.login_admin()
+
+        response = self.client.get(f"/api/v1/sketches/{admin_sketch.id}/")
+        self.assert200(response)
+        admin_perms = response.json["meta"]["permissions"]
+        self.assertTrue(admin_perms["admin"])
+        self.assertFalse(admin_perms["read"])
+        self.assertFalse(admin_perms["write"])
+        self.assertFalse(admin_perms["delete"])
+
+        admin_archive_url = f"/api/v1/sketches/{admin_sketch.id}/archive/"
+        response = self.client.post(admin_archive_url, json={"action": "archive"})
+        self.assert200(response)
+        self.assertEqual(
+            Sketch.get_by_id(admin_sketch.id).get_status.status, "archived"
+        )
+
+        # Admin without explicit read ACL is still blocked from exporting data.
+        response = self.client.post(admin_archive_url, json={"action": "export"})
+        self.assert403(response)
+        self.assertIn(
+            "User does not have sufficient access rights to read from a sketch.",
+            response.json["message"],
+        )
+        self.assertEqual(
+            Sketch.get_by_id(admin_sketch.id).get_status.status, "archived"
+        )
+
+        # Admin with read-only ACL sees admin=True and can export archived sketch.
+        admin_sketch.grant_permission("read", user=self.useradmin)
+        db_session.commit()
+        response = self.client.get(f"/api/v1/sketches/{admin_sketch.id}/")
+        self.assert200(response)
+        read_admin_perms = response.json["meta"]["permissions"]
+        self.assertTrue(read_admin_perms["admin"])
+        self.assertTrue(read_admin_perms["read"])
+        self.assertFalse(read_admin_perms["write"])
+
+        response = self.client.post(admin_archive_url, json={"action": "export"})
+        self.assert200(response)
+        self.assertEqual(
+            Sketch.get_by_id(admin_sketch.id).get_status.status, "archived"
+        )
+
+        response = self.client.post(admin_archive_url, json={"action": "unarchive"})
+        self.assert200(response)
+        self.assertEqual(Sketch.get_by_id(admin_sketch.id).get_status.status, "ready")
+
     def test_unarchive_sketch_with_failed_timeline(self):
         """Tests that a sketch can be successfully unarchived even if it contains
         a timeline in a 'fail' state. This ensures that users can recover

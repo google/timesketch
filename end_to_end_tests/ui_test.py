@@ -692,8 +692,8 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
             self._expect_and_close_error_snackbar(page)
             page.get_by_role("button", name="Cancel").click()
 
-            # 3. Attempt timeline deletion, sketch deletion, sketch archiving,
-            # and timeline upload in UI.
+            # 3. Attempt timeline deletion and timeline upload, and confirm
+            # sketch archiving and deletion are hidden in Sketch Options.
             processed_chip = page.locator(".v-chip.timeline-chip").filter(
                 has_text=expected_tl_name
             )
@@ -703,7 +703,8 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
             self._expect_and_close_error_snackbar(page)
 
             page.locator('[title="Sketch Options"]').click()
-            expect(page.get_by_text("Archive sketch")).to_be_visible(timeout=15000)
+            expect(page.get_by_text("Toggle theme")).to_be_visible(timeout=15000)
+            expect(page.get_by_text("Archive sketch")).to_be_hidden()
             expect(page.get_by_text("Delete sketch")).to_be_hidden()
 
             self._capture_step_screenshot(
@@ -711,12 +712,9 @@ class UiEndToEndTest(interface.BaseEndToEndTest):
                 "06_acl_readonly_collaborator",
                 "Step 6 - Read-Only Collaborator ACL Restrictions",
                 "Read-only collaborator (test2) can view events in Explore "
-                "while comment input and sketch deletion are hidden and "
-                "all write/delete actions are rejected.",
+                "while comment input, sketch archiving, and sketch deletion "
+                "are hidden and all write/delete actions are rejected.",
             )
-
-            page.get_by_text("Archive sketch").click()
-            self._expect_and_close_error_snackbar(page)
 
             page.reload(wait_until="domcontentloaded")
             page.get_by_role("button", name="Add Timeline").click()
