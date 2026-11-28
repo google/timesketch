@@ -34,6 +34,7 @@ class LLMProvider:
     """
 
     NAME = "name"
+    SUPPORTS_STREAMING = False
 
     def __init__(
         self,

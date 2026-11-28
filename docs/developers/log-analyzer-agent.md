@@ -157,14 +157,33 @@ The provider will send a streaming `POST` request with the following characteris
 
 #### **Response Format**
 
-Your agent should return a complete response as a single block of text. This
-response must contain a markdown-formatted section that includes a JSON object
-with the analysis findings.
+Your provider should yield a complete JSON response. The final yielded value is
+parsed directly as JSON by Timesketch; no Markdown wrapper or marker is required.
 
-*   **Headers:** `Content-Type: application/x-ndjson`
-*   **Body:** A text response that includes a `**JSON Summary of Findings**` marker,
-              followed by a JSON code block. Timesketch will parse the entire response
-              to find and extract this specific JSON block.
+*   **Body:** A JSON object with a top-level `findings` list. An optional
+    `report_summary` string can provide a short summary of the analysis.
+
+```json
+{
+  "findings": [
+    {
+      "log_records": [
+        { "record_id": "8XdJUJgB092O9Z5p3KNH" }
+      ],
+      "annotations": [
+        {
+          "investigative_question": "What is the initial access vector?",
+          "conclusions": [
+            "Successful password-based root login from a known Tor exit node."
+          ],
+          "priority": "critical"
+        }
+      ]
+    }
+  ],
+  "report_summary": "One high-priority finding was identified."
+}
+```
 
 **Finding List Schema:**
 
@@ -187,7 +206,7 @@ Each object inside the `annotations` list must have the following structure:
 |---|---|---|---|
 | `investigative_question` | String | **Yes** | The DFIQ question that was generated. This will become an `InvestigativeQuestion`. |
 | `conclusions` | List of Strings | **Yes** | A list of answers or findings for the question. Each will become an `InvestigativeQuestionConclusion`. |
-| `priority` | String | No | The priority for the question. Can be `low`, `medium`, or `high`. |
+| `priority` | String | No | Provider priority. `notice` maps to low priority and `critical` maps to high priority. Omit the field for the default/no priority. |
 | `attack_stage` | String | No | A suggested attack stage (e.g., MITRE ATT&CK Tactic). This is stored as a question attribute. |
 
 **Example of a Single Finding Object (from the list in the JSON block):**
@@ -201,7 +220,7 @@ Each object inside the `annotations` list must have the following structure:
   "annotations": [
     {
       "attack_stage": "Initial access",
-      "priority": "high",
+      "priority": "critical",
       "investigative_question": "What is the initial access vector?",
       "conclusions": [
         "Successful password-based root login from a known Tor exit node."

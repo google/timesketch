@@ -43,7 +43,7 @@ class LogAnalyzer(LLMFeatureInterface):
     This feature orchestrates the log analysis workflow by:
     1. Preparing and sending a stream of logs to a compatible LLM provider.
     2. Receiving a raw JSON string response from the provider.
-    3. Parsing the JSON, which is expected to be an object with a "summaries"
+    3. Parsing the JSON, which is expected to be an object with a "findings"
        key containing a list of findings.
     4. Processing each finding to create and commit DFIQ objects (Questions
        and Conclusions) in Timesketch.
@@ -86,10 +86,10 @@ class LogAnalyzer(LLMFeatureInterface):
         It assumes the entire response is a raw JSON string and parses it
         directly.
 
-        The expected JSON format is an object with a top-level key "summaries",
+        The expected JSON format is an object with a top-level key "findings",
         which should contain a list of finding objects. The method processes
         these findings to create Timesketch annotations (DFIQ). It also
-        handles cases where the "summaries" list is empty, returning a specific
+        handles cases where the "findings" list is empty, returning a specific
         informational message.
 
         Args:
