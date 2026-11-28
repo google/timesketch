@@ -13,12 +13,16 @@
 # limitations under the License.
 """Timesketch API client library."""
 
-from __future__ import unicode_literals
+from __future__ import annotations
 
 import json
 import logging
+from typing import Any, Dict, Union, TYPE_CHECKING
 
 from . import resource
+
+if TYPE_CHECKING:
+    from .client import TimesketchApi
 
 logger = logging.getLogger("timesketch_api.view")
 
@@ -31,7 +35,9 @@ class View(resource.BaseResource):
         name: Name of the view.
     """
 
-    def __init__(self, view_id, view_name, sketch_id, api):
+    def __init__(
+        self, view_id: int, view_name: str, sketch_id: int, api: TimesketchApi
+    ) -> None:
         """Initializes the View object.
 
         Args:
@@ -49,7 +55,9 @@ class View(resource.BaseResource):
         resource_uri = "sketches/{0:d}/views/{1:d}/".format(sketch_id, self.id)
         super().__init__(api, resource_uri)
 
-    def _get_top_level_attribute(self, name, default_value=None, refresh=False):
+    def _get_top_level_attribute(
+        self, name: str, default_value: Any = None, refresh: bool = False
+    ) -> Any:
         """Returns a top level attribute from a view object.
 
         Args:
@@ -59,7 +67,7 @@ class View(resource.BaseResource):
             refresh: If set to True then the data will be refreshed.
 
         Returns:
-            The dict value of the key "name".
+            The value of the key "name".
         """
         view = self.lazyload_data(refresh_cache=refresh)
         view_objects = view.get("objects")
@@ -72,29 +80,29 @@ class View(resource.BaseResource):
         return first_object.get(name, default_value)
 
     @property
-    def description(self):
+    def description(self) -> str:
         """Property that returns the description value of a view.
 
         Returns:
-            Description of the view as a string.
+            Description of the view.
         """
         return self._get_top_level_attribute("description", default_value="")
 
     @property
-    def user(self):
+    def user(self) -> str:
         """Property that returns the username of the view creator.
 
         Returns:
-            A string with the username of the user generating the view.
+            The username of the user generating the view.
         """
         user_dict = self._get_top_level_attribute("user", default_value={})
         username = user_dict.get("username")
         if not username:
             return "System"
-        return username
+        return str(username)
 
     @property
-    def query_string(self):
+    def query_string(self) -> str:
         """Property that returns the views query string.
 
         Returns:
@@ -103,7 +111,7 @@ class View(resource.BaseResource):
         return self._get_top_level_attribute("query_string", default_value="")
 
     @property
-    def query_filter(self):
+    def query_filter(self) -> Union[Dict[str, Any], str]:
         """Property that returns the views filter.
 
         Returns:
@@ -117,7 +125,7 @@ class View(resource.BaseResource):
         return json.loads(query_filter_string)
 
     @property
-    def query_dsl(self):
+    def query_dsl(self) -> Union[Dict[str, Any], str]:
         """Property that returns the views query DSL.
 
         Returns:

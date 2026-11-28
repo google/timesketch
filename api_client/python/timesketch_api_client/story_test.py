@@ -13,10 +13,8 @@
 # limitations under the License.
 """Tests for the Timesketch API client"""
 
-from __future__ import unicode_literals
-
 import unittest
-import mock
+from unittest import mock
 
 from . import client
 from . import test_lib
@@ -57,3 +55,40 @@ class StoryTest(unittest.TestCase):
         blocks = list(story.blocks)
         self.assertEqual(len(blocks), 3)
         self.assertEqual(blocks[1].text, "# My Heading\nWith Some Text.")
+
+    def test_add_text_commit_status(self):
+        """Test add_text propagates the boolean commit status."""
+        story = self.sketch.list_stories()[0]
+
+        ok_response = mock.Mock(status_code=200)
+        with mock.patch.object(
+            self.api_client.session, "post", return_value=ok_response
+        ):
+            self.assertTrue(story.add_text("Committed text block"))
+
+        fail_response = mock.Mock(
+            status_code=500, reason="Internal Server Error", text="Server error"
+        )
+        with mock.patch.object(
+            self.api_client.session, "post", return_value=fail_response
+        ):
+            self.assertFalse(story.add_text("Uncommitted text block"))
+
+    def test_null_safe_exports_and_view_name(self):
+        """Test None API values coalesce to empty strings instead of 'None'."""
+        story = self.sketch.list_stories()[0]
+
+        with mock.patch.object(story, "to_export_format", return_value={"story": None}):
+            self.assertEqual(story.to_html(), "")
+            self.assertEqual(story.to_markdown(), "")
+
+        view_block = story_lib.ViewBlock(story, 0)
+        mock_view = mock.Mock()
+        mock_view.id = 1
+        mock_view.name = None
+        view_block.feed(mock_view)
+        self.assertEqual(view_block.view_name, "")
+
+
+if __name__ == "__main__":
+    unittest.main()
