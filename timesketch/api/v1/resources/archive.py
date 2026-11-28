@@ -172,6 +172,17 @@ class SketchArchiveResource(resources.ResourceMixin, Resource):
                     "read from a sketch.",
                 )
 
+            # Exporting an archived sketch temporarily unarchives it, which
+            # requires the same access rights as unarchiving it.
+            if sketch.get_status.status == "archived":
+                if not sketch.has_permission(current_user, "delete"):
+                    if not current_user.admin:
+                        abort(
+                            HTTP_STATUS_CODE_FORBIDDEN,
+                            "User does not have sufficient access rights to "
+                            "export an archived sketch.",
+                        )
+
             return self._export_sketch(sketch)
 
         if action == "unarchive":

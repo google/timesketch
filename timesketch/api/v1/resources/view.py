@@ -257,10 +257,16 @@ class ViewResource(resources.ResourceMixin, Resource):
 
         # Make sure we have all expected attributes in the query filter.
         view.query_filter = view.validate_filter()
-        db_session.add(view)
-        db_session.commit()
 
-        return self.to_json(view)
+        # Only store the updated filter if the user can change the view.
+        if sketch.has_permission(current_user, "write"):
+            db_session.add(view)
+            db_session.commit()
+            return self.to_json(view)
+
+        response = self.to_json(view)
+        db_session.expire(view, ["query_filter"])
+        return response
 
     @login_required
     def delete(self, sketch_id: int, view_id: int):
