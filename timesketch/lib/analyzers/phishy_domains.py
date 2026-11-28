@@ -224,8 +224,10 @@ class PhishyDomainsSketchPlugin(interface.BaseAnalyzer):
         if not domain_counter:
             return "No domains discovered, so no phishy domains."
 
-        watched_domains_list = current_app.config.get(
-            "DOMAIN_ANALYZER_WATCHED_DOMAINS", []
+        # Copy the configured list, so that the domains added below are only
+        # used for this run and are not added to the shared app config.
+        watched_domains_list = list(
+            current_app.config.get("DOMAIN_ANALYZER_WATCHED_DOMAINS", [])
         )
         domain_threshold = current_app.config.get(
             "DOMAIN_ANALYZER_WATCHED_DOMAINS_THRESHOLD", 10
