@@ -155,6 +155,47 @@ def upload_file(
     return timeline, task_id
 
 
+def get_sanitized_command_line(argv, secrets=None):
+    """Returns the command line as a string, without secret values.
+
+    Secret options are removed together with their value. Since argparse also
+    accepts other spellings of an option (e.g. "-pVALUE" or abbreviated long
+    options), any argument that contains one of the parsed secret values is
+    removed as well.
+
+    Args:
+        argv (list[str]): the command line arguments.
+        secrets (list[str]): the values to remove, e.g. the parsed password.
+
+    Returns:
+        str: the sanitized command line.
+    """
+    secret_args = [
+        "-p",
+        "--password",
+        "--pwd",
+        "--client-secret",
+        "--client_secret",
+    ]
+    secrets = [secret for secret in secrets or [] if secret]
+
+    argv_sanitized = []
+    skip_next = False
+    for arg in argv:
+        if skip_next:
+            skip_next = False
+            continue
+        if arg in secret_args:
+            skip_next = True
+            continue
+        if arg.startswith(tuple(f"{a}=" for a in secret_args)):
+            continue
+        if any(arg == s or (arg.startswith("-") and s in arg) for s in secrets):
+            continue
+        argv_sanitized.append(arg)
+    return " ".join(argv_sanitized)
+
+
 def main(args=None):
     """The main function of the tool."""
     if args is None:
@@ -766,21 +807,9 @@ def main(args=None):
 
     context = options.context
     if not context:
-        # Create a copy to modify
-        argv_sanitized = []
-        password_args = ["-p", "--password", "--pwd"]
-        skip_next = False
-        for arg in sys.argv:
-            if skip_next:
-                skip_next = False
-                continue
-            if arg in password_args:
-                skip_next = True
-                continue
-            if arg.startswith(tuple(f"{a}=" for a in password_args)):
-                continue
-            argv_sanitized.append(arg)
-        context = " ".join(argv_sanitized)
+        context = get_sanitized_command_line(
+            sys.argv, secrets=[options.password, options.client_secret]
+        )
 
     config_dict = {
         "message_format_string": options.format_string,
