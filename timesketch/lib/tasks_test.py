@@ -405,3 +405,18 @@ class TestTasks(BaseTest):
             )
             self.assertEqual(datasource.status[0].status, "fail")
             mock_storage_reader.Close.assert_called_once()
+
+    @mock.patch("timesketch.lib.tasks.send_email")
+    def test_run_email_result_task_with_sketch(self, mock_send_email):
+        """Test the result email links to the sketch and its views."""
+        result = tasks.run_email_result_task(
+            self.searchindex.index_name, sketch_id=self.sketch1.id
+        )
+
+        self.assertEqual(result, f"Sent email to {self.user1.username:s}")
+        mock_send_email.assert_called_once()
+        body = mock_send_email.call_args[0][1]
+        sketch_url = f"https://localhost/sketch/{self.sketch1.id:d}/"
+        view_url = f"{sketch_url:s}explore?view={self.view1.id:d}"
+        self.assertIn(f"<b>Sketch</b><br>{sketch_url:s}<br>", body)
+        self.assertIn(f'<a href="{view_url:s}">View 1</a>', body)
