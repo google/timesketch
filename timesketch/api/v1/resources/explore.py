@@ -418,6 +418,14 @@ class ExploreResource(resources.ResourceMixin, Resource):
 
         if parent:
             previous_search = SearchHistory.get_by_id(parent)
+            # Ensure the referenced parent node belongs to this sketch. Without
+            # this check, an attacker could reference a SearchHistory id from a
+            # sketch they cannot access and have its data returned to them.
+            if previous_search and previous_search.sketch_id != sketch.id:
+                abort(
+                    HTTP_STATUS_CODE_FORBIDDEN,
+                    "Parent search node does not belong to this sketch.",
+                )
         else:
             previous_search = (
                 SearchHistory.query.filter_by(user=current_user, sketch=sketch)
