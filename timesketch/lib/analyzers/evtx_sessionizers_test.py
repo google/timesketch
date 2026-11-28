@@ -6,6 +6,8 @@ import copy
 from unittest import mock
 from typing import Optional
 
+import opensearchpy.exceptions
+
 from timesketch.lib.analyzers.evtx_sessionizers import LogonSessionizerSketchPlugin
 from timesketch.lib.analyzers.evtx_sessionizers import UnlockSessionizerSketchPlugin
 
@@ -482,6 +484,44 @@ class TestWinEXTXSessionizerPlugin(BaseTest):
             self.assertEqual(
                 message, "Sessionizing completed, number of sessions created: 0"
             )
+
+    @mock.patch("timesketch.lib.analyzers.interface.OpenSearchDataStore", MockDataStore)
+    def test_query_string_timestamp_bound(self):
+        """Test the query sent to the datastore carries a numeric timestamp
+        bound, both on the first pass and on a retry pass."""
+        index = "test_index"
+        sketch_id = 1
+        timestamp = 1410895419859714
+
+        for analyzer_class in self.analyzer_classes:
+            analyzer = analyzer_class["class"](index, sketch_id)
+            analyzer.datastore.client = mock.Mock()
+            event = mock.Mock()
+            event.source = {
+                "timestamp": timestamp,
+                "event_identifier": 6005,
+                "record_number": 1,
+            }
+
+            def interrupted_stream(stream_event=event):
+                yield stream_event
+                raise opensearchpy.exceptions.ConnectionTimeout(
+                    "TIMEOUT", "timed out", {}
+                )
+
+            with mock.patch.object(
+                analyzer,
+                "event_stream",
+                side_effect=[interrupted_stream(), iter([])],
+            ) as mock_stream:
+                analyzer.run()
+
+            query_strings = [
+                call.kwargs["query_string"] for call in mock_stream.call_args_list
+            ]
+            self.assertEqual(len(query_strings), 2)
+            self.assertIn("timestamp:[0 TO *]", query_strings[0])
+            self.assertIn("timestamp:[{0:d} TO *]".format(timestamp), query_strings[1])
 
 
 def _create_mock_event(
