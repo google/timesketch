@@ -802,9 +802,26 @@ def run_sketch_analyzer(
       Name (str) of the index.
     """
     analyzer_class = manager.AnalysisManager.get_analyzer(analyzer_name)
-    analyzer = analyzer_class(
-        sketch_id=sketch_id, index_name=index_name, timeline_id=timeline_id, **kwargs
-    )
+    try:
+        analyzer = analyzer_class(
+            sketch_id=sketch_id, index_name=index_name, timeline_id=timeline_id, **kwargs
+        )
+    except Exception:  # pylint: disable=broad-except
+        analysis = Analysis.get_by_id(analysis_id)
+        result = traceback.format_exc()
+        if analysis:
+            analysis.set_status("ERROR")
+            analysis.result = result
+            db_session.add(analysis)
+            db_session.commit()
+
+        logger.error(
+            "Unable to initialize analyzer %s (ID:%d): %s",
+            analyzer_name,
+            analysis_id,
+            result,
+        )
+        raise
 
     result = analyzer.run_wrapper(analysis_id)
     logger.info("[%s] result: %s", analyzer_name, result)
