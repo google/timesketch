@@ -15,6 +15,7 @@
 
 from __future__ import unicode_literals
 
+import json
 import unittest
 import mock
 
@@ -57,3 +58,15 @@ class StoryTest(unittest.TestCase):
         blocks = list(story.blocks)
         self.assertEqual(len(blocks), 3)
         self.assertEqual(blocks[1].text, "# My Heading\nWith Some Text.")
+
+    def test_add_text_to_unloaded_story_keeps_existing_blocks(self):
+        """Test adding a block before the blocks were read keeps them."""
+        story = self.sketch.list_stories()[0]
+        session = story._api.session  # pylint: disable=protected-access
+        with mock.patch.object(session, "post", wraps=session.post) as post:
+            story.add_text("A new note.")
+
+        posted = json.loads(post.call_args_list[0].kwargs["json"]["content"])
+        self.assertEqual(len(posted), 4)
+        self.assertEqual(posted[0]["content"], "# My Heading\nWith Some Text.")
+        self.assertEqual(posted[-1]["content"], "A new note.")
